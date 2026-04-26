@@ -1,0 +1,20 @@
+{
+  "name": "dev-skills",
+  "owner": {
+    "name": "martinatgit"
+  },
+  "metadata": {
+    "description": "A collection of useful skills to incorporate LLMs and agentic AI into the development workflow.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "dev-skills",
+      "source": ".",
+      "description": "A collection of useful skills to incorporate LLMs and agentic AI into the development workflow.",
+      "skills": [
+        "./skills/example-skill"
+      ]
+    }
+  ]
+}
