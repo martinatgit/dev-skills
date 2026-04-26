@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OrchestratorOutput",
+  "description": "Structured output schema for the meta-reasoning orchestrator's final consolidated result.",
+  "type": "object",
+  "required": ["task", "meta_assessment", "agent_results", "synthesis", "quality_control"],
+  "properties": {
+    "task": {
+      "type": "string",
+      "description": "The original user task verbatim"
+    },
+    "meta_assessment": {
+      "type": "object",
+      "required": ["task_type", "complexity", "stakes", "ambiguities", "actors_and_stakeholders", "selected_reasoning_families", "selection_rationale"],
+      "properties": {
+        "task_type": {
+          "type": "string",
+          "description": "Classification of the task (e.g. 'design decision', 'diagnosis', 'policy analysis', 'strategic planning')"
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["low", "moderate", "high", "very_high"],
+          "description": "Estimated complexity"
+        },
+        "stakes": {
+          "type": "string",
+          "enum": ["low", "moderate", "high", "critical"],
+          "description": "Estimated stakes of getting the answer wrong"
+        },
+        "ambiguities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Identified ambiguities in the task"
+        },
+        "actors_and_stakeholders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "actor": { "type": "string" },
+              "role": { "type": "string" },
+              "intent": { "type": "string" },
+              "constraints": { "type": "string" }
+            }
+          },
+          "description": "Identified actors, their roles, intents, and constraints"
+        },
+        "selected_reasoning_families": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which reasoning families were dispatched"
+        },
+        "wildcard_families": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Families dispatched as wildcards for unexpected insights"
+        },
+        "selection_rationale": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Why each family was selected or excluded"
+        }
+      }
+    },
+    "agent_results": {
+      "type": "array",
+      "description": "Collected outputs from all dispatched specialist agents",
+      "items": { "$ref": "agent-output.json" }
+    },
+    "synthesis": {
+      "type": "object",
+      "required": ["executive_summary", "integrated_findings", "cross_family_insights", "conflicts_or_tensions", "recommended_next_steps", "uncertainties", "terminal_claim", "terminal_claim_confidence", "terminal_claim_defeat_conditions", "terminal_claim_refutation_status"],
+      "properties": {
+        "executive_summary": {
+          "type": "string",
+          "description": "Concise integrated answer to the user's task — should state the terminal claim plainly"
+        },
+        "argumentative_chain_main": {
+          "type": "array",
+          "description": "The assembled cross-agent chain from Phase 5.5a — the structural backbone of synthesis",
+          "items": {
+            "type": "object",
+            "required": ["step", "contributing_family", "premise", "reasoning_step_type", "conclusion", "key_assumption"],
+            "properties": {
+              "step": { "type": "integer", "description": "Step number in the cross-agent chain" },
+              "contributing_family": { "type": "string", "description": "Which reasoning family contributed this step" },
+              "premise": { "type": "string", "description": "Opening claim for this step (must be conclusion of step N-1)" },
+              "reasoning_step_type": { "type": "string", "description": "deductive | inductive | abductive | modal | analogical | counterexample | proportionality | defeasible | conceptual" },
+              "conclusion": { "type": "string", "description": "What follows from the premise via this step" },
+              "key_assumption": { "type": "string", "description": "What must be true for this step to hold" },
+              "cross_family_stitch": { "type": "boolean", "description": "True if this step stitches two different families' chains together" }
+            }
+          }
+        },
+        "terminal_claim": {
+          "type": "string",
+          "description": "The specific, falsifiable claim this synthesis commits to — must name an actual conclusion, not a complexity statement"
+        },
+        "terminal_claim_confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the terminal claim"
+        },
+        "terminal_claim_defeat_conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Concrete circumstances under which the terminal claim would be wrong (minimum 2)"
+        },
+        "terminal_claim_refutation_status": {
+          "type": "string",
+          "enum": ["survived", "contested", "not_tested"],
+          "description": "Whether the claim was tested by Phase 5.6 Refutation Agent and survived, was defeated, or was not tested"
+        },
+        "integrated_findings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Load-bearing steps of the assembled chain, attributed to contributing families — NOT a flat merge of all agent findings"
+        },
+        "cross_family_insights": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Insights from cross-family stitching points where two agents' conclusions reinforce each other non-obviously"
+        },
+        "conflicts_or_tensions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Genuine disagreements between reasoning families that should be preserved"
+        },
+        "recommended_next_steps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Concrete actionable next steps"
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What remains uncertain and why"
+        }
+      }
+    },
+    "quality_control": {
+      "type": "object",
+      "required": ["verification_notes", "validation_notes", "blind_spots", "confidence_overall", "chain_depth_check", "chain_integrity_check", "cross_family_threading_check", "terminal_claim_check", "ingestion_contract_check"],
+      "properties": {
+        "verification_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Internal consistency checks performed"
+        },
+        "validation_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "External validity checks and real-world grounding"
+        },
+        "blind_spots": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Known gaps in the analysis"
+        },
+        "confidence_overall": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Overall confidence in the synthesised answer"
+        },
+        "chain_depth_check": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "WARN"],
+          "description": "PASS if chain meets minimum length for complexity level, FAIL if quality defect, WARN if borderline"
+        },
+        "chain_integrity_check": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "WARN"],
+          "description": "PASS if every step N premise derives from step N-1 conclusion, FAIL if chain breaks found"
+        },
+        "cross_family_threading_check": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "WARN"],
+          "description": "PASS if main chain draws from 3+ distinct families"
+        },
+        "terminal_claim_check": {
+          "type": "string",
+          "enum": ["PASS", "FAIL"],
+          "description": "PASS if terminal_claim is specific and falsifiable with defeat conditions, FAIL if missing or unfalsifiable"
+        },
+        "ingestion_contract_check": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "WARN"],
+          "description": "PASS if all integrated_findings are traceable to assembled chain steps, FAIL if cataloging artifacts detected"
+        }
+      }
+    },
+    "cache_status": {
+      "type": "object",
+      "description": "Whether the result was served from cache or freshly computed",
+      "properties": {
+        "hit": { "type": "boolean", "description": "True if the result was served from cache" },
+        "cache_key": { "type": "string", "description": "The cache key (SHA-256 hash of normalised task)" },
+        "cached_at": { "type": "string", "format": "date-time", "description": "When the cached result was originally computed (ISO 8601)" },
+        "cache_age_seconds": { "type": "integer", "description": "How old the cache entry is in seconds" }
+      }
+    },
+    "refinement_log": {
+      "type": "object",
+      "description": "Log of iterative refinement passes beyond the initial dispatch",
+      "properties": {
+        "total_passes": { "type": "integer", "minimum": 1, "description": "Total number of dispatch passes (1 = no refinement)" },
+        "refinement_triggers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What triggered each refinement pass"
+        },
+        "agents_redispatched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "agent_id": { "type": "string" },
+              "pass": { "type": "integer" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "cost_summary": {
+      "type": "object",
+      "description": "Execution cost estimates for this invocation",
+      "properties": {
+        "total_agents_dispatched": { "type": "integer", "description": "Total agent dispatches including refinement passes" },
+        "total_response_chars": { "type": "integer", "description": "Approximate total characters in all agent responses" },
+        "agent_costs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "agent_id": { "type": "string" },
+              "pass": { "type": "integer" },
+              "response_chars": { "type": "integer" },
+              "applicability_confidence": { "type": "number" },
+              "contributed_to_synthesis": { "type": "boolean" }
+            }
+          }
+        },
+        "cache_savings": { "type": "string", "description": "Description of cache savings if applicable" }
+      }
+    }
+  }
+}

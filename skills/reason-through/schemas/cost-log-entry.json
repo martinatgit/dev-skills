@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CostLogEntry",
+  "description": "Schema for a single line in the append-only cost log (JSONL format). One entry per invocation.",
+  "type": "object",
+  "required": ["timestamp", "task_hash", "dispatch_mode", "agents"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp of the invocation" },
+    "task_hash": { "type": "string", "description": "SHA-256 of normalised task (same as cache key)" },
+    "task_summary": { "type": "string", "description": "First 120 characters of the task for human readability" },
+    "dispatch_mode": { "type": "string", "enum": ["selective", "exhaustive", "focused", "cache_hit"] },
+    "total_passes": { "type": "integer", "description": "Number of dispatch passes including refinement" },
+    "cache_hit": { "type": "boolean" },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "agent_id": { "type": "string" },
+          "pass": { "type": "integer" },
+          "response_chars": { "type": "integer" },
+          "applicability_confidence": { "type": "number" },
+          "output_confidence": { "type": "number" },
+          "contributed": { "type": "boolean" },
+          "was_refinement": { "type": "boolean" },
+          "was_cross_referral": { "type": "boolean" }
+        }
+      }
+    },
+    "synthesis_confidence": { "type": "number", "description": "The overall confidence from quality_control" }
+  }
+}

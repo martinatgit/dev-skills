@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CacheEntry",
+  "description": "Schema for a cached reason-through result. Stored as JSON files in the cache/ directory.",
+  "type": "object",
+  "required": ["cache_key", "task_normalised", "created_at", "ttl_seconds", "framework_version", "dispatch_mode", "families_dispatched", "result"],
+  "properties": {
+    "cache_key": { "type": "string", "description": "SHA-256 hex digest of the normalised task string" },
+    "task_original": { "type": "string", "description": "The original task string as provided by the user" },
+    "task_normalised": { "type": "string", "description": "The task string after normalisation (lowercase, whitespace-collapsed, flags stripped)" },
+    "created_at": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp when this cache entry was created" },
+    "ttl_seconds": { "type": "integer", "default": 86400, "description": "Time-to-live in seconds (default: 24 hours)" },
+    "framework_version": { "type": "string", "description": "Version of the reason-through framework that produced this result" },
+    "dispatch_mode": { "type": "string", "enum": ["selective", "exhaustive", "focused"], "description": "Which dispatch mode was used" },
+    "families_dispatched": { "type": "array", "items": { "type": "string" }, "description": "Which family IDs were dispatched" },
+    "result": { "description": "The full OrchestratorOutput JSON", "$ref": "orchestrator-output.json" }
+  }
+}

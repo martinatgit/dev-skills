@@ -1,0 +1,213 @@
+{
+  "framework": {
+    "name": "reason-through",
+    "version": "3.0.0",
+    "description": "Multi-agent reasoning framework based on the Professional Reasoning Taxonomy",
+    "taxonomy_source": "doc/research-insights/reasoning/reasoning_taxonomy.json"
+  },
+  "orchestrator": {
+    "id": "meta_reasoning_orchestrator",
+    "prompt_file": "orchestrator.md",
+    "description": "Top-level meta-reasoning agent that dispatches, evaluates, and synthesises specialist reasoning agents"
+  },
+  "dispatch_config": {
+    "default_mode": "selective",
+    "modes": {
+      "selective": "Orchestrator estimates relevance, dispatches high-relevance families plus 2-3 wildcards",
+      "exhaustive": "Dispatches all 23 families in parallel (triggered by user flag --full or --exhaustive)",
+      "focused": "User specifies which families to dispatch (triggered by --families=X,Y,Z)"
+    },
+    "max_parallel_agents": 23,
+    "wildcard_count": 3,
+    "relevance_threshold": 0.4,
+    "timeout_seconds": 120,
+    "fallback_on_timeout": "Return partial results with timeout noted in quality_control.blind_spots"
+  },
+  "cache_config": {
+    "enabled": true,
+    "directory": "cache",
+    "default_ttl_seconds": 86400,
+    "max_entries": 100,
+    "bypass_flag": "--no-cache"
+  },
+  "refinement_config": {
+    "enabled": true,
+    "max_passes": 3,
+    "auto_refine_threshold": "Auto-refine when any agent has applicability >= 0.6 but output confidence < 0.5",
+    "max_cross_referrals_per_agent": 2,
+    "flags": {
+      "enable": "--refine",
+      "set_passes": "--refine=N"
+    }
+  },
+  "cost_config": {
+    "enabled": true,
+    "log_file": "logs/cost-log.jsonl",
+    "track_response_chars": true,
+    "track_applicability": true,
+    "track_contribution": true
+  },
+  "specialist_agents": [
+    {
+      "id": "formal_truth_preserving",
+      "name": "Formal and Truth-Preserving Reasoning",
+      "prompt_file": "families/formal_truth_preserving.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task demands establishing or verifying a conclusion through logically necessary steps, formal proof, axioms, or demonstrating that something must or cannot be true."
+    },
+    {
+      "id": "structural_classification",
+      "name": "Structural and Classification Reasoning",
+      "prompt_file": "families/structural_classification.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task centers on classifying entities, mapping part-whole or analogical relationships, or revealing the organizational structure that connects things."
+    },
+    {
+      "id": "explanation_discovery",
+      "name": "Explanation, Discovery, and Understanding",
+      "prompt_file": "families/explanation_discovery.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires explaining why something happened, identifying a cause or mechanism, diagnosing a fault, or constructing a coherent account of how observed phenomena came about."
+    },
+    {
+      "id": "uncertainty_evidence",
+      "name": "Uncertainty, Evidence, and Belief Management",
+      "prompt_file": "families/uncertainty_evidence.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task involves weighing conflicting or incomplete evidence, quantifying uncertainty, updating beliefs given new data, or judging how much confidence a conclusion deserves."
+    },
+    {
+      "id": "constraint_search",
+      "name": "Constraint, Search, and Possibility-Space Reasoning",
+      "prompt_file": "families/constraint_search.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires finding feasible solutions within hard constraints, searching a space of possibilities, planning a sequence of actions, or determining what states are reachable."
+    },
+    {
+      "id": "temporal_dynamic",
+      "name": "Temporal and Dynamic-System Reasoning",
+      "prompt_file": "families/temporal_dynamic.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task hinges on how a system evolves over time, including feedback loops, tipping points, path dependence, irreversibility, or the timing of interventions."
+    },
+    {
+      "id": "decision_action",
+      "name": "Decision, Optimization, and Action Reasoning",
+      "prompt_file": "families/decision_action.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires selecting among competing options, balancing tradeoffs, prioritizing under resource limits, or deciding what action to take given goals and costs."
+    },
+    {
+      "id": "normative_legal",
+      "name": "Normative, Legal, and Compliance Reasoning",
+      "prompt_file": "families/normative_legal.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task involves determining what is permitted, required, or forbidden under rules, laws, or norms, or interpreting authoritative texts, assigning burden of proof, or resolving jurisdictional conflicts."
+    },
+    {
+      "id": "scientific_model",
+      "name": "Scientific and Model-Based Reasoning",
+      "prompt_file": "families/scientific_model.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires building or testing a quantitative model, deriving predictions from physical laws, estimating orders of magnitude, or reasoning about conservation, symmetry, or limiting behavior in a scientific system."
+    },
+    {
+      "id": "clinical_medical",
+      "name": "Clinical and Medical Reasoning",
+      "prompt_file": "families/clinical_medical.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task involves narrowing a differential diagnosis, choosing a treatment plan, assessing prognosis, triaging urgency, or integrating patient preferences into a clinical decision."
+    },
+    {
+      "id": "strategic_adversarial",
+      "name": "Strategic, Adversarial, and Conflict Reasoning",
+      "prompt_file": "families/strategic_adversarial.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task involves an adversary or competitor whose moves must be anticipated, countered, or exploited, including deception, deterrence, tempo control, or resource maneuvering in a contested environment."
+    },
+    {
+      "id": "social_communication",
+      "name": "Social, Rhetorical, and Communicative Reasoning",
+      "prompt_file": "families/social_communication.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task centers on persuading an audience, framing a message, building coalitions, negotiating terms, or crafting communication that achieves acceptance within a social or institutional context."
+    },
+    {
+      "id": "philosophical_conceptual",
+      "name": "Philosophical and Conceptual Reasoning",
+      "prompt_file": "families/philosophical_conceptual.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires analyzing or refining a concept itself -- drawing distinctions, testing necessary or sufficient conditions, running thought experiments, or critiquing the coherence of a conceptual framework."
+    },
+    {
+      "id": "engineering_systems",
+      "name": "Engineering, Design, and Systems Reasoning",
+      "prompt_file": "families/engineering_systems.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task involves designing, building, or assuring an engineered artifact -- including failure-mode analysis, safety margins, control loops, fault trees, maintainability, or human-factors considerations."
+    },
+    {
+      "id": "economic_institutional_design",
+      "name": "Economic, Organizational, and Institutional-Design Reasoning",
+      "prompt_file": "families/economic_institutional_design.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires reasoning about incentive structures, marginal costs and benefits, principal-agent dynamics, signaling, or designing rules and mechanisms that shape rational actors' behavior."
+    },
+    {
+      "id": "historical_contextual",
+      "name": "Historical, Contextual, and Documentary Reasoning",
+      "prompt_file": "families/historical_contextual.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires reconstructing past context from documentary sources, assessing source reliability, or explaining how contingent historical events and multiple interacting causes produced the present situation."
+    },
+    {
+      "id": "embodied_experiential",
+      "name": "Embodied, Heuristic, and Experiential Reasoning",
+      "prompt_file": "families/embodied_experiential.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task depends on practitioner expertise, rules of thumb, pattern matching from past cases, tacit craft knowledge, or situational judgment that cannot be fully formalized."
+    },
+    {
+      "id": "creative_generative",
+      "name": "Creative and Generative Reasoning",
+      "prompt_file": "families/creative_generative.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task calls for generating novel ideas, blending disparate concepts, reframing a problem to open new solution paths, or systematically exploring a design space for creative alternatives."
+    },
+    {
+      "id": "aesthetic",
+      "name": "Aesthetic Reasoning",
+      "prompt_file": "families/aesthetic.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires judging elegance, beauty, stylistic fit, form-function harmony, or whether a solution feels coherent and well-proportioned rather than merely correct."
+    },
+    {
+      "id": "affective_interpersonal",
+      "name": "Affective and Interpersonal Reasoning",
+      "prompt_file": "families/affective_interpersonal.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires reading or managing emotions, assessing trustworthiness, inferring someone's motivations, de-escalating interpersonal conflict, or interpreting social signals between people."
+    },
+    {
+      "id": "ethical_beyond_formal_norms",
+      "name": "Ethical Reasoning Beyond Formal Norms",
+      "prompt_file": "families/ethical_beyond_formal_norms.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task involves a moral judgment that goes beyond what rules prescribe -- weighing competing values, considering what a virtuous or caring person would do, protecting dignity, ensuring fairness, or accepting responsibility."
+    },
+    {
+      "id": "learning_adaptation",
+      "name": "Learning and Adaptation Reasoning",
+      "prompt_file": "families/learning_adaptation.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task centers on learning from outcomes -- designing experiments, interpreting feedback, conducting postmortems, or systematically improving a process based on accumulated experience."
+    },
+    {
+      "id": "orchestration",
+      "name": "Orchestration Reasoning",
+      "prompt_file": "families/orchestration.md",
+      "enabled": true,
+      "diagnostic_trigger": "The task requires coordinating multiple distinct reasoning modes into a coherent workflow, sequencing reasoning stages, building decision pipelines, or synthesizing insights across different professional domains."
+    }
+  ]
+}

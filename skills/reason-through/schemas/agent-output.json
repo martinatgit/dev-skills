@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReasoningAgentOutput",
+  "description": "Structured output schema for specialist reasoning agents. Every specialist agent MUST return JSON conforming to this schema.",
+  "type": "object",
+  "required": ["agent_name", "reasoning_family", "applicability", "analysis", "semantic_model", "output_quality"],
+  "properties": {
+    "agent_name": {
+      "type": "string",
+      "description": "The agent's identifier (e.g. 'formal_truth_preserving')"
+    },
+    "reasoning_family": {
+      "type": "string",
+      "description": "Human-readable name of the reasoning family"
+    },
+    "applicability": {
+      "type": "object",
+      "required": ["applies", "confidence", "rationale"],
+      "properties": {
+        "applies": {
+          "type": "boolean",
+          "description": "Whether this reasoning family is relevant to the task"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence that this family applies (0.0 = not at all, 1.0 = certain)"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this family does or does not apply"
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "required": ["problem_reframing", "key_questions", "key_findings", "recommendations", "risks_and_caveats", "assumptions", "missing_information"],
+      "properties": {
+        "problem_reframing": {
+          "type": "string",
+          "description": "How this reasoning family reframes the problem"
+        },
+        "key_questions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The primary questions this family asks about the task"
+        },
+        "key_findings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Substantive findings from applying this reasoning"
+        },
+        "recommendations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Concrete recommended actions"
+        },
+        "risks_and_caveats": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Risks, caveats, and warnings"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Assumptions made during analysis"
+        },
+        "missing_information": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Information that would improve the analysis if available"
+        }
+      }
+    },
+    "reasoning_modes_applied": {
+      "type": "array",
+      "description": "Which specific reasoning modes within the family were most relevant",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mode": { "type": "string" },
+          "relevance": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "insight": { "type": "string" }
+        }
+      }
+    },
+    "semantic_model": {
+      "type": "object",
+      "required": ["concepts", "relationships"],
+      "properties": {
+        "concepts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Key concepts identified"
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Semantic relationships in 'conceptA -> relation -> conceptB' format"
+        }
+      }
+    },
+    "output_quality": {
+      "type": "object",
+      "required": ["confidence", "limits", "verification_suggestions"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Overall confidence in the analysis quality"
+        },
+        "limits": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Known limitations of this analysis"
+        },
+        "verification_suggestions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "How the findings could be verified"
+        }
+      }
+    },
+    "cross_referral_requests": {
+      "type": "array",
+      "description": "Requests for input from other specialist agents. The orchestrator collects these after pass 1 and fulfils them in refinement passes.",
+      "items": {
+        "type": "object",
+        "required": ["target_agent_id", "question"],
+        "properties": {
+          "target_agent_id": {
+            "type": "string",
+            "description": "The ID of the specialist agent whose perspective is needed (e.g. 'normative_legal')"
+          },
+          "question": {
+            "type": "string",
+            "description": "The specific question to ask that agent"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why this cross-referral would improve the analysis"
+          }
+        }
+      }
+    },
+    "pass_number": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Which pass this result was produced in (1 = initial, 2+ = refinement)"
+    },
+    "refinement_context": {
+      "type": "string",
+      "description": "Context injected by the orchestrator from other agents' findings (empty on pass 1)"
+    }
+  }
+}
