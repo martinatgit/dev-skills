@@ -1,11 +1,15 @@
 
 # Review and maintain the developer diary
 
+## Resolve configuration first
+
+Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>` and `<feature_routing_file>` for every read and write below.
+
 The following are a list of quality concerns to look for and repair to maintain a high quality developer diary.
 
 ## Identify and resolve duplication and ambiguities
 Make sure there is no significant duplication or ambiguity within the diary tree. You verify this as follows: 
- - Collect all leave nodes of the tree, i.e. all nodes that have no child nodes, in a list. Do this with a breadth-first search, start from the root `doc/developer-diary/developer-diary.md` and iterate over children until all leave nodes are found. 
+ - Collect all leave nodes of the tree, i.e. all nodes that have no child nodes, in a list. Do this with a breadth-first search, start from the root `<root_dir>/developer-diary.md` and iterate over children until all leave nodes are found. 
  - For each item in the list memorise its index and synthesise a short description and bullet point list of key words of topics that are representative of the node. This mimics formulating a search while reading the developer hierarchy. Then search for that information and validate that you find the node from which the information have been created (same index). If a different node is found add cross references to both nodes and describe how they are related. 
 
 ## Listed diary-entry files must exist
@@ -28,7 +32,7 @@ Report duplication instances for the user to resolve. Do not auto-fix — the us
 
 ## Feature routing regeneration
 
-Regenerate `doc/developer-diary/feature-routing.md` from the full tree:
+Regenerate `<feature_routing_file>` from the full tree:
 
 1. Traverse all nodes (breadth-first from root)
 2. For each node, extract identifiable features (packages, modules, components, functions, API surfaces)

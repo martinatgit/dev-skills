@@ -52,10 +52,12 @@ Use imperative verbs ("Read the file", not "The file is read"). Keep steps short
 
 ## Scripts
 
-Portable languages only:
+**Prefer Python 3 stdlib for everything.** It is the most portable, runs identically on Windows / macOS / Linux PowerShell / bash / zsh, and has no shell-quoting traps. Reach for shell only when shelling out is genuinely simpler.
 
-- POSIX bash (no bash-isms that break on macOS's default 3.x).
-- Python 3 stdlib, no external packages.
+Allowed:
+
+- Python 3 stdlib, no external packages. **Default choice.**
+- POSIX bash (must work on macOS's default 3.x). Use only when Python is overkill.
 - Node.js with no external packages beyond what ships with Node.
 
 If your skill genuinely needs a dependency, document it in the skill's `references/dependencies.md` and fail loudly with an install hint when it's missing. Do not install silently.
@@ -64,13 +66,28 @@ Scripts are executable helpers, not install steps. They run when the agent invok
 
 ## Configuration
 
-If the skill needs configuration, use Pattern 2 (the template demonstrates this):
+Skills that need configuration use **Pattern 2 (lazy, two-scope, Python helpers)**. The canonical reference is `skills/example-skill/`. The pattern is:
 
-1. Store config at `~/.config/<skill-name>/config.yaml`, permissions `0600`.
-2. Read order: env var → user config → project-local config → interactive prompt.
-3. On first use with missing config, run `scripts/configure.sh` to prompt and write.
-4. Never modify files outside `~/.config/<skill-name>/` during configuration.
-5. Never commit a config file to the repo.
+1. Two scopes:
+   - User scope at `~/.config/<skill-name>/config.yaml` (or `$XDG_CONFIG_HOME/<skill-name>/config.yaml`).
+   - Project scope at `<project_root>/.<skill-name>/config.yaml`. `<project_root>` is detected by walking upward from the cwd looking for VCS / language-manifest / agent-config markers.
+2. Resolution order (first match wins): env var → project-local → user-level (non-path keys only) → built-in default.
+3. **Path-typed keys are project-only.** A user-installed skill must not bleed one project's writes into another. The resolver refuses to read path-typed keys from the user-level layer.
+4. Three Python helpers ship per skill: `scripts/configure.py`, `scripts/resolve_config.py`, `scripts/find_project_root.py`. Stdlib only. Mode `0600` on POSIX.
+5. On first use with a missing path key, the agent prompts the user once, persists the answer to project-local config, and never asks again in that project.
+6. Never modify files outside the two configured paths during configuration.
+7. Never commit a config file to the repo.
+
+### Write-directory configuration
+
+If your skill writes user-visible files (e.g. a diary, a TODO tree, generated reports), expose a `root_dir` config key. It must be:
+
+- **Project-only** (never read from user-level config).
+- Resolved via `python3 scripts/resolve_config.py root_dir` at the start of each invocation.
+- Defaulted to a project-relative suggestion (e.g. `doc/<skill-name>`) presented at the first-use prompt.
+- Overridable via env var `<SKILL_NAME_UPPER>_ROOT_DIR` for ad-hoc use.
+
+This is what makes a skill installable user-scope (so the code is shared) while writes stay project-scope (so corpora never bleed across projects).
 
 ## Failure modes
 

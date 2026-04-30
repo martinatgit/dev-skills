@@ -46,7 +46,7 @@ Before doing any analysis, check if a cached result exists for this task.
 1. Take the user task string (flags already stripped by SKILL.md)
 2. Normalise: lowercase, collapse all whitespace to single spaces, trim
 3. Compute the SHA-256 hex digest of the normalised string — this is the cache key
-4. The cache file path is: `${CLAUDE_SKILL_DIR}/cache/{cache_key}.json`
+4. The cache file path is: `<cache_dir>/{cache_key}.json` — `cache_dir` comes from `python3 scripts/resolve_config.py cache_dir` (resolved at the start of each invocation by SKILL.md).
 
 **Cache lookup:**
 1. Use the Read tool to attempt reading the cache file at that path
@@ -92,7 +92,7 @@ Then select agents to dispatch:
 
 **Cost-aware dispatch hints:**
 
-If a cost log exists at `${CLAUDE_SKILL_DIR}/logs/cost-log.jsonl`, scan the last 20 entries for patterns:
+If a cost log exists at `<log_dir>/cost-log.jsonl` (where `log_dir` is resolved from configuration), scan the last 20 entries for patterns:
 - If a family has been dispatched 5+ times and NEVER returned `applicability.confidence >= 0.4`, note this — it may be consistently irrelevant to this user's tasks. Still dispatch if relevance estimation says HIGH, but demote from wildcard consideration.
 - If a family consistently produces very long responses (>5000 chars) but low contribution to synthesis, note this for the user in the cost summary.
 
@@ -100,21 +100,30 @@ This is advisory — never skip a HIGH-relevance family based on cost history al
 
 ### PHASE 3: Dispatch specialist agents
 
-Launch ALL selected agents **in parallel** using the Agent tool. Each agent receives:
-1. The base contract (from specialist-base.md)
-2. Its family-specific prompt (from agents/families/{id}.md)
-3. The user task
+Launch ALL selected agents **in parallel** using the host's standard parallel-sub-agent primitive. Each agent receives:
+1. The base contract (from `specialist-base.md`)
+2. Its family-specific prompt (from `agents/families/{id}.md`)
+3. The user task, in a `## USER TASK` section
 
-When calling Agent, use this pattern for each specialist:
+The dispatch payload for each specialist is the concatenation:
 
 ```
-Agent({
-  description: "{family_name} reasoning analysis",
-  prompt: "<base contract>\n\n<family-specific prompt>\n\n## USER TASK\n\n{task}"
-})
+<base contract>
+
+<family-specific prompt>
+
+---
+
+## USER TASK
+
+{task}
 ```
 
-CRITICAL: Launch all agents in a SINGLE message with multiple Agent tool calls to maximise parallelism. Do NOT launch them sequentially.
+If the host exposes model selection, apply the resolved `specialist_model_tier` from configuration as the model hint. If not, the host's default model is used.
+
+For the per-host translation of "parallel sub-agent dispatch" (Claude Code `Agent` tool, Codex CLI parallel `task` invocations, etc.) see `references/host-notes.md`.
+
+CRITICAL: All specialists in one phase MUST be launched concurrently in a single dispatch step. Sequential launches defeat the architecture and inflate wall-clock time.
 
 ### PHASE 4: Collect and filter results
 
@@ -476,7 +485,7 @@ After producing the final output:
    - `dispatch_mode`: the mode used
    - `families_dispatched`: list of family IDs that were dispatched
    - `result`: the full orchestrator output JSON
-3. Write the cache entry to `${CLAUDE_SKILL_DIR}/cache/{cache_key}.json` using the Write tool
+3. Write the cache entry to `<cache_dir>/{cache_key}.json` (using the host's standard file-write primitive). Create the directory if missing.
 4. If `--no-cache` was passed, skip the write
 
 **Cost logging:**
@@ -487,7 +496,7 @@ After producing the final output:
    - `contributed`: true if the agent's findings were used in the synthesis
    - `was_refinement`: true if dispatched in pass 2+
    - `was_cross_referral`: true if dispatched to fulfil a cross-referral request
-3. Append the entry as a single line to `${CLAUDE_SKILL_DIR}/logs/cost-log.jsonl` using Bash: `echo '<json_line>' >> path/to/cost-log.jsonl`
+3. Append the entry to the cost log by piping the JSON object on stdin to `python3 scripts/append_log.py`. The helper writes one JSONL line to `<log_dir>/cost-log.jsonl` (resolved from configuration), creating the directory if missing. This avoids host-specific shell-redirection idioms.
 
 **Cache status in output:**
 Include `cache_status` in the final JSON output:

@@ -1,0 +1,54 @@
+{
+  "skill": "developer-diary",
+  "purpose": "Canonical trigger prompts. Each positive prompt should activate the developer-diary skill on every supported host (Claude Code, Codex CLI baseline). Target trigger rate: >=80%.",
+  "prompts": [
+    {
+      "id": "explicit-read",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/developer-diary read"
+    },
+    {
+      "id": "explicit-update",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/developer-diary update"
+    },
+    {
+      "id": "explicit-review",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/developer-diary review"
+    },
+    {
+      "id": "casual-context-read",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "Before we start: read the developer diary and tell me what's relevant for today's work on the auth module."
+    },
+    {
+      "id": "casual-context-update",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "We just shipped the new payment flow. Update the developer diary with what we tried, what worked, and what surprised us."
+    },
+    {
+      "id": "review-repair",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "The developer diary has gotten messy — review and repair the structure."
+    },
+    {
+      "id": "single-domain-code-edit",
+      "trigger_expected": false,
+      "category": "negative",
+      "input": "Rename userId to user_identifier in src/auth.ts."
+    },
+    {
+      "id": "factual-lookup",
+      "trigger_expected": false,
+      "category": "negative",
+      "input": "What does TypeScript's never type mean?"
+    }
+  ]
+}

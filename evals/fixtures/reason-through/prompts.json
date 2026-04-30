@@ -1,0 +1,54 @@
+{
+  "skill": "reason-through",
+  "purpose": "Canonical trigger prompts. Each prompt should activate the reason-through skill on every supported host (Claude Code, Codex CLI baseline). Target trigger rate: >=80%.",
+  "prompts": [
+    {
+      "id": "explicit-slash",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/reason-through Should we open-source our core library?"
+    },
+    {
+      "id": "explicit-full",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/reason-through --full A patient presents with chest pain, elevated troponin, and normal ECG."
+    },
+    {
+      "id": "explicit-focused",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/reason-through --families=decision_action,ethical_beyond_formal_norms,economic_institutional_design Should we lay off 15% of engineering to hit quarterly targets?"
+    },
+    {
+      "id": "casual-multi-angle",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "Help me think through whether to accept a 30% raise that requires relocating to a higher cost-of-living city."
+    },
+    {
+      "id": "deep-analysis",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "I need a deep analysis of the EU's proposed AI liability rules from multiple angles."
+    },
+    {
+      "id": "complex-tradeoff",
+      "trigger_expected": true,
+      "category": "complex-decision",
+      "input": "Our distributed system has intermittent data inconsistencies that correlate with peak traffic but no specific deployment. Reason through the possibilities."
+    },
+    {
+      "id": "single-domain-code-edit",
+      "trigger_expected": false,
+      "category": "negative",
+      "input": "Rename the variable userId to user_identifier in src/auth.ts."
+    },
+    {
+      "id": "factual-lookup",
+      "trigger_expected": false,
+      "category": "negative",
+      "input": "What's the syntax for a TypeScript interface?"
+    }
+  ]
+}

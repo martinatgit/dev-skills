@@ -3,7 +3,7 @@
     "name": "reason-through",
     "version": "3.0.0",
     "description": "Multi-agent reasoning framework based on the Professional Reasoning Taxonomy",
-    "taxonomy_source": "doc/research-insights/reasoning/reasoning_taxonomy.json"
+    "taxonomy_source": "supplied at generation time via REASON_THROUGH_TAXONOMY env var or scripts/_generate_specialists.py --taxonomy"
   },
   "orchestrator": {
     "id": "meta_reasoning_orchestrator",

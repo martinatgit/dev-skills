@@ -1,58 +1,103 @@
 ---
 name: developer-diary
-description:  Manages persistent engineering knowledge across sessions in a developer-diary. Reads diary before design/implementation tasks, updates it after, and reviews it for structural repair. Invoke with read, update, or review. Use this skill before a design or implementation task starts to 'read' the developer diary and get relevant context. Use this skill to 'update' the developer diary after a completing a design or implementation task to update the diary and retain notes on progress and lessons learned. Use this skill to 'review' for maintaining and repairing issues with the developer diary. 
-allowed-tools: Bash Read Grep Glob Write Edit
-effort: medium
-context: fork
-agent: general-purpose
-argument-hint: "[read|update|review]"
+description: Persistent engineering knowledge across sessions. Maintains a hierarchical project diary that captures decisions, reasoning, alternatives considered, debugging stories, and lessons learned — the colleague-handoff context that is otherwise lost between sessions and engineers. Invoke with `read` (before design or implementation work, to load relevant context), `update` (after meaningful work, while context is fresh), or `review` (occasionally, to repair structural drift). Use whenever the user mentions "developer diary", "engineering notebook", "session notes", "what did we do last time", "carry over context", or asks you to load or write project history. Use this even if phrased casually like "remind me where we left off" or "write down what we just did". Do not use for ephemeral chat memory or for action-item tracking — use `update-todos` for the latter.
 ---
 
+# Developer Diary
 
-## Invocation modes
-You are invoked in **$ARGUMENTS** mode.
+The developer diary is a hierarchical, project-local notebook of durable engineering knowledge. Each node is a markdown file that captures not only what was done, but how it was thought about, what alternatives were considered, what surprised the engineer, and what the next reader needs to watch out for.
 
-- If mode is `read`:  follow the instructions in `${CLAUDE_SKILL_DIR}/actions/read-diary.md`. This is executed before an implementation or design task to selectively get relevant context information. 
-- If mode is `update`: follow the instructions in `${CLAUDE_SKILL_DIR}/actions/update-diary.md`. This is executed after completion of an implementation or design task when context is still fresh o update the developer diary with all relevant information. 
-- If mode is `review`: follow the instructions in `${CLAUDE_SKILL_DIR}/actions/review-diary.md`. This is executed occasionally to review and repair the diary structure in order to maintain integrity, consistency, and accurateness of the information. 
-- If no mode is provided or mode is unrecognised: ask the user which mode to use.
+You maintain it as your personal engineering notebook — the place where you write down everything a trusted colleague needs to know to continue your work. You write like a conscientious engineer clocking off for the day: reasoning traces, doubts, "aha" moments, things that feel fragile, gut feelings about risk.
 
+You are keenly aware that your context window is limited and the next engineer reading your notes starts with zero context. You write with enough richness that reading a diary node feels like getting a thorough handoff, not like reading a change log.
 
+**The quality bar.** If a new LLM reads your diary entry and still needs to read every source file and spec section you referenced to understand the decisions and trade-offs, your entry is too sparse. The diary should transfer understanding, not just facts.
 
-You maintain the developer diary as your personal engineering notebook — the place where you write down everything a trusted colleague needs to know to continue your work. You write like a conscientious engineer clocking off for the day: not just what was done, but how you thought about it, what you tried, what surprised you, what you're unsure about, and what the next person should watch out for. You capture your internal monologue — doubts, reasoning traces, alternatives considered, "aha" moments, things that feel fragile, gut feelings about risks.
+## Inputs
 
-You are keenly aware that your context window is limited and the next engineer reading your notes starts with zero context. You write with enough richness that reading a diary node feels like getting a thorough handoff from the person who did the work — not like reading a change log.
+The skill is invoked as:
 
-**The quality bar:** If a new LLM reads your diary entry and still needs to read every source file and spec section you referenced to understand the decisions and trade-offs, your entry is too sparse. The diary should transfer understanding, not just facts.
+```
+/developer-diary [read | update | review]
+```
 
-When executing a task, you always use the diary to remind yourself of where you left off, past progress and lessons learned. The same holds for team members that come and go. New team members can use the diary to quickly get the relevant background to execute their tasks. As the knowledge becomes large, the diary is organised in a tree hierarchy. The purpose is to get to relevant details efficiently, without polluting the context window or exceeding cognitive load. The strategy is a combination of abstraction and divide-and-conquer. The tree hierarchy helps to avoid reading irrelevant information.
+- `read` — invoke before design/implementation work, to selectively load relevant context.
+- `update` — invoke after completing meaningful work, while context is still fresh.
+- `review` — invoke occasionally, to repair the diary's structure (orphan refs, parent/child duplication, stale cross-links).
 
-Each node abstracts and summarises over all its children. Hence, the root node contains an overarching summary of the entire project. For example, at root-level the "Relevant context" section summarises the entire software project, what the library is about, motivation and intentions, and references requirements.
+If no mode is supplied or the value is unrecognised, ask the user which mode to use.
 
+## Configuration
 
-## Diary location and file layout
+Resolution order (first match wins):
+
+1. Environment variable `DEVELOPER_DIARY_<UPPERCASE_KEY>` (e.g. `DEVELOPER_DIARY_ROOT_DIR`).
+2. **Project-local** config at `<project_root>/.developer-diary/config.yaml`.
+3. **User-level** config at `~/.config/developer-diary/config.yaml` — applies to non-path keys only (e.g. `node_token_limit`). The `root_dir` is project-bound and is never read from this layer.
+4. Built-in default (for non-path keys only).
+
+Path-typed keys (`root_dir`, `feature_routing_file`) are project-only by design: the diary is a per-project artefact, and a user-installed skill must not bleed one project's diary into another.
+
+**Configure**
+
+```sh
+# Project-scope (writes <project_root>/.developer-diary/config.yaml)
+python3 scripts/configure.py --scope project
+
+# Non-interactive
+python3 scripts/configure.py --scope project --root-dir doc/developer-diary
+
+# User defaults (e.g. for node_token_limit, applies across projects)
+python3 scripts/configure.py --scope user
+
+# Inspect resolution
+python3 scripts/configure.py --print
+```
+
+**First-use flow.** If `root_dir` cannot be resolved (no env var, no project-local config), the agent must:
+
+1. Detect the project root via `python3 scripts/find_project_root.py`. If it returns a path, suggest `<project_root>/doc/developer-diary` as the default.
+2. Ask the user "Where should the developer diary live in this project? [default: <suggestion>]".
+3. Persist the answer with `python3 scripts/configure.py --scope project --root-dir <answer>`.
+4. Re-resolve and proceed. The prompt will not recur in this project.
+
+If no project root is detected, refuse with the configure command and a one-line hint. Never fall back to a user-home location for `root_dir` — that would mix diaries across projects.
+
+See [`references/config-schema.md`](references/config-schema.md) for the full schema.
+
+## Workflow
+
+Every invocation begins with:
+
+**Step 0 — Resolve configuration.** Run `python3 scripts/resolve_config.py --all` and parse the `key=value` lines. Use the resolved `root_dir` for every read and write below. If `root_dir` is empty, run the first-use flow above before continuing.
+
+After Step 0, follow the action file matching the requested mode (paths relative to this SKILL.md):
+
+- `read`   → [`actions/read-diary.md`](actions/read-diary.md)
+- `update` → [`actions/update-diary.md`](actions/update-diary.md)
+- `review` → [`actions/review-diary.md`](actions/review-diary.md)
+
+## Diary tree layout
 
 The root node is always:
 
-`doc/developer-diary/developer-diary.md`
+```
+<root_dir>/developer-diary.md
+```
 
-Each child node is stored in a numbered child directory with file name:
+Each child node is stored in a numbered child directory:
 
-`diary-entry.md`
+```
+<root_dir>/child_1/diary-entry.md
+<root_dir>/child_3/child_6/diary-entry.md
+```
 
-Examples:
-- `doc/developer-diary/child_1/diary-entry.md`
-- `doc/developer-diary/child_3/child_6/diary-entry.md`
-
-The diary hierarchy mirrors the software architecture. Higher nodes (closer to root) contain routing and abstraction. Lower nodes contain narrower implementation detail.
-
-Each diary-entry.md node must strictly follow a fixed schema with all required section headings present, though only Index, Last updated, Title, and Relevant Context must always contain meaningful content. Each section serves a specific role, including uniquely identifying the node and providing sufficient technical context, tracking decisions, progress, issues, and next steps—ensuring developers can continue work seamlessly based on the node’s position in the hierarchy. Nodes should remain modular, under ~4000 tokens, and organized into child nodes when necessary, with clear relationships, no duplication, and a single source of truth across the developer diary structure.
-
-
+The hierarchy mirrors the software architecture. Higher nodes (closer to root) contain routing and abstraction. Lower nodes contain narrower implementation detail. Each node abstracts and summarises over its children, so the root contains an overarching summary of the entire project.
 
 ## Node-writing principles
 
 ### Content richness (highest priority)
+
 - **"Notes and commentary" is the most important section.** It captures the internal monologue — decision reasoning, session context, uncertainties, observations. Never leave it empty. Structure it with subsections: Decision journal, Session context, Uncertainties and risks.
 - **Design decisions must include alternatives.** Never write "We chose X" without naming at least one alternative and explaining why X won.
 - **Problems must include the diagnosis story.** Never write "No problems encountered" unless the work was truly trivial. Describe what you debugged, even if the fix was quick.
@@ -62,45 +107,54 @@ Each diary-entry.md node must strictly follow a fixed schema with all required s
 - Write durable engineering knowledge, not chat transcripts — but durable knowledge includes reasoning, not just conclusions.
 
 ### Structure and scope
+
 - Keep each node focused on a single architectural concern.
 - Assume the reader already understands the nodes on the direct path from root to the current node.
 - Do not duplicate large amounts of information from parent or sibling nodes.
 - Prefer a single source of truth. Use `Relevant related diary nodes` for cross-references instead of duplicating content.
-- Make sure that relevant knowledge that is in context window while writing the diary is explicitly referenced.
+- Reference relevant knowledge that is in the context window when writing, so future readers can locate the source.
 - Put immediate handoff instructions in `Special instructions for next reader`. Remove or migrate them once consumed.
 - Keep markdown easy to scan and navigate.
 
 ## Size limit and splitting
 
-A single diary-entry node should remain below an estimated 4000 tokens.
+A single `diary-entry.md` should remain below the configured `node_token_limit` (default `4000`).
 
 If a node would exceed that size:
-1. split it into independent child concerns,
-2. keep the parent as an abstraction and routing layer,
-3. move detailed content into new child nodes,
-4. add the children to the parent `Child nodes` table,
-5. update peer scoping where needed.
+
+1. Split it into independent child concerns.
+2. Keep the parent as an abstraction and routing layer.
+3. Move detailed content into new child nodes.
+4. Add the children to the parent `Child nodes` table.
+5. Update peer scoping where needed.
 
 Prefer low coupling between peers. Avoid unnecessary cross-links between unrelated branches.
 
+## Quick deep-access reference
 
-## Quick deep access reference
+At top level, maintain a routing index at the path resolved from `feature_routing_file` (default `<root_dir>/feature-routing.md`).
 
-At top level, maintain a quick reference where to find features (file doc/developer-diary/feature-routing.md). 
-The file contains a tabular index of identifiable units of the architecture (e.g. packages, modules, components, functions, features, etc)
-The table structure is as follows (example): 
+The file contains a tabular index of identifiable units of the architecture (packages, modules, components, functions, features, etc.):
+
 ```md
 | Feature name | Index | Description |
 | --- | --- | --- |
-| HM Type System | R.1.2.1 | `MonoType`, `PolyType`, `Linearity`; Algorithm W (Milner 1978) inference; `typeCheck(db)`; `typeof/2` clauses in ClauseDB; advisory, non-blocking |
+| HM Type System | R.1.2.1 | `MonoType`, `PolyType`, `Linearity`; Algorithm W (Milner 1978) inference; advisory, non-blocking |
 ```
-When updating (mode update) the developer diary, also update the feature-routing.md table accordingly. 
 
+When invoked in `update` mode, the skill also updates this table accordingly.
 
-## Final behavior
+## Final behaviour
 
-Treat the diary as a shared engineering memory:
+Treat the diary as shared engineering memory:
+
 - read it before meaningful implementation or design work,
 - update it after meaningful implementation or design work,
 - review and repair it when explicitly asked or when a concrete inconsistency is discovered.
 
+## References
+
+- [`references/config-schema.md`](references/config-schema.md) — full configuration schema and CLI usage.
+- [`actions/read-diary.md`](actions/read-diary.md) — read-mode procedure.
+- [`actions/update-diary.md`](actions/update-diary.md) — update-mode procedure.
+- [`actions/review-diary.md`](actions/review-diary.md) — review-mode procedure.

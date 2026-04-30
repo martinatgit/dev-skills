@@ -61,16 +61,42 @@ def check_marketplace() -> list[str]:
 
 
 def check_no_placeholders() -> list[str]:
+    """Reject {{...}} placeholders in user-facing surfaces only.
+
+    The rule's intent is that contributors must not ship unfilled template
+    placeholders inside SKILL.md or `references/`. Runtime artefacts
+    (`agents/`, `actions/`, `resources/`, `scripts/`) are filled by the
+    skill at runtime and legitimately contain placeholder markers; the
+    repo-root `template/` is also exempt.
+    """
     problems: list[str] = []
-    for path in REPO_ROOT.rglob("*"):
-        if not path.is_file() or ".git" in path.parts or "assets" in path.parts:
-            continue
-        try:
-            text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, PermissionError):
-            continue
-        if "{{" in text and "}}" in text:
-            problems.append(f"{path}: contains unfilled placeholder {{{{...}}}}")
+    for skill_md in SKILLS_DIR.glob("*/SKILL.md"):
+        targets = [skill_md]
+        ref_dir = skill_md.parent / "references"
+        if ref_dir.is_dir():
+            targets.extend(p for p in ref_dir.rglob("*.md") if p.is_file())
+        for path in targets:
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, PermissionError):
+                continue
+            if "{{" in text and "}}" in text:
+                problems.append(
+                    f"{path}: contains unfilled placeholder {{{{...}}}}"
+                )
+    return problems
+
+
+def check_python_scripts() -> list[str]:
+    """Compile every *.py under skills/<name>/scripts/ to catch syntax errors."""
+    import py_compile
+    problems: list[str] = []
+    for skill_dir in sorted(SKILLS_DIR.glob("*/scripts")):
+        for py_file in sorted(skill_dir.glob("*.py")):
+            try:
+                py_compile.compile(str(py_file), doraise=True)
+            except py_compile.PyCompileError as e:
+                problems.append(f"{py_file}: {e.msg.strip()}")
     return problems
 
 
@@ -91,6 +117,7 @@ def main() -> int:
         targets = sorted(SKILLS_DIR.glob("*/SKILL.md"))
         all_problems.extend(check_marketplace())
         all_problems.extend(check_no_placeholders())
+        all_problems.extend(check_python_scripts())
 
     for skill_md in targets:
         all_problems.extend(check_frontmatter(skill_md))

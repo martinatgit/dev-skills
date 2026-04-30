@@ -2,6 +2,10 @@
 
 This is the heart of the GTD discipline. Without `review`, the corpus silently degrades into a write-only graveyard.
 
+## Resolve configuration first
+
+Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>` for every read and write below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
+
 ## When to run
 
 - On user request ("weekly review", "triage TODOs").
@@ -39,7 +43,7 @@ Compute:
 - `dead-blockers` — TODOs in `blocked/` whose `blocked-by[]` are all resolved. Offer to move to `active/`.
 - `inbox-overflow` — `inbox/` has >5 items. Prompt user to run `clarify` on each.
 - `invalid-next-step` — any TODO whose `next-step` is not in the 9-value vocabulary.
-- `bidirectional-link-violations` — TODOs referencing diary nodes that do not reference them back, and vice versa (scan `doc/developer-diary/**/*.md` for `related-todos` frontmatter).
+- `bidirectional-link-violations` — TODOs referencing diary nodes that do not reference them back, and vice versa (scan the project's diary tree for `related-todos` frontmatter).
 
 ## Phase 2 — forced triage
 
@@ -53,7 +57,7 @@ Dead-blocker cascade: if the user accepts moving blocked→active, update the fi
 
 ## Phase 4 — regenerate index
 
-Rewrite `doc/TODOs/index.md` from scratch. Structure:
+Rewrite `<root_dir>/index.md` from scratch (use `resources/index.md.tpl` as the layout). Structure:
 
 ```markdown
 # TODO index
@@ -74,7 +78,7 @@ Regenerated: 2026-04-16T14:30:00
 
 | ID | Next-step | Priority | Scope | Expires | Very-next-action |
 |---|---|---|---|---|---|
-| TODO-... | spec-update | high | area | 2026-04-22 | Draft §4.2.1 of v7.3 |
+| TODO-... | spec-update | high | area | 2026-04-22 | Draft §4.2.1 of requirements.md |
 | ... |
 
 ## Blocked

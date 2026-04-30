@@ -61,6 +61,7 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 
 ## Final
 
-- [ ] `grep -rn '{{' skills/<your-skill>/` returns nothing (no unfilled placeholders).
+- [ ] `python3 evals/run.py --skill <your-skill>` returns OK (covers frontmatter, placeholders in user-facing surfaces, and Python script compilation).
 - [ ] `python3 -m json.tool .claude-plugin/marketplace.json > /dev/null` exits 0.
-- [ ] `bash -n skills/<your-skill>/scripts/*.sh` exits 0 for every script.
+- [ ] `python3 -m py_compile skills/<your-skill>/scripts/*.py` exits 0 for every script.
+- [ ] If the skill writes user files, it exposes a `root_dir` (or equivalent path-typed) config key marked project-only.

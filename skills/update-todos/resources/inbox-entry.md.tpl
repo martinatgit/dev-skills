@@ -10,8 +10,8 @@ references:
     anchor: {{§4.2.1 or omit}}
     note: {{what's at this reference}}
 discovered-in-task: {{one-line description of the task in flight when this emerged}}
-discovered-by: {{claude | martin | other-name}}
-diary-node: {{doc/developer-diary/.../diary-entry.md or omit}}
+discovered-by: {{claude | <human-name> | imported}}
+diary-node: {{<root_dir of developer-diary>/.../diary-entry.md or omit}}
 ---
 
 # {{Title}}

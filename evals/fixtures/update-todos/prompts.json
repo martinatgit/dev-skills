@@ -1,0 +1,60 @@
+{
+  "skill": "update-todos",
+  "purpose": "Canonical trigger prompts. Each positive prompt should activate the update-todos skill on every supported host (Claude Code, Codex CLI baseline). Target trigger rate: >=80%.",
+  "prompts": [
+    {
+      "id": "explicit-capture",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/update-todos capture The error-handling in parseInput() swallows the actual cause; should be wrapped properly."
+    },
+    {
+      "id": "explicit-clarify",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/update-todos clarify TODO-20260423-0007"
+    },
+    {
+      "id": "explicit-review",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/update-todos review"
+    },
+    {
+      "id": "explicit-list",
+      "trigger_expected": true,
+      "category": "explicit-invocation",
+      "input": "/update-todos list --next-step decide"
+    },
+    {
+      "id": "casual-deferred",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "Let's not action this now, but capture it as a TODO so we don't lose it: the validator has no test for the empty-string case."
+    },
+    {
+      "id": "casual-question",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "There's an open question about whether snake_case or camelCase is the convention here. File a TODO for the product owner to decide."
+    },
+    {
+      "id": "convention-violation",
+      "trigger_expected": true,
+      "category": "casual-phrasing",
+      "input": "I noticed our error-message style is inconsistent across modules. Capture this so a future refactor can address it."
+    },
+    {
+      "id": "single-domain-fix",
+      "trigger_expected": false,
+      "category": "negative",
+      "input": "Fix the typo in line 42 of README.md."
+    },
+    {
+      "id": "factual-lookup",
+      "trigger_expected": false,
+      "category": "negative",
+      "input": "What's the syntax for a TypeScript generic constraint?"
+    }
+  ]
+}

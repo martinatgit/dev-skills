@@ -4,8 +4,15 @@
 Use this procedure when reading information from the developer-diary. 
 
 
+## Resolve configuration first
+Before reading any diary nodes, resolve `root_dir` and `feature_routing_file` by running:
+```
+python3 scripts/resolve_config.py --all
+```
+Use the resolved `<root_dir>` for every read below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
+
 ## Structure of the developer-diary
-The developer diary is organised in a hierarchical tree. Each tree node is stored in a markdown file. The root node has a high-level of abstraction while details are deeper in tree as appropriate. The root node is stored in `doc/developer-diary/developer-diary.md`. The tree structure is intentional to selectively and exclusively select the content that is relevant for a task at hand. Only read relevant nodes. Avoid polluting your context and attention with irrelevant nodes. 
+The developer diary is organised in a hierarchical tree. Each tree node is stored in a markdown file. The root node has a high level of abstraction; details are deeper in the tree as appropriate. The root node is stored in `<root_dir>/developer-diary.md`. The tree structure is intentional to selectively and exclusively select the content that is relevant for a task at hand. Only read relevant nodes. Avoid polluting your context and attention with irrelevant nodes.
 
 ## 1. Clarify the task you are preparing for
 
@@ -21,10 +28,10 @@ This task understanding is your relevance filter for selecting diary nodes.
 ## 2. Start at the root
 
 The root node is always:
-`doc/developer-diary/developer-diary.md`
+`<root_dir>/developer-diary.md`
 Always read the root first.
 
-Then read the file `doc/developer-diary/feature-routing.md`
+Then read the configured `feature_routing_file` (default `<root_dir>/feature-routing.md`).
 
 Create an in-memory list named `selected_nodes`. Add the root node to it first.
 

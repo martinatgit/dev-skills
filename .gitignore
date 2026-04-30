@@ -7,10 +7,15 @@ venv/
 
 ## LLMs
 .claude/
+CLAUDE.md
+
 
 # Node
 node_modules/
 .npm/
+
+# Temporary files
+/tmp/
 
 # Editor
 .vscode/

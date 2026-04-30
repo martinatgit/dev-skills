@@ -2,6 +2,10 @@
 
 Read-only. Does not modify files.
 
+## Resolve configuration first
+
+Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>` for every read below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
+
 ## Filters
 
 Accept any combination of:
@@ -20,7 +24,7 @@ Default (no filters): list all TODOs grouped by status folder, sorted by `expire
 
 ## Implementation sketch
 
-1. Glob `doc/TODOs/**/TODO-*.md`.
+1. Glob `<root_dir>/**/TODO-*.md`.
 2. Parse frontmatter of each into a table.
 3. Apply filters.
 4. Render as markdown table to stdout (the user's conversation).
@@ -36,7 +40,7 @@ For `--orphan`, compute inbound links across the whole corpus and show only TODO
 ```
 update-todos list --next-step decide
   → all TODOs needing product-owner decision
-update-todos list --path src/aiqeung-core/layer6/petri.rs
+update-todos list --path src/parser.ts
   → all TODOs touching this file, for context before editing
 update-todos list --expires-within 14
   → upcoming forced-triage deadlines

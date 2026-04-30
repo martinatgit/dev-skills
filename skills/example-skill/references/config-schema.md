@@ -1,38 +1,57 @@
 # Configuration schema
 
-This skill reads configuration from `~/.config/your-skill-name/config.yaml`.
+The skill reads configuration from two scopes:
+
+- **User scope** at `~/.config/example-skill/config.yaml`
+  (or `$XDG_CONFIG_HOME/example-skill/config.yaml`).
+- **Project scope** at `<project_root>/.example-skill/config.yaml`,
+  where `<project_root>` is detected by `scripts/find_project_root.py`.
+
+Both files are mode `0600` on POSIX.
 
 ## Resolution order
 
-Values are resolved in this order, first match wins:
+First match wins:
 
-1. Environment variables prefixed `YOUR_SKILL_NAME_*`
-2. `~/.config/your-skill-name/config.yaml`
-3. `./.your-skill-name/config.yaml` (project-local, optional)
-4. Interactive prompt via `bash scripts/configure.sh`
+1. Environment variable `EXAMPLE_SKILL_<UPPERCASE_KEY>`.
+2. Project-local config (`<project_root>/.example-skill/config.yaml`).
+3. User-level config (`~/.config/example-skill/config.yaml`) — **non-path keys only**. Path-typed keys are project-bound and never resolved from the user layer.
+4. Built-in default.
 
 ## Required keys
 
-| Key | Env var | Type | Description |
-|---|---|---|---|
-| `api_endpoint` | `YOUR_SKILL_NAME_API_ENDPOINT` | string (URL) | Base URL for the upstream API. |
-| `project_id`   | `YOUR_SKILL_NAME_PROJECT_ID`   | string         | Project identifier. |
-
-## Optional keys
-
 | Key | Env var | Type | Default | Description |
 |---|---|---|---|---|
-| `timeout_seconds` | `YOUR_SKILL_NAME_TIMEOUT_SECONDS` | integer | `30` | Request timeout. |
+| `api_endpoint` | `EXAMPLE_SKILL_API_ENDPOINT` | string (URL) | `https://api.example.com` | Base URL for the upstream API. |
+| `project_id`   | `EXAMPLE_SKILL_PROJECT_ID`   | string        | `demo`                    | Project identifier. |
 
-## Example
+example-skill has no path-typed keys. Skills that write user files (e.g.
+`developer-diary`, `update-todos`) include a project-only `root_dir` key.
+
+## Example file
 
 ```yaml
-# ~/.config/your-skill-name/config.yaml
+# ~/.config/example-skill/config.yaml  (or <project_root>/.example-skill/config.yaml)
 api_endpoint: https://api.example.com
 project_id: proj_abc123
-timeout_seconds: 30
 ```
 
-## File permissions
+## CLI
 
-The config file must be `0600` (owner read/write only). `configure.sh` sets this automatically. If permissions are wrong, the skill will refuse to read the file and prompt you to `chmod 600` it.
+```sh
+# User-scope (defaults reused across projects)
+python3 scripts/configure.py
+
+# Project-scope (writes <project_root>/.example-skill/config.yaml)
+python3 scripts/configure.py --scope project
+
+# Non-interactive
+python3 scripts/configure.py --scope project --api-endpoint https://api.example.com --project-id demo
+
+# Print resolved configuration (env + project + user + defaults merged)
+python3 scripts/configure.py --print
+
+# Print just the file path that will be written for the chosen scope
+python3 scripts/configure.py --path
+python3 scripts/configure.py --scope project --path
+```

@@ -9,7 +9,7 @@ priority: {{low | medium | high}}
 effort: {{small | medium | large | unknown}}
 scope: {{project | area | resource}}
 tags: [{{tag1}}, {{tag2}}, ...]
-expires: {{YYYY-MM-DD, default = created + 90 days}}
+expires: {{YYYY-MM-DD, default = created + default_expiry_days (default 90)}}
 very-next-action: {{one imperative sentence — the literal next physical action}}
 references:
   - path: {{relative/file/path}}
@@ -17,7 +17,7 @@ references:
     anchor: {{§4.2.1 or omit}}
     note: {{what's at this reference}}
 related:
-  - {{TODO-id OR doc/developer-diary/.../diary-entry.md OR doc/requirements/.../spec.md#§x.y}}
+  - {{TODO-id OR <root_dir of developer-diary>/.../diary-entry.md OR <project>/requirements.md#§x.y}}
 blocks: [{{TODO-ids that cannot start until this resolves}}]
 blocked-by: [{{TODO-ids that must resolve before this can start}}]
 discovered-in-task: {{preserved verbatim from inbox}}
@@ -41,7 +41,7 @@ diary-node: {{preserved verbatim from inbox, or added at clarify-time}}
 
 ## Problem / opportunity
 
-{{What goes wrong if we do nothing? Where is the asymmetry, gap, or violation? Cite evidence — quote code, quote spec text, show the contradiction. Ground every claim (CLAUDE.md §3).}}
+{{What goes wrong if we do nothing? Where is the asymmetry, gap, or violation? Cite evidence — quote code, quote spec text, show the contradiction. Ground every claim.}}
 
 ## Rationale for deferral
 
@@ -49,7 +49,7 @@ diary-node: {{preserved verbatim from inbox, or added at clarify-time}}
 
 ## Proposed approach(es)
 
-{{Sketch one or more directions. Name alternatives where they exist (CLAUDE.md §8 mandates alternatives for design decisions). This is NOT a plan — a plan belongs to superpowers:writing-plans at action time. This is a trailhead.}}
+{{Sketch one or more directions. Name alternatives where they exist. This is NOT a plan — a plan belongs to a planning skill (e.g. superpowers:writing-plans) at action time. This is a trailhead.}}
 
 ## Acceptance criteria
 
@@ -61,7 +61,7 @@ diary-node: {{preserved verbatim from inbox, or added at clarify-time}}
 
 ## Open questions
 
-{{What genuinely remains undecided? Each question SHOULD have a hypothesised answer or a decision owner (e.g. "Martin to decide").}}
+{{What genuinely remains undecided? Each question SHOULD have a hypothesised answer or a decision owner (e.g. "<owner> to decide").}}
 
 ## Resolution notes
 

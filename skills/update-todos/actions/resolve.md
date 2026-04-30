@@ -2,6 +2,10 @@
 
 Marks a TODO as resolved, wont-fix, or discarded, and migrates it to `archive/`.
 
+## Resolve configuration first
+
+Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>` for every read and write below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
+
 ## Inputs
 
 - TODO id (required).
@@ -30,7 +34,7 @@ Append to the body (do not overwrite earlier sections):
 
 - **Resolved on:** 2026-04-16
 - **Resolution type:** resolved
-- **Resolved in:** commit a1b2c3d / PR #142 / doc/requirements/aiqeung-core/v7.3-spec.md §4.2.1
+- **Resolved in:** commit a1b2c3d / PR #142 / doc/requirements.md §4.2.1
 - **Closure:** <one paragraph — what was actually done, any surprises, any follow-ups>
 - **Follow-ups (if any):** TODO-20260418-0002 (captured during this resolution)
 ```
@@ -46,11 +50,11 @@ For each TODO id in `related[]`:
 
 ## Step 5 — migrate to archive/
 
-Move the file from its current folder to `doc/TODOs/archive/`. Keep filename and id.
+Move the file from its current folder to `<root_dir>/archive/`. Keep filename and id.
 
 ## Step 6 — update the index
 
-Rewrite the row in `doc/TODOs/index.md` with the new status. Do not remove the row — archive TODOs remain visible in the index for retrospectives.
+Rewrite the row in `<root_dir>/index.md` with the new status. Do not remove the row — archive TODOs remain visible in the index for retrospectives.
 
 ## Step 7 — link to diary (optional but recommended)
 
@@ -59,8 +63,8 @@ If the resolution involved meaningful engineering decisions, prompt the user: "T
 ## Step 8 — report
 
 ```
-Resolved TODO-20260410-0003 (spec-update) → doc/TODOs/archive/
-  resolved-in: commit a1b2c3d — "docs(aiqeung-core): document snake_case convention for place names"
+Resolved TODO-20260410-0003 (spec-update) → <root_dir>/archive/
+  resolved-in: commit a1b2c3d — "docs: document snake_case convention"
   unblocked: 1 TODO (TODO-20260411-0005 moved to active/)
   cross-links updated: 2
 ```

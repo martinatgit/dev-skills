@@ -7,6 +7,16 @@
 
 Use this procedure when explicitly asked to create or update a developer diary entry or after meaningful implementation or design work has been completed and the context and memory of executing it is still fresh.
 
+## Resolve configuration first
+
+Before locating any diary file, resolve `root_dir`, `feature_routing_file`, and `node_token_limit` by running:
+
+```
+python3 scripts/resolve_config.py --all
+```
+
+Use the resolved `<root_dir>` and `<feature_routing_file>` for every read and write below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
+
 
 ## 1. Rich context capture
 
@@ -69,16 +79,16 @@ The diary is an engineer's personal notebook — not a status report. Write as i
 - None
 
 ## Notes and commentary
-- Source: src/aiqeung-core/propagator.ts
+- Source: src/core/propagator.ts
 ```
 
 **GOOD entry (rich, enables seamless continuation):**
 ```md
 ## Progress made
-- Implemented PropagatorEngine (981 lines, `src/aiqeung-core/propagator.ts`).
+- Implemented PropagatorEngine (981 lines, `src/core/propagator.ts`).
   Core design follows Schulte/Gecode event-based scheduling but adapted for
   immutable-value semantics (no trailing — snapshot IS the value). Deliberate
-  departure from Gecode's mutable model because aiqeung uses reference-based
+  departure from Gecode's mutable model because the project uses reference-based
   backtracking (see Layer 0 solver).
 - Fixpoint loop schedules propagators by priority (unary > binary > linear >
   quadratic > expensive), fires until no domain changes. Event hierarchy
@@ -100,7 +110,7 @@ The diary is an engineer's personal notebook — not a status report. Write as i
 ## Notes and commentary
 
 ### Decision journal
-- **Immutable vs. mutable engine:** Chose immutable because aiqeung's
+- **Immutable vs. mutable engine:** Chose immutable because the project's
   backtracking is reference-based (restore = reassign pointer). Mutable would
   need undo trail. Tradeoff: slower for large domains (full copy on narrow).
   Acceptable for current scale (<100 vars). Can add mutable-trailing behind
@@ -112,8 +122,8 @@ The diary is an engineer's personal notebook — not a status report. Write as i
 - Spec: `doc/proposed-layer4-5-specification.md` §10B.1
 - References: Schulte "Programming Constraint Services", Triska SWI-CLP(Z),
   Michel MiniCP
-- Created: `src/aiqeung-core/propagator.ts` (981 lines)
-- Tests: `tests/aiqeung-core/propagator.test.ts` (30 tests, all pass)
+- Created: `src/core/propagator.ts` (981 lines)
+- Tests: `tests/core/propagator.test.ts` (30 tests, all pass)
 
 ### Uncertainties and risks
 - `all_different` uses naive O(n²) pairwise `neq`, not Régin (1994). Correct
@@ -160,18 +170,18 @@ If no existing node cleanly owns the concern:
 
 ## 4. Evaluate whether to create a child node
 
-Before writing content into the target node, evaluate whether the work should go into a new child instead of the current node. The goal is proactive decomposition — do not wait for the 4000-token hard limit to split.
+Before writing content into the target node, evaluate whether the work should go into a new child instead of the current node. The goal is proactive decomposition — do not wait for the node_token_limit hard limit to split.
 
 **Create a child node when ANY of these signals apply:**
 
 ### Signal 1 — New source directory
-The work introduced or substantially fills a new source directory (e.g., `src/aiqeung-core/verification/`, `src/aiqeung-core/context/`). A directory boundary in code usually corresponds to a concern boundary in the diary. If the parent node already covers the parent directory, the new sub-directory gets its own child node.
+The work introduced or substantially fills a new source directory (e.g., `src/core/verification/`, `src/core/context/`). A directory boundary in code usually corresponds to a concern boundary in the diary. If the parent node already covers the parent directory, the new sub-directory gets its own child node.
 
 ### Signal 2 — Multiple distinct API surfaces
 The update would record 3 or more independently usable public API surfaces (e.g., `PropagatorEngine`, `TheoryRegistry`, `kInduction`) within a single node. Each distinct API surface that could be described, tested, and maintained independently likely deserves its own node.
 
 ### Signal 3 — Approaching size limit
-The node is estimated above 60% of the 4000-token guideline AND the content covers 2+ separable sub-topics. Do not wait for the hard limit. Split proactively — surgical splitting of an oversized node is harder than creating children early.
+The node is estimated above 60% of the node_token_limit guideline AND the content covers 2+ separable sub-topics. Do not wait for the hard limit. Split proactively — surgical splitting of an oversized node is harder than creating children early.
 
 ### Signal 4 — Dedicated spec or design section
 A specification document, requirements document, or design document has a dedicated subsection for this concern (e.g., a spec with §10B.1 through §10B.4 maps to 4 potential child nodes). The diary hierarchy should mirror the spec hierarchy where the spec captures real architectural decomposition.
@@ -316,7 +326,7 @@ Also ensure:
 
 **Cross-reference rule:** If the work involved nodes outside the current branch (e.g., Layer 0 changes made while implementing Layer 4), add a row to `Relevant related diary nodes` in both the current node and the referenced node, with a one-sentence description of the relationship. This ensures developers can discover cross-cutting dependencies by reading either node.
 
-**Feature routing:** If the update introduces a new architecturally identifiable feature, renames an existing one, or changes its diary node location, update `doc/developer-diary/feature-routing.md` accordingly. For bulk updates, defer to the next `/developer-diary review` cycle which regenerates the full table.
+**Feature routing:** If the update introduces a new architecturally identifiable feature, renames an existing one, or changes its diary node location, update `<feature_routing_file>` accordingly. For bulk updates, defer to the next `/developer-diary review` cycle which regenerates the full table.
 
 
 ## 8. Creating a new child node
@@ -401,9 +411,9 @@ Use this exact template:
 
 ## 9. Size-limit enforcement
 
-Estimate whether the updated node exceeds the 4000-token guideline.
+Estimate whether the updated node exceeds the node_token_limit guideline.
 
-**Important:** The 4000-token limit exists to prevent context pollution during reading, NOT to encourage brevity. A 3900-token entry that is 80% rich narrative is far more valuable than a 1500-token entry that is 100% dry bullet points. When you need to trim for size, remove structural overhead and repetition first — never sacrifice decision context, reasoning traces, or uncertainty documentation.
+**Important:** The node_token_limit limit exists to prevent context pollution during reading, NOT to encourage brevity. A 3900-token entry that is 80% rich narrative is far more valuable than a 1500-token entry that is 100% dry bullet points. When you need to trim for size, remove structural overhead and repetition first — never sacrifice decision context, reasoning traces, or uncertainty documentation.
 
 If yes:
 - split the node into child concerns:

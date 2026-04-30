@@ -13,7 +13,10 @@
       "source": ".",
       "description": "A collection of useful skills to incorporate LLMs and agentic AI into the development workflow.",
       "skills": [
-        "./skills/example-skill"
+        "./skills/example-skill",
+        "./skills/developer-diary",
+        "./skills/reason-through",
+        "./skills/update-todos"
       ]
     }
   ]
