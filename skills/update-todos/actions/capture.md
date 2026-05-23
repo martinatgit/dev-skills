@@ -4,7 +4,7 @@ Low-friction entry point. This is the default mode when a deferred concern arise
 
 ## Resolve configuration first
 
-Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>`, `<inbox_wip_limit>`, and `<active_wip_limit>` for every read and write below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
+Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>`, `<health_tier_healthy_max>`, `<health_tier_guidance_max>`, and `<health_tier_strong_threshold>` for every read and write below. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
 
 ## Iron rules
 
