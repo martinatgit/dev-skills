@@ -17,6 +17,7 @@ update-todos maintenance --filter stale:N                 # days since last-chec
 update-todos maintenance --filter legacy                  # only legacy-backfill: true TODOs
 update-todos maintenance --filter bucket:active|blocked|deferred
 update-todos maintenance --filter tag:<name>
+update-todos maintenance --include-rejected               # surface backfill-rejected TODOs (excluded by default)
 update-todos maintenance --dry-run [...any of the above]  # preview, no writes
 ```
 
@@ -37,6 +38,8 @@ Score each open TODO in `active/`, `blocked/`, `deferred/` (not archive, not inb
 | `maintenance-suggested` frontmatter field set (deferred from auto-trigger) | 3 |
 
 `legacy-backfill: true` does NOT bias the ranking (provenance only). To surface legacy items deliberately, use `--filter legacy`.
+
+**Backfill-rejected TODOs are excluded by default.** A TODO carrying `legacy-backfill-rejected-at: <YYYY-MM-DD>` (top-level frontmatter, written when the user rejects a legacy backfill prompt — see [Legacy backfill rejection](#legacy-backfill-rejection) below) is dropped from the candidate set entirely, regardless of other signals. Pass `--include-rejected` to surface them again (typically when the user is ready to revisit).
 
 Ties broken by oldest `last-checked`.
 
@@ -98,7 +101,7 @@ TODO-20260415-0003 "Fix snake_case violation in token emitter"
 ```
 
 - `y` — apply proposed changes; append `maintenance-history` entry; move to next TODO if batch.
-- `n` — do not write proposed changes; DO append a `maintenance-history` entry recording the rejection (so the next pass does not silently re-propose without a record).
+- `n` — do not write proposed changes; DO append a `maintenance-history` entry recording the rejection (so the next pass does not silently re-propose without a record). **If the TODO is a legacy item** (no excerpts, missing snapshot fields — see [Legacy backfill rejection](#legacy-backfill-rejection)), also write `legacy-backfill-rejected-at: <today>` to the TODO's top-level frontmatter so default-mode maintenance excludes the item entirely on future runs.
 - `different-verdict` — user picks one of the other four; agent recomputes proposed changes for that verdict and re-prompts.
 - `dry` — show the would-be diff for the file without writing; re-prompt.
 - `abort` — stop the entire run (batch terminates).
@@ -144,6 +147,28 @@ This is intentional: rejection IS a lifecycle event worth logging. It is the onl
 ## On dry-run
 
 `--dry-run` suppresses ALL writes — including the rejection record above. Output is the same Phase 3 prompt framed as "would do" without soliciting a keystroke. Useful for batch previews. Differs from `n` in that no rejection trace remains.
+
+## Legacy backfill rejection
+
+A "legacy" TODO is one missing the snapshot fields the maintenance machinery needs (no `excerpts`, no `clarified-at-sha`, no `last-checked` on its references). The first time `maintenance` opens such a TODO, it offers to **backfill the baseline** from current file state — see the Phase 3 prompt for backfill. If the user accepts (`y`), the TODO gains synthetic excerpts and `legacy-backfill: true`, and subsequent passes treat it normally.
+
+If the user **rejects** the backfill (`n`), the prompt would otherwise re-fire on every future maintenance run for that TODO, since nothing about its state has changed. To avoid this loop:
+
+1. Write `legacy-backfill-rejected-at: <today>` to the TODO's top-level frontmatter (alongside `discovered-in-task`, `discovered-by`, etc.).
+2. Append the standard rejection entry to `maintenance-history` (`approved-by: user-rejected`, `verdict: still-valid (legacy-backfill)`).
+3. Default-mode `maintenance` and `list --maintenance-candidates` then **exclude this TODO from the candidate set entirely.** The exclusion is a hard skip, not a low rank — backfill-rejected TODOs do not bubble up under any default ranking.
+
+To revisit a rejected TODO later, the user runs `maintenance --include-rejected` (re-prompts for backfill) or `maintenance <id> --include-rejected` (re-prompts for a specific id).
+
+To **permanently clear** the rejection (the user has decided to backfill after all), accepting the backfill prompt on the next `--include-rejected` pass auto-removes the `legacy-backfill-rejected-at` field as part of the Phase 4 frontmatter write. There is no manual `--clear-rejection` flag.
+
+### Why hard skip rather than ranking penalty
+
+A ranking penalty would still surface the TODO eventually (once nothing else ranks higher), re-firing the prompt. The user already said no. Hard skip honors that decision until the user explicitly opts back in via `--include-rejected`.
+
+### Why a separate field rather than reusing maintenance-history
+
+The history array grows append-only; checking it for a rejection requires scanning every entry. A top-level field makes the candidate-ranking step O(1) per TODO and keeps the exclusion rule one line: `if 'legacy-backfill-rejected-at' in frontmatter and not args.include_rejected: skip`.
 
 ## End-of-run report
 

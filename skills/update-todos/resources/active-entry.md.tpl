@@ -34,6 +34,7 @@ discovered-by: {{preserved verbatim from inbox}}
 diary-node: {{preserved verbatim from inbox, or added at clarify-time}}
 maintenance-history: []   # appended by `update-todos maintenance` on every approved pass
 legacy-backfill: false    # set to true by maintenance if the first baseline was synthetic
+# legacy-backfill-rejected-at: {{YYYY-MM-DD}}  # uncomment if user rejected legacy backfill; excludes from default maintenance
 ---
 
 # {{Title}}
