@@ -1,6 +1,6 @@
 ---
 name: update-todos
-description: Captures every deferred decision, design inconsistency, convention violation, missing test, open question, unresolved ambiguity, or other action item that emerges during design or implementation work — atomically, with full rehydratable context so a future engineer can act on it without archaeology. Use whenever the user (or you) say "let's not action this now", "capture as a TODO", "file this for later", "we should look at this", "open question for the product owner", or notice a concern that derails the current task. Use this even if phrased casually like "remind me later" or "we'll come back to this". Always project-local: TODOs from one project never bleed into another, even when the skill itself is installed user-scope. Invoke with `capture`, `clarify`, `list`, `resolve`, `review`, or `import`. Do not use for ephemeral session memory or for narrative/decision history — use `developer-diary` for the latter.
+description: Captures every deferred decision, design inconsistency, convention violation, missing test, open question, unresolved ambiguity, or other action item that emerges during design or implementation work — atomically, with full rehydratable context so a future engineer can act on it without archaeology. Use whenever the user (or you) say "let's not action this now", "capture as a TODO", "file this for later", "we should look at this", "open question for the product owner", or notice a concern that derails the current task. Use this even if phrased casually like "remind me later" or "we'll come back to this". Always project-local: TODOs from one project never bleed into another, even when the skill itself is installed user-scope. Invoke with `capture`, `clarify`, `list`, `resolve`, `review`, `maintenance`, `health`, or `import`. Do not use for ephemeral session memory or for narrative/decision history — use `developer-diary` for the latter.
 ---
 
 # update-todos
@@ -32,7 +32,7 @@ Resolution order (first match wins):
 
 1. Environment variable `UPDATE_TODOS_<UPPERCASE_KEY>` (e.g. `UPDATE_TODOS_ROOT_DIR`).
 2. **Project-local** config at `<project_root>/.update-todos/config.yaml`.
-3. **User-level** config at `~/.config/update-todos/config.yaml` — applies to non-path keys only (`inbox_wip_limit`, `active_wip_limit`, `default_expiry_days`). The `root_dir` is project-bound and is **never** read from this layer.
+3. **User-level** config at `~/.config/update-todos/config.yaml` — applies to non-path keys only (`health_tier_healthy_max`, `health_tier_guidance_max`, `health_tier_strong_threshold`, `default_expiry_days`, `auto_maintenance_on_resolve`). The `root_dir` is project-bound and is **never** read from this layer.
 4. Built-in default (for non-path keys only).
 
 The `root_dir` key is project-only by design. If a user installs `update-todos` in their home directory and invokes it across many repositories, each project keeps its own TODO tree. There is no fallback to a user-home location — that would mix one project's TODOs into another.
@@ -47,7 +47,7 @@ python3 scripts/configure.py --scope project
 python3 scripts/configure.py --scope project --root-dir doc/TODOs
 
 # User defaults for non-path keys (applies across projects)
-python3 scripts/configure.py --scope user --inbox-wip-limit 25
+python3 scripts/configure.py --scope user --health-tier-guidance-max 50
 
 # Inspect resolution
 python3 scripts/configure.py --print
@@ -68,7 +68,7 @@ See [`references/config-schema.md`](references/config-schema.md) for the full sc
 
 Every invocation begins with:
 
-**Step 0 — Resolve configuration.** Run `python3 scripts/resolve_config.py --all` and parse the `key=value` lines. Use the resolved `<root_dir>`, `<inbox_wip_limit>`, `<active_wip_limit>`, and `<default_expiry_days>` for every read and write below. If `root_dir` is empty, run the first-use flow above before continuing.
+**Step 0 — Resolve configuration.** Run `python3 scripts/resolve_config.py --all` and parse the `key=value` lines. Use the resolved `<root_dir>`, the three `health_tier_*` keys, `<default_expiry_days>`, and `<auto_maintenance_on_resolve>` for every read and write below. If `root_dir` is empty, run the first-use flow above before continuing.
 
 After Step 0, follow the action file matching the requested mode (paths relative to this SKILL.md):
 
@@ -134,6 +134,8 @@ Enforced bidirectional contract:
 
 If you are about to write an "Open question" in a diary entry, invoke this skill in `capture` mode instead and link the resulting TODO from the diary. Narrative stays narrative; action items migrate out.
 
+Maintenance is for keeping TODOs actionable, not for recording history — that is still `developer-diary`'s job. The `maintenance-history:` frontmatter array on a TODO is a structured per-event log scoped to that one TODO; it is not a substitute for the diary's subsystem-level narrative.
+
 ## Capture trigger (when to invoke without being asked)
 
 Invoke `capture` proactively whenever, mid-task, you observe any of:
@@ -155,14 +157,15 @@ Do NOT invoke `capture` for concerns that belong in:
 - **Anything that takes <2 minutes to fix** — just fix it. The 2-minute rule (Allen 2015) applies.
 - **Anything that fits as an inline `// TODO` comment** — one-line, one-file, teammate can action in <30 minutes, context obvious from surrounding code. External capture is reserved for concerns that span files, specs, layers, or decisions.
 
-## WIP limits (prevent corpus rot)
+## Corpus health (soft tiered guidance)
 
-Kanban-style work-in-progress limits keep the system healthy. Defaults are configurable via the `inbox_wip_limit` and `active_wip_limit` keys:
+Three per-bucket tier thresholds replace the prior hard WIP limits. Capture never refuses. Thresholds resolve from configuration:
 
-- `<root_dir>/inbox/` ≤ `<inbox_wip_limit>` (default `20`).
-- `<root_dir>/active/` ≤ `<active_wip_limit>` (default `15`).
+- `<root_dir>/inbox/` (and other buckets) ≤ `<health_tier_healthy_max>` (default `20`) → `healthy` (silent).
+- Above `<health_tier_healthy_max>` and ≤ `<health_tier_guidance_max>` (default `60`) → `guidance` (advisory commentary on every capture and in `health`).
+- Above `<health_tier_strong_threshold>` (default `60`) → `strong` (loud commentary, still no block).
 
-If either limit is exceeded, `capture` refuses and tells the user to run `clarify` and `review` first. Capture is cheap only when downstream drains.
+Run `update-todos health` for the on-demand metadata-only report. The deprecation map for the old `inbox_wip_limit` / `active_wip_limit` keys is documented in [`references/config-schema.md`](references/config-schema.md).
 
 ## Dedup, clarify, and review discipline
 
