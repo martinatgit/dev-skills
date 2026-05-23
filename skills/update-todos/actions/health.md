@@ -29,7 +29,7 @@ Report layout:
 ```markdown
 # update-todos health
 
-Generated: {{ISO timestamp}}
+Generated: <ISO timestamp>
 
 ## Per-bucket
 
