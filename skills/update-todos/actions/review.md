@@ -37,13 +37,11 @@ Load all TODO frontmatter across all folders.
 
 Compute:
 - `expired` — `expires < today` and `status ∉ {resolved, wont-fix, discarded}`.
-- `expiring-soon` — `expires` within 7 days.
-- `stale` — `updated` older than 30 days and status is not resolved/wont-fix/discarded.
-- `orphan` — no inbound or outbound `related` links (across open/blocked/deferred).
 - `dead-blockers` — TODOs in `blocked/` whose `blocked-by[]` are all resolved. Offer to move to `active/`.
-- `inbox-overflow` — `inbox/` has >5 items. Prompt user to run `clarify` on each.
 - `invalid-next-step` — any TODO whose `next-step` is not in the 9-value vocabulary.
 - `bidirectional-link-violations` — TODOs referencing diary nodes that do not reference them back, and vice versa (scan the project's diary tree for `related-todos` frontmatter).
+
+Drift signals (`stale`, `orphan`, `expiring-soon`, `inbox-overflow`) no longer live here. They have moved to `update-todos health` (metadata-only summary) and `update-todos maintenance` (content-level drift). See [`health.md`](health.md) and [`maintenance.md`](maintenance.md).
 
 ## Phase 2 — forced triage
 
@@ -51,7 +49,7 @@ Walk `expired` list. For each, prompt and update per user's decision. Halt on no
 
 ## Phase 3 — advisory prompts
 
-Walk `expiring-soon`, `stale`, `orphan`, `dead-blockers`, `inbox-overflow`, `invalid-next-step`, `bidirectional-link-violations` lists. For each, show the TODO and a suggested action. The user may address them now or defer until next review.
+Walk `dead-blockers`, `invalid-next-step`, `bidirectional-link-violations` lists. For each, show the TODO and a suggested action. The user may address them now or defer until next review.
 
 Dead-blocker cascade: if the user accepts moving blocked→active, update the file and rerun Phase 1 (new dead-blockers may emerge from the unblock).
 
@@ -115,10 +113,16 @@ Sort each section by `expires` ascending, then `priority` descending.
 Review complete:
   expired triaged: 2 (1 extended, 1 resolved)
   dead-blockers unblocked: 1
-  orphans: 1 (TODO-20260301-0002 — user chose to defer)
-  stale flagged: 4 (not actioned)
+  invalid next-step: 0
+  bidirectional link violations: 0
   index regenerated: 20 open TODOs
+
+Corpus health (see `update-todos health` for detail):
+  inbox 12 (healthy), active 18 (healthy), blocked 3 (healthy), deferred 7 (healthy)
+  Maintenance candidates: 4 (run `update-todos list --maintenance-candidates`)
 ```
+
+Drift signals (stale, orphan, expiring-soon) are surfaced by `update-todos health` and `update-todos maintenance`. `review` covers only the bureaucratic guarantees: forced triage of expired items, dead-blocker detection, invalid `next-step` values, and bidirectional diary-link integrity.
 
 ## Red flags
 
