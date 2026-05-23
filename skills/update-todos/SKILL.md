@@ -12,7 +12,7 @@ The skill is project-local by design: when invoked inside a project, it writes o
 ## Inputs
 
 ```
-/update-todos [capture | clarify | list | resolve | review | import]
+/update-todos [capture | clarify | list | resolve | review | maintenance | health | import]
 ```
 
 - `capture` — low-friction write of a new TODO into `<root_dir>/inbox/`. Runs deduplication BEFORE writing. Default mode when an observation arises mid-task and should not derail flow.
@@ -20,6 +20,8 @@ The skill is project-local by design: when invoked inside a project, it writes o
 - `list` — filtered read-only view (next-step, tag, scope, status, priority, staleness, file overlap, orphan, dead-blocker).
 - `resolve` — move a TODO to `<root_dir>/archive/` with Resolution notes; update cross-links on related TODOs.
 - `review` — forced triage of expired items, orphan detection, dead-blocker detection, index regeneration.
+- `maintenance` — deep, one-TODO-at-a-time content verification against the cited files. See [`actions/maintenance.md`](actions/maintenance.md).
+- `health` — cheap metadata-only corpus health report. See [`actions/health.md`](actions/health.md).
 - `import --from <path>` — one-shot migration of a flat markdown bullet list into atomic files.
 
 If no mode is supplied or unrecognised, ask the user which mode to use.
@@ -70,12 +72,14 @@ Every invocation begins with:
 
 After Step 0, follow the action file matching the requested mode (paths relative to this SKILL.md):
 
-- `capture`  → [`actions/capture.md`](actions/capture.md)
-- `clarify`  → [`actions/clarify.md`](actions/clarify.md)
-- `list`     → [`actions/list.md`](actions/list.md)
-- `resolve`  → [`actions/resolve.md`](actions/resolve.md)
-- `review`   → [`actions/review.md`](actions/review.md)
-- `import`   → [`actions/import.md`](actions/import.md)
+- `capture`     → [`actions/capture.md`](actions/capture.md)
+- `clarify`     → [`actions/clarify.md`](actions/clarify.md)
+- `list`        → [`actions/list.md`](actions/list.md)
+- `resolve`     → [`actions/resolve.md`](actions/resolve.md)
+- `review`      → [`actions/review.md`](actions/review.md)
+- `maintenance` → [`actions/maintenance.md`](actions/maintenance.md)
+- `health`      → [`actions/health.md`](actions/health.md)
+- `import`      → [`actions/import.md`](actions/import.md)
 
 ## Folder layout
 
