@@ -16,6 +16,7 @@ references:
     lines: {{start-end or omit}}
     anchor: {{§4.2.1 or omit}}
     note: {{what's at this reference}}
+    kind: {{code | spec | diary — defaults to code; omit if code}}
     captured-at-sha: {{preserved verbatim from inbox, or null}}
     captured-at: {{preserved verbatim from inbox}}
     clarified-at-sha: {{git short SHA at clarify, or null}}
@@ -23,7 +24,7 @@ references:
     excerpts:
       - lines: {{start-end, auto-derived from the reference's lines}}
         text: |
-          {{verbatim file content at clarify time}}
+          {{verbatim file content at clarify time — omitted entirely for kind: diary}}
 related:
   - {{TODO-id OR <root_dir of developer-diary>/.../diary-entry.md OR <project>/requirements.md#§x.y}}
 blocks: [{{TODO-ids that cannot start until this resolves}}]

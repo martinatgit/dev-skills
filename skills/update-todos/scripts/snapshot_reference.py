@@ -121,6 +121,11 @@ def main() -> int:
                         "and --lines is omitted, the excerpt is auto-derived from "
                         "the matching markdown heading through the next same-or-"
                         "higher-level heading (capped at the 50-line hard limit).")
+    p.add_argument("--kind", choices=["code", "spec", "diary"], default="code",
+                   help="Reference kind. 'diary' suppresses excerpt extraction in "
+                        "heavy mode (diary nodes are append-only; drift detection "
+                        "against them is meaningless). 'spec' and 'code' both "
+                        "produce excerpts.")
     args = p.parse_args()
 
     path = Path(args.path)
@@ -135,6 +140,20 @@ def main() -> int:
 
     if args.lines is None and not args.anchor:
         out = f"{sha_line}\ncaptured-at: {today}\n{unavailable_line}"
+        sys.stdout.write(out)
+        return 0
+
+    if args.kind == "diary":
+        # Diary nodes are append-only by contract. Heavy mode for a diary
+        # reference records the SHA only; no excerpt is extracted (drift
+        # detection against append-only files is meaningless).
+        out = (
+            f"clarified-at-sha: {sha or 'null'}\n"
+            f"clarified-at: {today}\n"
+            f"kind: diary\n"
+        )
+        if not sha:
+            out += "git-unavailable: true\n"
         sys.stdout.write(out)
         return 0
 

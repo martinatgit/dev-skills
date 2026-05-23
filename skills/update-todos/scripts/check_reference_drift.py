@@ -197,6 +197,13 @@ def check_reference(ref: dict, todo_dir: Path) -> dict:
     file_path = (todo_dir / path_str).resolve() if not Path(path_str).is_absolute() else Path(path_str)
     out: dict = {"path": path_str}
 
+    if ref.get("kind") == "diary":
+        # Diary-node references are append-only by contract. Drift detection
+        # is meaningless; we only verify existence.
+        out["kind"] = "diary"
+        out["finding"] = "unchanged" if file_path.exists() else "missing-file"
+        return out
+
     if not file_path.exists():
         out["finding"] = "missing-file"
         return out

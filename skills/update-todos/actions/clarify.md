@@ -84,7 +84,7 @@ This is advisory, not blocking. Continue with the clarify pass.
 
 **Spec-section references** (anchor like `§4.2.1`): the helper auto-derives the heading + first paragraph (up to 50 lines, whichever is smaller). No additional handling required.
 
-**Diary-node references**: the helper records `clarified-at-sha` only. No excerpt is captured (diary nodes are append-only by contract; drift detection is meaningless).
+**Diary-node references**: invoke the helper with `--kind diary` (e.g. `snapshot_reference.py <path> --lines <lines> --kind diary`). The helper records `clarified-at-sha` and `kind: diary` only — no excerpt is captured (diary nodes are append-only by contract; drift detection against them is meaningless). Detection rule: a reference is a diary node when its `path` resolves to a file under the project's developer-diary tree (typically `doc/diary/` or whatever the developer-diary skill is configured with). If unsure, ask the user before tagging `kind: diary`.
 
 ## Step 5 — move the file
 

@@ -102,6 +102,24 @@ class SnapshotReferenceTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not found", result.stderr.lower())
 
+    def test_kind_diary_suppresses_excerpt(self):
+        """--kind diary in heavy mode emits SHA + kind: diary, no excerpts block."""
+        result = run(str(FIXTURES / "sample.txt"), "--lines", "3-5", "--kind", "diary")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        out = result.stdout
+        self.assertIn("clarified-at-sha:", out)
+        self.assertIn("kind: diary", out)
+        self.assertNotIn("excerpts:", out)
+        self.assertNotIn("line three", out)
+
+    def test_kind_code_emits_excerpt(self):
+        """--kind code (default) still produces an excerpt block."""
+        result = run(str(FIXTURES / "sample.txt"), "--lines", "3-5", "--kind", "code")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("excerpts:", result.stdout)
+        self.assertIn("line 3", result.stdout)
+        self.assertIn("line 5", result.stdout)
+
     def test_anchor_caps_at_50_lines(self):
         """Anchor section longer than 50 lines is capped, not refused."""
         import tempfile

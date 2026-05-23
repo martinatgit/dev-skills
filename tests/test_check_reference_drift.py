@@ -125,6 +125,52 @@ class DriftCheckTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("finding: unchanged", result.stdout)
 
+    def test_diary_reference_existence_only(self):
+        """A reference with kind: diary checks existence only; no excerpt match."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            (tdp / "subsystem.md").write_text(
+                "# Diary node\n\nFirst entry.\nSecond entry.\n",
+                encoding="utf-8",
+            )
+            todo_text = (
+                "---\n"
+                "id: TODO-20260101-0001\n"
+                "references:\n"
+                "  - path: subsystem.md\n"
+                "    kind: diary\n"
+                "    clarified-at-sha: null\n"
+                "---\n\n# Test TODO\n"
+            )
+            todo = tdp / "TODO-test.md"
+            todo.write_text(todo_text, encoding="utf-8")
+            result = run(todo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("kind: diary", result.stdout)
+            self.assertIn("finding: unchanged", result.stdout)
+            self.assertNotIn("similarity", result.stdout)
+            self.assertNotIn("new-lines", result.stdout)
+
+    def test_diary_reference_missing(self):
+        """A missing diary reference reports missing-file with kind preserved."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            todo_text = (
+                "---\n"
+                "id: TODO-20260101-0001\n"
+                "references:\n"
+                "  - path: gone.md\n"
+                "    kind: diary\n"
+                "    clarified-at-sha: null\n"
+                "---\n\n# Test TODO\n"
+            )
+            todo = tdp / "TODO-test.md"
+            todo.write_text(todo_text, encoding="utf-8")
+            result = run(todo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("kind: diary", result.stdout)
+            self.assertIn("finding: missing-file", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
