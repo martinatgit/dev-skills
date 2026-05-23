@@ -69,6 +69,53 @@ class SnapshotReferenceTests(unittest.TestCase):
             self.assertIn("captured-at-sha: null", result.stdout)
             self.assertIn("git-unavailable: true", result.stdout)
 
+    def test_anchor_extracts_section(self):
+        """--anchor finds the matching heading and extracts through next same-level heading."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            spec = Path(td) / "spec.md"
+            spec.write_text(
+                "# Top\n\n"
+                "## §4.2.1 Naming\n\n"
+                "Use snake_case for identifiers.\n"
+                "Examples: foo_bar, baz_qux.\n\n"
+                "## §4.2.2 Layout\n\n"
+                "Two-space indent.\n",
+                encoding="utf-8",
+            )
+            result = run(str(spec), "--anchor", "§4.2.1")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            out = result.stdout
+            self.assertIn("§4.2.1 Naming", out)
+            self.assertIn("snake_case", out)
+            self.assertIn("foo_bar", out)
+            self.assertNotIn("§4.2.2", out)
+            self.assertNotIn("Two-space indent", out)
+
+    def test_anchor_not_found(self):
+        """Missing anchor exits nonzero with a clear error."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            spec = Path(td) / "spec.md"
+            spec.write_text("# Top\n\n## §4.2.1 Naming\n\nBody.\n", encoding="utf-8")
+            result = run(str(spec), "--anchor", "§9.9.9")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("not found", result.stderr.lower())
+
+    def test_anchor_caps_at_50_lines(self):
+        """Anchor section longer than 50 lines is capped, not refused."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            spec = Path(td) / "spec.md"
+            body = "\n".join(f"line {i}" for i in range(1, 80))
+            spec.write_text(f"## §big\n\n{body}\n", encoding="utf-8")
+            result = run(str(spec), "--anchor", "§big")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("§big", result.stdout)
+            self.assertIn("line 1\n", result.stdout)
+            # 50-line cap excludes the very tail of the file
+            self.assertNotIn("line 79", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

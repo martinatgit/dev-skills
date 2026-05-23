@@ -69,6 +69,44 @@ def read_excerpt(path: Path, start: int, end: int) -> list[str]:
     return all_lines[start - 1:end]
 
 
+def heading_level(line: str) -> int:
+    """Return 1 for '# x', 2 for '## x', etc. 0 if not a markdown heading."""
+    s = line.lstrip()
+    if not s.startswith("#"):
+        return 0
+    count = 0
+    for ch in s:
+        if ch == "#":
+            count += 1
+        else:
+            break
+    if count == 0 or count > 6:
+        return 0
+    if len(s) > count and s[count] != " ":
+        return 0
+    return count
+
+
+def find_anchor_section(path: Path, anchor: str) -> tuple[int, int] | None:
+    """Find a markdown heading containing the anchor substring (case-sensitive).
+    Return (start_line, end_line) 1-indexed inclusive. End is the line BEFORE
+    the next heading of same-or-higher level, OR start + EXCERPT_HARD_LIMIT - 1,
+    whichever comes first. None if no matching heading found."""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    all_lines = text.splitlines()
+    for i, ln in enumerate(all_lines):
+        lvl = heading_level(ln)
+        if lvl and anchor in ln:
+            start = i + 1
+            max_end = min(start + EXCERPT_HARD_LIMIT - 1, len(all_lines))
+            for j in range(i + 1, len(all_lines)):
+                jl = heading_level(all_lines[j])
+                if jl and jl <= lvl:
+                    return (start, min(j, max_end))
+            return (start, max_end)
+    return None
+
+
 def emit_yaml_block(lines: list[str], indent: str = "    ") -> str:
     body = "\n".join(f"{indent}  {ln}" for ln in lines) if lines else ""
     return f"{indent}text: |\n{body}\n" if lines else f"{indent}text: |\n"
@@ -78,7 +116,11 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("path", help="File path (absolute, or relative to cwd)")
     p.add_argument("--lines", help="Line range as N or N-M (heavy mode)")
-    p.add_argument("--anchor", help="Optional spec anchor (informational only)")
+    p.add_argument("--anchor",
+                   help="Spec anchor (e.g. '§4.2.1'). When provided in heavy mode "
+                        "and --lines is omitted, the excerpt is auto-derived from "
+                        "the matching markdown heading through the next same-or-"
+                        "higher-level heading (capped at the 50-line hard limit).")
     args = p.parse_args()
 
     path = Path(args.path)
@@ -91,16 +133,29 @@ def main() -> int:
     sha_line = f"captured-at-sha: {sha or 'null'}"
     unavailable_line = "" if sha else "git-unavailable: true\n"
 
-    if args.lines is None:
+    if args.lines is None and not args.anchor:
         out = f"{sha_line}\ncaptured-at: {today}\n{unavailable_line}"
         sys.stdout.write(out)
         return 0
 
-    try:
-        start, end = parse_lines(args.lines)
-    except ValueError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
+    if args.lines is None and args.anchor:
+        # Anchor-only heavy mode: derive line range from the matching heading.
+        if is_binary(path):
+            print(f"error: anchor extraction not supported on binary file: {path}",
+                  file=sys.stderr)
+            return 2
+        match = find_anchor_section(path, args.anchor)
+        if match is None:
+            print(f"error: anchor {args.anchor!r} not found in {path}",
+                  file=sys.stderr)
+            return 2
+        start, end = match
+    else:
+        try:
+            start, end = parse_lines(args.lines)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
 
     span = end - start + 1
     if span > EXCERPT_HARD_LIMIT:
