@@ -19,6 +19,7 @@ Accept any combination of:
 - `--path <file-path>` — TODOs whose `references[]` include this path
 - `--orphan` — TODOs with no inbound or outbound `related` links
 - `--blocked-by-resolved` — TODOs in `blocked/` whose `blocked-by` all resolved
+- `--maintenance-candidates` — print the top 20 candidate TODOs for `maintenance`, ranked per the candidate-ranking signals in [`maintenance.md`](maintenance.md). Output includes the per-TODO score breakdown so the user can see why each ranks where it does. Compatible with `--filter legacy` to scope to legacy-backfill TODOs.
 
 Default (no filters): list all TODOs grouped by status folder, sorted by `expires` ascending.
 
@@ -46,6 +47,10 @@ update-todos list --expires-within 14
   → upcoming forced-triage deadlines
 update-todos list --orphan
   → Zettelkasten health check
+update-todos list --maintenance-candidates
+  → top-20 drift candidates with score breakdown
+update-todos list --maintenance-candidates --filter legacy
+  → drift candidates scoped to legacy-backfill TODOs only
 ```
 
 ## Output format

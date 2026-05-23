@@ -18,8 +18,10 @@ See `README.md` in this folder for conventions and the boundary with `developer-
 
 ## Active
 
-| ID | Next-step | Priority | Scope | Expires | Very-next-action |
-|---|---|---|---|---|---|
+> `Last-checked` column annotates age: blank=fresh, `(30d)`=stale, `(60d+)`=drift candidate. `Drift` column shows `?` when `maintenance-suggested` is set (auto-trigger fired but user deferred); empty otherwise.
+
+| ID | Next-step | Priority | Scope | Expires | Last-checked | Drift | Very-next-action |
+|---|---|---|---|---|---|---|---|
 
 ## Blocked
 
