@@ -10,6 +10,10 @@ venv/
 CLAUDE.md
 
 
+# Agent files
+/docs/designs
+/docs/plans
+
 # Node
 node_modules/
 .npm/
