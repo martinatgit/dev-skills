@@ -9,6 +9,8 @@ references:
     lines: {{start-end or omit}}
     anchor: {{§4.2.1 or omit}}
     note: {{what's at this reference}}
+    captured-at-sha: {{git short SHA at capture, or null}}
+    captured-at: {{YYYY-MM-DD}}
 discovered-in-task: {{one-line description of the task in flight when this emerged}}
 discovered-by: {{claude | <human-name> | imported}}
 diary-node: {{<root_dir of developer-diary>/.../diary-entry.md or omit}}
@@ -23,3 +25,5 @@ diary-node: {{<root_dir of developer-diary>/.../diary-entry.md or omit}}
 ## Raw observation
 
 {{One-paragraph description of the concern as first observed. Do not polish. Do not synthesise. This is the moment of discovery captured faithfully.}}
+
+> Inbox-phase TODO; references not yet pinned. Run clarify to snapshot.
