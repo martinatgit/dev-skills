@@ -16,6 +16,14 @@ references:
     lines: {{start-end or omit}}
     anchor: {{§4.2.1 or omit}}
     note: {{what's at this reference}}
+    captured-at-sha: {{preserved verbatim from inbox, or null}}
+    captured-at: {{preserved verbatim from inbox}}
+    clarified-at-sha: {{git short SHA at clarify, or null}}
+    last-checked: {{YYYY-MM-DD; equals clarified-at on first write}}
+    excerpts:
+      - lines: {{start-end, auto-derived from the reference's lines}}
+        text: |
+          {{verbatim file content at clarify time}}
 related:
   - {{TODO-id OR <root_dir of developer-diary>/.../diary-entry.md OR <project>/requirements.md#§x.y}}
 blocks: [{{TODO-ids that cannot start until this resolves}}]
@@ -23,6 +31,8 @@ blocked-by: [{{TODO-ids that must resolve before this can start}}]
 discovered-in-task: {{preserved verbatim from inbox}}
 discovered-by: {{preserved verbatim from inbox}}
 diary-node: {{preserved verbatim from inbox, or added at clarify-time}}
+maintenance-history: []   # appended by `update-todos maintenance` on every approved pass
+legacy-backfill: false    # set to true by maintenance if the first baseline was synthetic
 ---
 
 # {{Title}}
@@ -62,6 +72,20 @@ diary-node: {{preserved verbatim from inbox, or added at clarify-time}}
 ## Open questions
 
 {{What genuinely remains undecided? Each question SHOULD have a hypothesised answer or a decision owner (e.g. "<owner> to decide").}}
+
+## Pinned references
+
+{{Human-readable mirror of the references[] excerpts. One sub-section per reference, format:
+
+### {{ref-path}}:{{ref-lines}}
+
+> Last maintenance: {{ts of most-recent maintenance-history entry, or "never" if maintenance-history is empty}} — {{verdict, or "—"}}
+
+```
+{{verbatim excerpt content (from frontmatter excerpts[].text)}}
+```
+
+Generated from the frontmatter at clarify time; refreshed by maintenance when excerpts change. Do not edit by hand — edit the frontmatter and re-render.}}
 
 ## Resolution notes
 
