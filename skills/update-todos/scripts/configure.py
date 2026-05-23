@@ -30,9 +30,11 @@ ENV_PREFIX = "UPDATE_TODOS_"
 # below carries the suggestion text used by configure.py interactively.
 DEFAULTS: dict[str, str] = {
     "root_dir": "",
-    "inbox_wip_limit": "20",
-    "active_wip_limit": "15",
+    "health_tier_healthy_max": "20",
+    "health_tier_guidance_max": "60",
+    "health_tier_strong_threshold": "60",
     "default_expiry_days": "90",
+    "auto_maintenance_on_resolve": "false",
 }
 
 PROMPT_SUGGESTIONS: dict[str, str] = {
@@ -41,12 +43,21 @@ PROMPT_SUGGESTIONS: dict[str, str] = {
 
 PROMPTS: dict[str, str] = {
     "root_dir": "TODO root directory (relative to project root, or absolute)",
-    "inbox_wip_limit": "Max unclarified entries before capture refuses",
-    "active_wip_limit": "Max active entries before capture refuses",
+    "health_tier_healthy_max": "Per-bucket count at or below = healthy (silent)",
+    "health_tier_guidance_max": "Per-bucket count at or below = guidance commentary",
+    "health_tier_strong_threshold": "Per-bucket count above = strong commentary (still no block)",
     "default_expiry_days": "Default expiry horizon for human-discovered TODOs",
+    "auto_maintenance_on_resolve": "Auto-trigger maintenance scan on related TODOs at resolve time (true/false)",
 }
 
 PATH_KEYS: set[str] = {"root_dir"}
+
+# Deprecated keys map to a target key; their value is migrated, and a
+# warning is emitted on the first encounter. Removed in a future release.
+DEPRECATED_KEY_MAP: dict[str, str] = {
+    "inbox_wip_limit": "health_tier_guidance_max",
+    "active_wip_limit": "health_tier_guidance_max",
+}
 
 
 def find_project_root(start: Path | None = None) -> Path | None:
@@ -129,8 +140,17 @@ def prompt_for(key: str, current: str) -> str:
             return suggested
         if not ans:
             return suggested
-        if key in {"inbox_wip_limit", "active_wip_limit", "default_expiry_days"} and not ans.isdigit():
+        integer_keys = {
+            "health_tier_healthy_max",
+            "health_tier_guidance_max",
+            "health_tier_strong_threshold",
+            "default_expiry_days",
+        }
+        if key in integer_keys and not ans.isdigit():
             print(f"  must be an integer, got: {ans!r}", file=sys.stderr)
+            continue
+        if key == "auto_maintenance_on_resolve" and ans not in {"true", "false"}:
+            print(f"  must be 'true' or 'false', got: {ans!r}", file=sys.stderr)
             continue
         return ans
 
@@ -154,7 +174,23 @@ def main() -> int:
     p.add_argument("--non-interactive", action="store_true")
     for k in DEFAULTS:
         p.add_argument(f"--{k.replace('_', '-')}", dest=k, default=None)
+    for old in DEPRECATED_KEY_MAP:
+        p.add_argument(f"--{old.replace('_', '-')}", dest=old, default=None,
+                       help=argparse.SUPPRESS)
     args = p.parse_args()
+
+    # Migrate any deprecated CLI keys to their targets, with a warning.
+    for old, new in DEPRECATED_KEY_MAP.items():
+        v = getattr(args, old, None)
+        if v is not None:
+            print(
+                f"warning: --{old.replace('_','-')} is deprecated; "
+                f"migrating to --{new.replace('_','-')}={v}",
+                file=sys.stderr,
+            )
+            if getattr(args, new, None) is None:
+                setattr(args, new, v)
+            setattr(args, old, None)
 
     if args.scope == "project":
         proot = find_project_root()
@@ -190,6 +226,17 @@ def main() -> int:
         return 0
 
     existing = load_existing(target)
+    # Migrate deprecated keys read from the existing file (one-time).
+    for old, new in DEPRECATED_KEY_MAP.items():
+        if old in existing:
+            print(
+                f"warning: {target} contains deprecated key {old!r}; "
+                f"migrating to {new!r}",
+                file=sys.stderr,
+            )
+            if new not in existing or not existing[new]:
+                existing[new] = existing[old]
+            del existing[old]
     print(f"Configuring {SKILL_NAME} ({args.scope} scope) at: {target}")
     print("Press Enter to accept the bracketed default for each prompt.\n")
 
