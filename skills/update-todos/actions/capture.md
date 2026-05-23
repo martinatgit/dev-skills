@@ -11,7 +11,11 @@ Run `python3 scripts/resolve_config.py --all` and use the resolved `<root_dir>`,
 1. **Run deduplication BEFORE writing.** An unchecked capture pollutes the corpus.
 2. **Apply the 2-minute rule BEFORE capturing.** If the concern can be actioned in under 2 minutes of uninterrupted work, just do it — filing it is higher-cost than fixing it. Only capture what genuinely needs deferral.
 3. **Prefer inline `// TODO` for concerns that meet all three:** (a) fit on one line, (b) a teammate could action in <30 minutes, (c) context is obvious from the surrounding code. `<root_dir>/` is for concerns that require rehydration beyond the immediate file. Rationale: inline TODOs stay with the code that needs to change; external TODOs stay with concerns that span files, specs, or decisions.
-4. **Capture backpressure.** If `<root_dir>/inbox/` has more than `<inbox_wip_limit>` unclarified entries OR `<root_dir>/active/` has more than `<active_wip_limit>` open entries, REFUSE to capture. Instead, tell the user: "Inbox/active over WIP limit — run `update-todos review` and `update-todos clarify` before capturing more." Kanban WIP limits prevent corpus decay; the capture funnel is cheap only when the downstream is drained.
+4. **Capture never refuses; emit tiered corpus-health commentary at the end of every successful capture.** Per-bucket count thresholds resolve from configured tier keys (`<health_tier_healthy_max>`, `<health_tier_guidance_max>`, `<health_tier_strong_threshold>`). After the capture report (Step 7) print a corpus-health line. Tier language:
+   - `healthy` (≤ `<health_tier_healthy_max>`): single line, no recommendation. Example: `Corpus health: inbox 12 (healthy)`.
+   - `guidance` (above `<health_tier_healthy_max>`, ≤ `<health_tier_guidance_max>`): advisory commentary. Example: `Corpus health: inbox 24 (guidance — above 20). Consider clarify before more captures.`
+   - `strong` (above `<health_tier_strong_threshold>`): loud commentary, still no block. Example: `Corpus health: inbox 87 (strong — above 60). Capture is degrading. Run review + clarify + maintenance immediately.`
+   Buckets at or below `<health_tier_healthy_max>` are not mentioned in the commentary line (only the elevated bucket is named). If multiple buckets are elevated, list each with its tier on its own line.
 
 ## Required inputs (from the user's prompt or current context)
 
@@ -88,12 +92,15 @@ Extract from the active conversation:
 - Specs / diary nodes consulted.
 - Error messages or test failures that triggered the observation (verbatim).
 - The diary node (if any) whose work produced this TODO — put in `diary-node` frontmatter.
+- **Lightweight snapshot per reference.** For each entry in the `references[]` you are about to write, invoke `python3 skills/update-todos/scripts/snapshot_reference.py <path>` (no `--lines`). Capture the emitted `captured-at-sha` and `captured-at` and splice them into the reference entry. If the helper reports `git-unavailable: true`, include that flag on the reference and emit a one-line warning in the capture report (do not refuse). No excerpts are produced at capture time; that is a `clarify`-phase responsibility (see [`actions/clarify.md`](clarify.md)).
 
 Be generous. Rehydration is the whole point.
 
 ## Step 5 — write the file
 
 Use `resources/inbox-entry.md.tpl`. Fill only the inbox-phase fields listed in the template. Do NOT pre-populate Problem/opportunity, Rationale for deferral, Proposed approach, Acceptance criteria, or Open questions — those are clarify-phase fields.
+
+The `references[]` schema written at capture time includes the four pre-existing fields (`path`, `lines?`, `anchor?`, `note`) plus the two snapshot fields (`captured-at-sha`, `captured-at`) emitted by the helper in Step 4. Do not write `clarified-at-sha`, `last-checked`, or `excerpts` at capture time — those are written by `clarify`.
 
 Write to `<root_dir>/inbox/TODO-YYYYMMDD-NNNN-<slug>.md`.
 
@@ -111,7 +118,10 @@ Do not regenerate the full index on capture — that is `review`'s job. Append-o
 One-line summary to the user:
 ```
 Captured TODO-20260416-0003 → <root_dir>/inbox/TODO-20260416-0003-fix-snake-case-violation.md (next-step: spec-update; dedup: no matches)
+Corpus health: inbox 12 (healthy)
 ```
+
+When a bucket is in the `guidance` or `strong` tier, append the appropriate sentence per Iron rule 4. Multiple elevated buckets list one line each.
 
 If this TODO was discovered during work that is being recorded in a diary entry, remind the user: "consider linking this TODO from the diary node via `related-todos: [TODO-20260416-0003]`."
 
@@ -124,7 +134,6 @@ If this TODO was discovered during work that is being recorded in a diary entry,
 - Inventing a `next-step` value outside the 9-value vocabulary.
 - Capturing something that meets the 2-minute rule (just do it).
 - Capturing something that fits as an inline `// TODO` comment (put it there; external capture is for cross-file/cross-spec concerns).
-- Capturing when inbox or active bucket is over the WIP limit — triage first.
 
 If any of these flags fire: stop, ask the user.
 
