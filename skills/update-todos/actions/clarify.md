@@ -62,22 +62,46 @@ Use `resources/active-entry.md.tpl` as skeleton. Fill each section with substanc
 
 Keep Discovery context and Required references from the inbox file verbatim. Do not rewrite them — they are the timestamped record.
 
-## Step 4 — move the file
+## Step 4 — snapshot references (heavy)
+
+This is where the maintenance-mode baseline gets pinned. For each entry in the TODO's `references[]` that does NOT already carry `excerpts` (i.e. the reference has not been pinned yet), run:
+
+```sh
+python3 skills/update-todos/scripts/snapshot_reference.py <ref.path> --lines <ref.lines>
+```
+
+Splice the helper's output (which includes `clarified-at-sha`, `clarified-at`, and the `excerpts:` block) into the reference entry. The excerpt is auto-derived from the reference's existing `lines` range — the engineer is not asked to subdivide unless they explicitly want to (in which case they edit the YAML by hand to produce multiple smaller excerpts, then re-run `snapshot_reference.py` per sub-range).
+
+For references that already carry `excerpts` (e.g. a TODO bounced back from `active/` to `inbox/` via a `needs-rewrite` maintenance verdict — see [`actions/maintenance.md`](maintenance.md)), preserve the existing excerpts verbatim. Do not re-snapshot — those excerpts are the historical baseline the user is consciously re-clarifying.
+
+Set `last-checked` on each newly-snapshotted reference to today's date (YYYY-MM-DD).
+
+**Short-excerpt warning.** If any newly-derived excerpt is fewer than 3 non-blank lines, emit a one-line warning:
+
+> Excerpt at `<path>:<lines>` is short; maintenance disambiguation may be unreliable. Consider widening the reference.
+
+This is advisory, not blocking. Continue with the clarify pass.
+
+**Spec-section references** (anchor like `§4.2.1`): the helper auto-derives the heading + first paragraph (up to 50 lines, whichever is smaller). No additional handling required.
+
+**Diary-node references**: the helper records `clarified-at-sha` only. No excerpt is captured (diary nodes are append-only by contract; drift detection is meaningless).
+
+## Step 5 — move the file
 
 Move from `<root_dir>/inbox/` to `<root_dir>/active/`. Keep the same filename. Do NOT change the id.
 
-## Step 5 — update cross-references
+## Step 6 — update cross-references
 
 For each entry in `related`, `blocks`, `blocked-by`:
 - If it points to another TODO, open that TODO's file and ensure the reverse link is present (`blocks` ↔ `blocked-by`, `related` is symmetric). Add if missing.
 - If it points to a diary node, remind the user (textual output): "consider adding `related-todos: [this id]` to the diary node's frontmatter."
 - If it points to a spec section, the link is one-way (specs do not link back).
 
-## Step 6 — update the index
+## Step 7 — update the index
 
 Update the row in `<root_dir>/index.md` — status column changes from `inbox` to `open`, new columns get populated (priority, expires, very-next-action summary).
 
-## Step 7 — report
+## Step 8 — report
 
 ```
 Clarified TODO-20260416-0003 → <root_dir>/active/
@@ -94,3 +118,4 @@ Clarified TODO-20260416-0003 → <root_dir>/active/
 - Overwriting Discovery context. It is historical record; preserve it verbatim.
 - Assigning `priority: high` to everything. High = must be resolved before next release.
 - Accepting a `very-next-action` that starts with "think", "consider", "figure out", "look into", "investigate the tradeoffs". These are not actions. Rewrite or reject.
+- Silently re-snapshotting references whose excerpts already exist. Existing excerpts are the historical baseline; only `maintenance` refreshes them, and only with user approval.
