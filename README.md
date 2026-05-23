@@ -62,7 +62,7 @@ Full env-var table and the project-root detection rules are in [`docs/install.md
 | [`example-skill`](skills/example-skill/SKILL.md) | Starter skill demonstrating the repo's authoring conventions. |
 | [`developer-diary`](skills/developer-diary/SKILL.md) | Persistent engineering knowledge across sessions. Reads the diary before design or implementation work, updates it after, and reviews it for structural repair. Invoke with `read`, `update`, or `review`. |
 | [`reason-through`](skills/reason-through/SKILL.md) | Multi-perspective reasoning framework. Dispatches up to 23 specialist reasoning agents in parallel and synthesises their outputs into one integrated answer with a falsifiable terminal claim. |
-| [`update-todos`](skills/update-todos/SKILL.md) | Captures deferred decisions, design inconsistencies, convention violations, missing tests, and open questions as atomic markdown notes in `doc/TODOs/` with full context. Invoke with `capture`, `clarify`, `list`, `resolve`, `review`, or `import`. |
+| [`update-todos`](skills/update-todos/SKILL.md) | Captures deferred decisions, design inconsistencies, convention violations, missing tests, and open questions as atomic markdown notes in `doc/TODOs/` with full context. Invoke with `capture`, `clarify`, `list`, `resolve`, `review`, `maintenance`, `health`, or `import`. |
 | [`terminology`](skills/terminology/SKILL.md) | Curates the project's shared technical vocabulary in a single glossary file (default `doc/terminology.md`). Invoke with `note` (or `/note-term <…>`), `get`, `review`, or `validate`. |
 
 ## Authoring a new skill
