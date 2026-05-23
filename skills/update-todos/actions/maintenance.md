@@ -44,11 +44,14 @@ Ties broken by oldest `last-checked`.
 
 Re-read the TODO file. Load `references[]`. For each reference:
 
-1. Check the file exists at `path`. If not → finding `missing-file`.
-2. Run `git log --follow <path>` from `clarified-at-sha`. If renamed → record `renamed-from: <old-path>`; propose new `path` for the proposed-changes block. If `clarified-at-sha` is unreachable (rebased away — check with `git cat-file -e <sha>`), record `sha-unreachable: true` and fall back to comparing against current HEAD only; surface in the Phase 3 prompt.
-3. Read the current file. Run `python3 skills/update-todos/scripts/check_reference_drift.py --todo <todo-path>` for the per-reference findings.
+Invoke `python3 skills/update-todos/scripts/check_reference_drift.py --todo <todo-path>` once for the whole TODO. The script handles, per reference:
 
-The drift checker handles normalization (LF, per-line rstrip), the verbatim search, the similarity fallback (token Jaccard ≥ 0.85), and the multi-match disambiguation. Its YAML output is what you consume.
+1. Existence check. If the file at `path` is missing AND a rename can be detected (`git log --diff-filter=R --name-status` since `clarified-at-sha`, or all history if the SHA isn't set), the script records `renamed-from: <old-path>`, updates the reported `path` to the new location, and continues drift detection at the new path. If no rename is found, the finding is `missing-file`.
+2. SHA-reachability check. If `clarified-at-sha` is set but the SHA is no longer in the repo (rebased away), the script records `sha-unreachable: true` on the finding. Drift detection still runs against current HEAD content; surface the flag in the Phase 3 prompt.
+3. Diary short-circuit. References with `kind: diary` get existence-only checking (no excerpt comparison) — diary nodes are append-only by contract.
+4. Normalization (LF endings, per-line right-trim) and matching (exact match, then similarity fallback at token Jaccard ≥ 0.85, with multi-match disambiguation by closest-to-original-line).
+
+The script's YAML output is what you consume. You do NOT run `git log --follow` manually — the script does that work.
 
 ## Per-TODO pass — Phase 2: Verdict (recommendation)
 

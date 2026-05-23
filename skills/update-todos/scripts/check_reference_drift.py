@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -192,6 +193,84 @@ def closest_to(target_start: int, candidates: list[int]) -> int:
     return min(candidates, key=lambda c: (abs(c - target_start), c))
 
 
+def find_rename_target(old_path: str, cwd: Path, since_sha: str | None) -> str | None:
+    """If old_path was renamed in git history (optionally since `since_sha`),
+    return the most-recent new path. None if no rename event found, or git
+    is unavailable, or the SHA is unreachable.
+
+    Uses `git log --diff-filter=R --name-status` scoped to the file. The
+    output's R lines have format `R<similarity>\\t<old>\\t<new>`. Git walks
+    history newest-first, so the FIRST R line we encounter whose <old>
+    matches our recorded path is the most-recent rename.
+    """
+    # Confirm we're in a worktree.
+    try:
+        ws = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            cwd=cwd, capture_output=True, text=True, check=False,
+        )
+        if ws.returncode != 0 or ws.stdout.strip() != "true":
+            return None
+    except OSError:
+        return None
+
+    # If since_sha is set, verify it's reachable; otherwise omit the range
+    # (search all history).
+    rev_range: str | None = None
+    if since_sha:
+        check = subprocess.run(
+            ["git", "cat-file", "-e", since_sha],
+            cwd=cwd, capture_output=True, text=True, check=False,
+        )
+        if check.returncode == 0:
+            rev_range = f"{since_sha}..HEAD"
+
+    # Don't restrict via -- <path>: git's pathspec filter does not always
+    # surface renames whose old-side matches a deleted file. Dump all rename
+    # events in the (optional) revision range and filter in Python.
+    cmd = ["git", "log", "--diff-filter=R", "--name-status", "--format="]
+    if rev_range:
+        cmd.append(rev_range)
+
+    try:
+        out = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
+    except OSError:
+        return None
+    if out.returncode != 0:
+        return None
+
+    # Try matching the exact recorded path first; if not found, also accept
+    # paths that end with the same basename (covers cases where the recorded
+    # path was relative to a different directory than git's repo root).
+    basename = old_path.rsplit("/", 1)[-1]
+    fallback: str | None = None
+    for line in out.stdout.splitlines():
+        if not line.startswith("R"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 3:
+            continue
+        if parts[1] == old_path:
+            return parts[2]
+        if fallback is None and parts[1].rsplit("/", 1)[-1] == basename:
+            fallback = parts[2]
+    return fallback
+
+
+def sha_reachable(sha: str, cwd: Path) -> bool:
+    """True if the given SHA exists in the local repo. False otherwise."""
+    if not sha or sha == "null":
+        return False
+    try:
+        out = subprocess.run(
+            ["git", "cat-file", "-e", sha],
+            cwd=cwd, capture_output=True, text=True, check=False,
+        )
+        return out.returncode == 0
+    except OSError:
+        return False
+
+
 def check_reference(ref: dict, todo_dir: Path) -> dict:
     path_str = ref.get("path", "")
     file_path = (todo_dir / path_str).resolve() if not Path(path_str).is_absolute() else Path(path_str)
@@ -204,9 +283,29 @@ def check_reference(ref: dict, todo_dir: Path) -> dict:
         out["finding"] = "unchanged" if file_path.exists() else "missing-file"
         return out
 
+    clarified_sha = ref.get("clarified-at-sha")
+    if isinstance(clarified_sha, str) and clarified_sha and clarified_sha != "null":
+        if not sha_reachable(clarified_sha, todo_dir):
+            out["sha-unreachable"] = True
+
     if not file_path.exists():
-        out["finding"] = "missing-file"
-        return out
+        # Try to detect a rename so we don't false-positive to `obsolete`.
+        new_path = find_rename_target(
+            path_str, todo_dir,
+            clarified_sha if isinstance(clarified_sha, str) else None,
+        )
+        if new_path:
+            new_file = (todo_dir / new_path).resolve() if not Path(new_path).is_absolute() else Path(new_path)
+            if new_file.exists():
+                out["renamed-from"] = path_str
+                out["path"] = new_path
+                file_path = new_file
+            else:
+                out["finding"] = "missing-file"
+                return out
+        else:
+            out["finding"] = "missing-file"
+            return out
 
     file_lines = normalize(file_path.read_text(encoding="utf-8", errors="replace"))
 

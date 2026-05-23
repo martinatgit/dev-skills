@@ -151,6 +151,96 @@ class DriftCheckTests(unittest.TestCase):
             self.assertNotIn("similarity", result.stdout)
             self.assertNotIn("new-lines", result.stdout)
 
+    def test_rename_detected_excerpt_unchanged(self):
+        """A renamed file is detected; excerpt matches at the new path."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            # Init git, commit old file, capture SHA, rename, commit again.
+            for cmd in (
+                ["git", "init", "-q"],
+                ["git", "config", "user.email", "test@example.com"],
+                ["git", "config", "user.name", "Test"],
+            ):
+                subprocess.run(cmd, cwd=tdp, check=True, capture_output=True)
+            (tdp / "old.txt").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+            subprocess.run(["git", "add", "old.txt"], cwd=tdp, check=True, capture_output=True)
+            subprocess.run(["git", "commit", "-q", "-m", "initial"], cwd=tdp, check=True, capture_output=True)
+            sha = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=tdp, capture_output=True, text=True, check=True,
+            ).stdout.strip()
+            subprocess.run(["git", "mv", "old.txt", "new.txt"], cwd=tdp, check=True, capture_output=True)
+            subprocess.run(["git", "commit", "-q", "-m", "rename"], cwd=tdp, check=True, capture_output=True)
+
+            # TODO references the OLD path with the pre-rename SHA.
+            indented = "\n".join("          " + ln for ln in ["alpha", "beta"])
+            todo_text = (
+                "---\n"
+                "id: TODO-rename\n"
+                "references:\n"
+                "  - path: old.txt\n"
+                f"    clarified-at-sha: {sha}\n"
+                "    excerpts:\n"
+                "      - lines: 1-2\n"
+                "        text: |\n"
+                f"{indented}\n"
+                "---\n\n# Test TODO\n"
+            )
+            todo = tdp / "TODO-rename-test.md"
+            todo.write_text(todo_text, encoding="utf-8")
+            result = run(todo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("renamed-from: old.txt", result.stdout)
+            self.assertIn("path: new.txt", result.stdout)
+            self.assertIn("finding: unchanged", result.stdout)
+
+    def test_rename_not_found_falls_back_to_missing_file(self):
+        """When the recorded path doesn't exist AND no rename is detected,
+        the finding is missing-file (no false renamed-from)."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            # Not in a git repo at all -- rename detection short-circuits.
+            todo = write_todo(tdp, "ghost.txt", "1-2", "1-2", ["alpha", "beta"])
+            result = run(todo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("finding: missing-file", result.stdout)
+            self.assertNotIn("renamed-from", result.stdout)
+
+    def test_unreachable_clarified_sha_is_flagged(self):
+        """When clarified-at-sha is set but unreachable (rebased away or
+        wrong hash), the finding includes sha-unreachable: True."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            for cmd in (
+                ["git", "init", "-q"],
+                ["git", "config", "user.email", "test@example.com"],
+                ["git", "config", "user.name", "Test"],
+            ):
+                subprocess.run(cmd, cwd=tdp, check=True, capture_output=True)
+            (tdp / "src.txt").write_text("alpha\nbeta\n", encoding="utf-8")
+            subprocess.run(["git", "add", "src.txt"], cwd=tdp, check=True, capture_output=True)
+            subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=tdp, check=True, capture_output=True)
+
+            indented = "\n".join("          " + ln for ln in ["alpha", "beta"])
+            todo_text = (
+                "---\n"
+                "id: TODO-unreachable\n"
+                "references:\n"
+                "  - path: src.txt\n"
+                "    clarified-at-sha: deadbee\n"  # not a real SHA
+                "    excerpts:\n"
+                "      - lines: 1-2\n"
+                "        text: |\n"
+                f"{indented}\n"
+                "---\n\n# Test TODO\n"
+            )
+            todo = tdp / "TODO-unreach.md"
+            todo.write_text(todo_text, encoding="utf-8")
+            result = run(todo)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("sha-unreachable: True", result.stdout)
+            self.assertIn("finding: unchanged", result.stdout)
+
     def test_diary_reference_missing(self):
         """A missing diary reference reports missing-file with kind preserved."""
         with tempfile.TemporaryDirectory() as td:
