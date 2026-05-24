@@ -1,0 +1,4 @@
+docs_root: agent-docs
+skills:
+  terminology:
+    filename: terms.md

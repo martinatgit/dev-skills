@@ -1,0 +1,14 @@
+schema: dev-skills/v1
+docs_root: agent-docs
+
+skills:
+  developer-diary:
+    subdir: developer-diary
+    node_token_limit: 4000
+  terminology:
+    filename: terms.md
+    validation_timeout: 10
+  update-todos:
+    subdir: TODOs
+  create-tutorial:
+    subdir: tutorials
