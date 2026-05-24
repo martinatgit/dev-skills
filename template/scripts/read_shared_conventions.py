@@ -15,6 +15,8 @@ appeared. Use the `DEV_SKILLS_CONFIG_FILE` env var to override the default path.
 The parser supports a tightly-constrained YAML subset: top-level scalar keys
 plus a one-level-nested map (the `skills:` block, with one map per skill name,
 each containing scalar leaves). No lists. No anchors. No multi-line strings.
+The `#` character is always treated as a comment delimiter, even inside quoted
+values; do not put `#` inside any value in the schema.
 """
 from __future__ import annotations
 
@@ -97,9 +99,12 @@ def load(project_root):
     if not path.exists():
         return None
     try:
-        raw = path.read_text(encoding="utf-8")
+        raw = path.read_text(encoding="utf-8-sig")
     except OSError as e:
         _warn_once("could not read %s: %s" % (path, e))
+        return None
+    except UnicodeDecodeError as e:
+        _warn_once("could not decode %s as UTF-8: %s; ignoring" % (path, e))
         return None
     try:
         data = _parse_yaml(raw)
