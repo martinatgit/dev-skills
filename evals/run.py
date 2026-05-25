@@ -100,6 +100,23 @@ def check_python_scripts() -> list[str]:
     return problems
 
 
+def check_shared_reader_drift() -> list:
+    """Byte-compare each skill's stamped reader against the canonical template."""
+    template = REPO_ROOT / "template" / "scripts" / "read_shared_conventions.py"
+    if not template.exists():
+        return []  # Template absent; refresher hasn't been introduced.
+    canonical = template.read_bytes()
+    problems = []
+    for copy in sorted(SKILLS_DIR.glob("*/scripts/read_shared_conventions.py")):
+        if copy.read_bytes() != canonical:
+            problems.append(
+                "%s: differs from canonical template at %s "
+                "(run: python3 scripts/refresh-shared-reader.py)"
+                % (copy, template)
+            )
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skill", help="Check one skill only (by folder name)")
@@ -118,6 +135,7 @@ def main() -> int:
         all_problems.extend(check_marketplace())
         all_problems.extend(check_no_placeholders())
         all_problems.extend(check_python_scripts())
+        all_problems.extend(check_shared_reader_drift())
 
     for skill_md in targets:
         all_problems.extend(check_frontmatter(skill_md))
