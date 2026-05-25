@@ -6,7 +6,8 @@ Two-scope writer:
     --scope project -> writes <project_root>/.developer-diary/config.yaml (default
                        when path-typed keys are involved)
 
-Path-typed keys (root_dir, feature_routing_file) are project-only by design:
+Path-typed keys (root_dir, feature_routing_file, requirements_dir,
+todos_inbox_dir, todos_archive_dir) are project-only by design:
 the diary is a per-project artefact and must not bleed across projects when
 the skill itself is installed user-scope.
 
@@ -27,26 +28,42 @@ ENV_PREFIX = "DEVELOPER_DIARY_"
 # built-in default for root_dir would mask the "not yet configured" state
 # and short-circuit the agent's first-use prompt. The agent treats an empty
 # path-typed value as "ask the user, persist via --scope project".
+# requirements_dir / todos_inbox_dir / todos_archive_dir default to empty as
+# well — they are opt-in; the maintain action silently skips the corresponding
+# drift checks when a key is unset.
 DEFAULTS: dict[str, str] = {
     "root_dir": "",
     "feature_routing_file": "",
     "node_token_limit": "4000",
+    "requirements_dir": "",
+    "todos_inbox_dir": "",
+    "todos_archive_dir": "",
 }
 
 PROMPT_SUGGESTIONS: dict[str, str] = {
     "root_dir": "doc/developer-diary",
     # feature_routing_file stays blank by default — the resolver derives
     # <root_dir>/feature-routing.md when it is unset.
+    # requirements_dir / todos_*_dir stay blank — opt-in only.
 }
 
 PROMPTS: dict[str, str] = {
     "root_dir": "Diary root directory (relative to project root, or absolute)",
     "feature_routing_file": "Feature-routing file path (blank = <root_dir>/feature-routing.md)",
     "node_token_limit": "Soft node-size limit in tokens",
+    "requirements_dir": "Requirements directory for requirement-ID drift checks (blank = skip)",
+    "todos_inbox_dir": "Open-TODOs directory for TODO-ID drift checks (blank = skip)",
+    "todos_archive_dir": "Archived-TODOs directory (required if todos_inbox_dir is set)",
 }
 
 # Path-typed keys: refused at the user-config layer.
-PATH_KEYS: set[str] = {"root_dir", "feature_routing_file"}
+PATH_KEYS: set[str] = {
+    "root_dir",
+    "feature_routing_file",
+    "requirements_dir",
+    "todos_inbox_dir",
+    "todos_archive_dir",
+}
 
 
 def find_project_root(start: Path | None = None) -> Path | None:
