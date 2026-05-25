@@ -26,12 +26,28 @@ def find_skill_script_dirs(skills_root: Path):
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
+    epilog = """\
+Examples:
+    python3 scripts/refresh-shared-reader.py
+    python3 scripts/refresh-shared-reader.py --repo-root <path>  # for tests
+    python3 scripts/refresh-shared-reader.py --check             # dry-run
+"""
+    parser = argparse.ArgumentParser(
+        description="Refresh per-skill copies of read_shared_conventions.py "
+                    "from the canonical template.",
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     default_root = Path(__file__).resolve().parent.parent
-    p.add_argument("--repo-root", default=str(default_root))
-    p.add_argument("--check", action="store_true",
-                   help="Report drift without writing.")
-    args = p.parse_args()
+    parser.add_argument(
+        "--repo-root", default=str(default_root),
+        help="Path to the repo root (default: parent of this script).",
+    )
+    parser.add_argument(
+        "--check", action="store_true",
+        help="Report drift without writing.",
+    )
+    args = parser.parse_args()
 
     repo_root = Path(args.repo_root).resolve()
     template = repo_root / "template" / "scripts" / "read_shared_conventions.py"

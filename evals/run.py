@@ -100,7 +100,7 @@ def check_python_scripts() -> list[str]:
     return problems
 
 
-def check_shared_reader_drift() -> list:
+def check_shared_reader_drift() -> list[str]:
     """Byte-compare each skill's stamped reader against the canonical template."""
     template = REPO_ROOT / "template" / "scripts" / "read_shared_conventions.py"
     if not template.exists():
@@ -112,7 +112,7 @@ def check_shared_reader_drift() -> list:
             problems.append(
                 "%s: differs from canonical template at %s "
                 "(run: python3 scripts/refresh-shared-reader.py)"
-                % (copy, template)
+                % (copy.relative_to(REPO_ROOT), template.relative_to(REPO_ROOT))
             )
     return problems
 
