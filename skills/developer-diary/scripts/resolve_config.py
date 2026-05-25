@@ -7,8 +7,8 @@ Resolution order (first match wins):
     3. ~/.config/developer-diary/config.yaml  (only for non-path keys)
     4. Built-in default
 
-Path keys (root_dir, feature_routing_file) are project-only — never read from
-the user-level layer.
+Path keys (root_dir, feature_routing_file, requirements_dir, todos_inbox_dir,
+todos_archive_dir) are project-only — never read from the user-level layer.
 
 Usage:
     python3 scripts/resolve_config.py <key>

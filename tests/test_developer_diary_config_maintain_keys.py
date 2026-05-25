@@ -8,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "skills" / "developer-diary" / "scripts"
-CONFIGURE = SCRIPTS / "configure.py"
+CONFIGURE = SCRIPTS / "configure.py"  # used by upcoming TodosCouplingTests
 RESOLVE = SCRIPTS / "resolve_config.py"
 
 
