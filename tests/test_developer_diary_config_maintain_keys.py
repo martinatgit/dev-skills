@@ -38,5 +38,78 @@ class MaintainKeyDefaultsTests(unittest.TestCase):
                     self.assertEqual(v, "", f"{k} should default to empty, got {v!r}")
 
 
+class TodosCouplingTests(unittest.TestCase):
+    def _project_root(self, td):
+        # configure.py with --scope project needs a project marker.
+        # find_project_root.py looks for .git, package.json, etc.
+        proot = Path(td) / "proj"
+        proot.mkdir()
+        (proot / ".git").mkdir()
+        return proot
+
+    def test_inbox_without_archive_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            proot = self._project_root(td)
+            env = {"HOME": td, "XDG_CONFIG_HOME": str(Path(td) / "config")}
+            result = run(
+                CONFIGURE,
+                "--scope", "project",
+                "--non-interactive",
+                "--root-dir", "doc/developer-diary",
+                "--todos-inbox-dir", "doc/TODOs/inbox",
+                # deliberately omit --todos-archive-dir
+                env=env,
+                cwd=proot,
+            )
+            self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertIn("todos_archive_dir", result.stderr)
+
+    def test_archive_without_inbox_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            proot = self._project_root(td)
+            env = {"HOME": td, "XDG_CONFIG_HOME": str(Path(td) / "config")}
+            result = run(
+                CONFIGURE,
+                "--scope", "project",
+                "--non-interactive",
+                "--root-dir", "doc/developer-diary",
+                "--todos-archive-dir", "doc/TODOs/archive",
+                env=env,
+                cwd=proot,
+            )
+            self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertIn("todos_inbox_dir", result.stderr)
+
+    def test_both_set_is_accepted(self):
+        with tempfile.TemporaryDirectory() as td:
+            proot = self._project_root(td)
+            env = {"HOME": td, "XDG_CONFIG_HOME": str(Path(td) / "config")}
+            result = run(
+                CONFIGURE,
+                "--scope", "project",
+                "--non-interactive",
+                "--root-dir", "doc/developer-diary",
+                "--todos-inbox-dir", "doc/TODOs/inbox",
+                "--todos-archive-dir", "doc/TODOs/archive",
+                env=env,
+                cwd=proot,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_neither_set_is_accepted(self):
+        with tempfile.TemporaryDirectory() as td:
+            proot = self._project_root(td)
+            env = {"HOME": td, "XDG_CONFIG_HOME": str(Path(td) / "config")}
+            result = run(
+                CONFIGURE,
+                "--scope", "project",
+                "--non-interactive",
+                "--root-dir", "doc/developer-diary",
+                env=env,
+                cwd=proot,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

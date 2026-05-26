@@ -162,6 +162,30 @@ def write(path: Path, values: dict[str, str], extras: list[str] | None = None) -
         pass
 
 
+def write_shared_conventions_minimal(project_root: Path, docs_root: str) -> Path:
+    """Create a minimal .agents/dev-skills.yaml with schema + docs_root only.
+
+    Refuses to overwrite an existing foreign file (no dev-skills/v1 marker).
+    Used by the lazy first-use prompt when the user opts into the shared layer.
+    """
+    target = project_root / ".agents" / "dev-skills.yaml"
+    if target.exists():
+        existing = target.read_text(encoding="utf-8")
+        if "schema: dev-skills/v1" not in existing:
+            raise RuntimeError(
+                "refusing to overwrite %s: missing schema: dev-skills/v1 marker.\n"
+                "Remove the file or set DEV_SKILLS_CONFIG_FILE and re-run."
+                % target
+            )
+        return target
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        "schema: dev-skills/v1\ndocs_root: %s\n" % docs_root,
+        encoding="utf-8",
+    )
+    return target
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--scope", choices=["user", "project"], default="user")
@@ -212,6 +236,39 @@ def main() -> int:
     print(f"Configuring {SKILL_NAME} ({args.scope} scope) at: {target}")
     print("Press Enter to accept the bracketed default for each prompt.\n")
 
+    # First-use fork: when no root_dir exists yet, offer to create the shared
+    # conventions file instead of per-skill config. Honour ESC / answer-2 by
+    # falling through to the per-skill prompt loop below.
+    if (
+        args.scope == "project"
+        and not args.non_interactive
+        and not existing.get("root_dir")
+        and not getattr(args, "root_dir", None)
+    ):
+        print("\nDeveloper-diary needs a root directory.")
+        print("  1. Apply a docs-folder convention to every skill in this project")
+        print("     (creates .agents/dev-skills.yaml with docs_root only -- recommended)")
+        print("  2. Configure just developer-diary (creates .developer-diary/config.yaml)")
+        try:
+            choice = input("Choice [1/2, default 1]: ").strip() or "1"
+        except EOFError:
+            choice = "1"
+        if choice == "1":
+            try:
+                docs_root = input("docs_root [doc]: ").strip() or "doc"
+            except EOFError:
+                docs_root = "doc"
+            try:
+                shared_path = write_shared_conventions_minimal(proot, docs_root)
+                print("\nWrote %s." % shared_path)
+                print("developer-diary will resolve root_dir to %s/developer-diary"
+                      % docs_root)
+                return 0
+            except RuntimeError as e:
+                print("error: %s" % e, file=sys.stderr)
+                return 2
+        # Choice 2: fall through to the per-skill prompt loop below.
+
     new_values: dict[str, str] = {}
     for k, default in DEFAULTS.items():
         cli_v = getattr(args, k, None)
@@ -229,6 +286,18 @@ def main() -> int:
                 new_values[k] = current
             continue
         new_values[k] = prompt_for(k, current)
+
+    inbox = new_values.get("todos_inbox_dir", "")
+    archive = new_values.get("todos_archive_dir", "")
+    if bool(inbox) != bool(archive):
+        missing = "todos_archive_dir" if inbox else "todos_inbox_dir"
+        present = "todos_inbox_dir" if inbox else "todos_archive_dir"
+        print(
+            f"error: {present} is set but {missing} is not. "
+            f"Both must be set together, or both left blank.",
+            file=sys.stderr,
+        )
+        return 2
 
     extras = ([f"# Scope: project."] if args.scope == "project" else [])
     write(target, new_values, extras)
