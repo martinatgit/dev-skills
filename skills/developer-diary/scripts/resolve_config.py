@@ -25,10 +25,38 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import configure  # type: ignore  # noqa: E402
+import read_shared_conventions  # type: ignore  # noqa: E402
 
 
 def expand(value: str) -> str:
     return os.path.expandvars(os.path.expanduser(value))
+
+
+def _compose_from_shared(shared, project_root):
+    """Return path/tunable overrides for developer-diary derived from the shared file.
+
+    Mapping:
+        root_dir              <- <docs_root>/skills.developer-diary.subdir
+                                  (default subdir = "developer-diary")
+        feature_routing_file  <- <docs_root>/skills.developer-diary.feature_routing_file
+                                  (default derived in resolve_all from <root_dir>)
+    Non-path tunables passed through: node_token_limit.
+    """
+    if shared is None:
+        return {}
+    docs_root = shared.get("docs_root", "doc")
+    block = shared.get("skills", {}).get("developer-diary", {}) or {}
+    subdir = block.get("subdir") or "developer-diary"
+    overrides = {
+        "root_dir": str(Path(docs_root) / subdir),
+    }
+    frf = block.get("feature_routing_file")
+    if frf:
+        overrides["feature_routing_file"] = str(Path(docs_root) / frf)
+    for k in ("node_token_limit",):
+        if k in block:
+            overrides[k] = str(block[k])
+    return overrides
 
 
 def resolve_all() -> dict[str, str]:
@@ -36,7 +64,22 @@ def resolve_all() -> dict[str, str]:
     project_values = (configure.load_existing(configure.project_config_path(proot))
                       if proot else {})
     user_values = configure.load_existing(configure.user_config_path())
+    shared = read_shared_conventions.load(proot) if proot else None
+    shared_overrides = _compose_from_shared(shared, proot)
+
     raw = configure.resolve(project_values, user_values)
+    # Layer precedence: env > project-skill > shared > user-skill > default.
+    # configure.resolve already handled env, project, user, default — we slot
+    # shared in between project and user by overriding entries that were not
+    # already set by env or project.
+    for k in list(raw):
+        env_v = os.environ.get(configure.ENV_PREFIX + k.upper())
+        if env_v:
+            continue  # env-var wins at layer 1.
+        if k in project_values and project_values[k]:
+            continue  # project-skill wins at layer 2.
+        if k in shared_overrides:
+            raw[k] = shared_overrides[k]
 
     resolved: dict[str, str] = {}
     for k, v in raw.items():
