@@ -105,6 +105,56 @@ class UpdateTodosSharedTest(unittest.TestCase):
             msg=resolved["root_dir"],
         )
 
+    def test_shared_default_expiry_days_flows_through(self):
+        """default_expiry_days in the shared file should override user-config default."""
+        shared_yaml = (
+            "schema: dev-skills/v1\n"
+            "docs_root: agent-docs\n"
+            "\n"
+            "skills:\n"
+            "  update-todos:\n"
+            "    subdir: tasks\n"
+            "    default_expiry_days: 42\n"
+        )
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                shared = Path(td) / ".agents" / "dev-skills.yaml"
+                shared.parent.mkdir(parents=True)
+                shared.write_text(shared_yaml, encoding="utf-8")
+                os.environ["DEV_SKILLS_CONFIG_FILE"] = str(shared)
+                (Path(td) / ".git").mkdir()
+                os.chdir(td)
+                resolved = resolve_config.resolve_all()
+            finally:
+                os.chdir(self._cwd)
+        self.assertEqual(resolved.get("default_expiry_days"), "42")
+
+    def test_shared_deprecated_keys_are_ignored(self):
+        """Deprecated keys in the shared file should not affect resolution."""
+        shared_yaml = (
+            "schema: dev-skills/v1\n"
+            "docs_root: agent-docs\n"
+            "\n"
+            "skills:\n"
+            "  update-todos:\n"
+            "    subdir: tasks\n"
+            "    inbox_wip_limit: 999\n"
+            "    active_wip_limit: 999\n"
+        )
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                shared = Path(td) / ".agents" / "dev-skills.yaml"
+                shared.parent.mkdir(parents=True)
+                shared.write_text(shared_yaml, encoding="utf-8")
+                os.environ["DEV_SKILLS_CONFIG_FILE"] = str(shared)
+                (Path(td) / ".git").mkdir()
+                os.chdir(td)
+                resolved = resolve_config.resolve_all()
+            finally:
+                os.chdir(self._cwd)
+        self.assertNotIn("inbox_wip_limit", resolved)
+        self.assertNotIn("active_wip_limit", resolved)
+
 
 if __name__ == "__main__":
     unittest.main()
