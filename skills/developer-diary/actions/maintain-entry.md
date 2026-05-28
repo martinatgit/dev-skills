@@ -13,7 +13,7 @@ python3 scripts/resolve_config.py --all
 
 Hold `root_dir`, `feature_routing_file`, `node_token_limit`, `requirements_dir`, `todos_inbox_dir`, `todos_archive_dir` for use throughout. If `root_dir` is empty, follow the first-use flow in SKILL.md before continuing.
 
-`requirements_dir`, `todos_inbox_dir`, `todos_archive_dir` are optional. When any one of them is empty, the corresponding reference type is silently skipped throughout Phases 3, 4, and 5.
+`requirements_dir` is optional and independent: when empty, requirement-ID drift checks are silently skipped throughout Phases 3, 4, and 5. `todos_inbox_dir` and `todos_archive_dir` are an optional coupled pair: when both are empty, TODO-ID drift checks are silently skipped; when both are set, TODO-ID drift checks run; when only one is set, the action stops at config-resolution time and reports the inconsistency (see the Edge cases table).
 
 ## Argument resolution
 
@@ -67,7 +67,8 @@ Extract every external reference cited in the target entry into a working table.
 | Reference type | Detection rule |
 | --- | --- |
 | File path | Anything matching `src/**`, `doc/**`, `test/**`, `scripts/**` |
-| Identifier | Class / function / method / schema-field names appearing in or near a file-path citation (example shape: an identifier `ClassOrFunctionName` cited next to `path/to/file.ext`) |
+| Identifier | Class / function / method names appearing in or near a file-path citation (example shape: an identifier `ClassOrFunctionName` cited next to `path/to/file.ext`) |
+| Schema field | A field name cited in the same sentence as a schema file path (e.g. `serial_id` cited near `src/schemas/job.schema.ts`). Distinguished from generic identifiers by being declared as a typed schema property rather than a function/method. |
 | Requirement ID | Regex `[A-Z]{3,}-\d{3,}` (example shapes: `AUTH-021`, `BILLING-103`). **Exclude** matches whose prefix names an external standards body: `ISO`, `IEC`, `RFC`, `CVE`, `SHA`, `IEEE`, `OWASP`, `ANSI`, `ITU`, `NIST`, `W3C`. A match qualifies as an internal requirement ID only if its prefix appears as a section identifier somewhere under `<requirements_dir>/**` (cheap to verify with a single `grep -r "<PREFIX>-" <requirements_dir>/`). **Inventoried only if `requirements_dir` is set; otherwise skip the type entirely.** |
 | TODO ID | Regex `TODO-\d{8}-\d{4}`. **Inventoried only if `todos_inbox_dir` is set; otherwise skip the type entirely.** |
 | Diary index pointer | Regex `R(\.\d+)+` |
@@ -86,7 +87,7 @@ For each inventoried reference, run exactly one verification and record the resu
 | Schema field | `Read` the cited schema file and look for the field declaration. | Missing field or different declared type → record as drift. |
 | Requirement ID | `Grep` under `<requirements_dir>/**` for the ID. **Skipped entirely if `requirements_dir` is unset.** | Missing → drift. Present but status changed or wording diverged from the claim → drift with note. |
 | TODO ID | `Glob` `<todos_inbox_dir>/<id>*.md` then `<todos_archive_dir>/<id>*.md`. **Skipped entirely if `todos_inbox_dir` is unset.** | Inbox → still open. Archive → discharged. Missing from both → orphan. |
-| Diary index | Resolve via root child table and parent child tables. | Missing → broken pointer. |
+| Diary index pointer | Resolve via root child table and parent child tables. | Missing → broken pointer. |
 
 Commit SHAs are not verified — record them and move on.
 
@@ -152,7 +153,7 @@ Sections, in order:
 - Identifiers: N
 - Requirement IDs: N    (0 if requirements_dir is unset)
 - TODO IDs: N           (0 if todos_inbox_dir is unset)
-- Diary indices: N
+- Diary index pointers: N
 - Commit SHAs: N (not verified)
 
 ## 3. Drift findings

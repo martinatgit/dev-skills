@@ -37,7 +37,7 @@ Resolution order (first match wins):
 3. **User-level** config at `~/.config/developer-diary/config.yaml` — applies to non-path keys only (e.g. `node_token_limit`). The `root_dir` is project-bound and is never read from this layer.
 4. Built-in default (for non-path keys only).
 
-Path-typed keys (`root_dir`, `feature_routing_file`) are project-only by design: the diary is a per-project artefact, and a user-installed skill must not bleed one project's diary into another.
+Path-typed keys (`root_dir`, `feature_routing_file`, `requirements_dir`, `todos_inbox_dir`, `todos_archive_dir`) are project-only by design: the diary is a per-project artefact, and a user-installed skill must not bleed one project's diary into another.
 
 **Configure**
 
@@ -120,7 +120,7 @@ The hierarchy mirrors the software architecture. Higher nodes (closer to root) c
 
 ## Size limit and splitting
 
-A single `diary-entry.md` should remain below the configured `node_token_limit` (default `4000`).
+A single `diary-entry.md` should remain below the configured `node_token_limit` (default `4000`). The same threshold also governs the `maintain` action's Phase 7 split decision.
 
 If a node would exceed that size:
 
