@@ -16,6 +16,25 @@ The tutorial must be **self-contained**, requiring no external context to unders
 
 ---
 
+## Configuration
+
+Resolution order (first match wins):
+
+1. Environment variable `CREATE_TUTORIAL_TUTORIALS_DIR`.
+2. Project-local config at `<project_root>/.create-tutorial/config.yaml`.
+3. Shared conventions file at `<project_root>/.agents/dev-skills.yaml` — composes `tutorials_dir` as `<docs_root>/skills.create-tutorial.subdir`, defaulting to `<docs_root>/tutorials`.
+4. Built-in default `doc/tutorials`.
+
+See [`references/config-schema.md`](references/config-schema.md).
+
+## Workflow
+
+**Step 0 — Resolve configuration.** Run `python3 scripts/resolve_config.py --all` and parse the `key=value` lines. Use the resolved `tutorials_dir` as the destination directory for every write below. If `tutorials_dir` is empty (no env var, no project config, no shared file), run the first-use flow: `python3 scripts/configure.py --scope project` and re-resolve.
+
+Then follow the structure below to produce the tutorial.
+
+---
+
 ## Inputs & Assumptions
 
 Before generating the tutorial:
@@ -111,7 +130,7 @@ For each major API / function:
 
 ## Saving the Tutorial
 
-- Save as a markdown file in: `doc/tutorials/`
+- Save as a markdown file in the resolved `tutorials_dir` (Step 0 of Workflow).
 - File name rules:
   - Use concise, kebab-case naming
   - Reflect the main component or feature
