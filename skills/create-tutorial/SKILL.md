@@ -1,11 +1,6 @@
 ---
-name: create-tutorial 
-description: Use this skill to generate a comprehensive, textbook-style technical tutorial for a newly implemented or modified software component.
-argument-hint: "[topic of tutorial]"
-metadata: 
-  author: "Martin Saerbeck"
-  version: "0.1"
-effort: high
+name: create-tutorial
+description: Generate a comprehensive, textbook-style technical tutorial for a newly implemented or modified software component. Use whenever the user types /create-tutorial <topic>, asks for "a tutorial on X", says "write a textbook chapter for this module", or similar. The topic is passed as the first argument; prefer this skill over ad-hoc explanations whenever the goal is a durable, self-contained artefact (not a chat answer). Do not use for inline explanations, short notes, or session handoff — use developer-diary for the latter.
 ---
 
 # Create a Technical Tutorial
