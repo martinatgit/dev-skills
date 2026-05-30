@@ -9,7 +9,8 @@ Usage:
     python3 scripts/setup-conventions.py                                  # interactive
     python3 scripts/setup-conventions.py --non-interactive --docs-root X
     python3 scripts/setup-conventions.py --print
-    python3 scripts/setup-conventions.py --repair
+
+(--repair is a v2 candidate; not implemented in v1.)
 """
 from __future__ import annotations
 
@@ -19,6 +20,22 @@ import sys
 from pathlib import Path
 
 SCHEMA_VERSION = "dev-skills/v1"
+
+_INVALID_VALUE_CHARS = ("#", "\n", "\r")
+
+
+def _validate_scalar(label: str, value: str) -> None:
+    """Reject values that would not round-trip through the canonical reader."""
+    for ch in _INVALID_VALUE_CHARS:
+        if ch in value:
+            print(
+                "error: %s value %r contains forbidden character %r.\n"
+                "The shared-conventions YAML subset rejects '#', '\\n', '\\r' "
+                "in values (they break the reader's comment / line handling)."
+                % (label, value, ch),
+                file=sys.stderr,
+            )
+            sys.exit(2)
 
 # Map skill name -> {key_in_yaml: cli_flag_suffix}.
 # Path-shaped: subdir / filename. Non-path tunables: passed through.
@@ -44,10 +61,8 @@ SKILL_SCHEMA = {
 
 def _find_project_root(start: Path) -> Path:
     here = Path(__file__).resolve().parent
-    # find_project_root lives in skills/<any>/scripts/ (any copy works) and in
-    # template/scripts/. Use the example-skill copy as the canonical source.
-    fpr_path = here.parent / "skills" / "example-skill" / "scripts"
-    sys.path.insert(0, str(fpr_path))
+    template = here.parent / "template" / "scripts"
+    sys.path.insert(0, str(template))
     import find_project_root as fpr  # type: ignore
     root = fpr.find_project_root(start, fpr.DEFAULT_MARKERS)
     if root is None:
@@ -64,10 +79,11 @@ def _target_path(project_root: Path) -> Path:
 
 
 def _pre_flight(target: Path) -> None:
+    """Refuse to overwrite a file that does not parse as dev-skills/v1."""
     if not target.exists():
         return
-    text = target.read_text(encoding="utf-8")
-    if "schema: dev-skills/v1" not in text:
+    parsed = _load_existing(target)
+    if parsed is None:
         print(
             "error: %s exists but is not a dev-skills/v1 file.\n"
             "Either remove it, or set DEV_SKILLS_CONFIG_FILE=<alt-path> and re-run."
@@ -92,15 +108,25 @@ def _render(docs_root: str, skill_overrides: dict) -> str:
 
 
 def _load_existing(target: Path):
-    """Load the canonical reader to parse an existing file."""
+    """Use the canonical reader to parse `target` directly (no project_root)."""
     if not target.exists():
         return None
     here = Path(__file__).resolve().parent
     template = here.parent / "template" / "scripts"
     sys.path.insert(0, str(template))
     import read_shared_conventions as rsc  # type: ignore
-    # Use the target's directory as the project root for the reader.
-    return rsc.load(target.parent.parent)
+    # Set the env var to point at `target` so the reader uses it verbatim,
+    # then restore. This makes _load_existing path-explicit and removes the
+    # accidental reliance on target.parent.parent.
+    saved = os.environ.get("DEV_SKILLS_CONFIG_FILE")
+    os.environ["DEV_SKILLS_CONFIG_FILE"] = str(target)
+    try:
+        return rsc.load(target.parent)  # second arg is irrelevant when env set
+    finally:
+        if saved is None:
+            os.environ.pop("DEV_SKILLS_CONFIG_FILE", None)
+        else:
+            os.environ["DEV_SKILLS_CONFIG_FILE"] = saved
 
 
 def _print_resolved(target: Path) -> int:
@@ -137,8 +163,6 @@ Examples:
                         help="Set the docs_root (default: doc).")
     parser.add_argument("--print", dest="do_print", action="store_true",
                         help="Print resolved values from existing file and exit.")
-    parser.add_argument("--repair", action="store_true",
-                        help="Only fill in missing keys; preserve existing values.")
     parser.add_argument("--non-interactive", action="store_true",
                         help="Skip prompts; use --docs-root and per-skill flags.")
     # Per-skill flags. Generated from SKILL_SCHEMA.
@@ -172,6 +196,8 @@ Examples:
             ans = ""
         docs_root = ans or prompt_default
 
+    _validate_scalar("docs_root", docs_root)
+
     # Collect per-skill overrides from CLI flags.
     skill_overrides = {}
     for skill, keys in SKILL_SCHEMA.items():
@@ -182,6 +208,10 @@ Examples:
                 block[k] = v
         if block:
             skill_overrides[skill] = block
+
+    for skill, block in skill_overrides.items():
+        for k, v in block.items():
+            _validate_scalar("%s.%s" % (skill, k), v)
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(_render(docs_root, skill_overrides), encoding="utf-8")

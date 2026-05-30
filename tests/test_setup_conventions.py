@@ -77,6 +77,36 @@ class SetupConventionsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(alt.exists())
 
+    def test_full_round_trip(self):
+        """Installer output must round-trip through the canonical reader."""
+        result = _run(
+            "--non-interactive",
+            "--docs-root", "agent-docs",
+            "--terminology-filename", "terms.md",
+            "--developer-diary-subdir", "diary",
+            cwd=self.tmp,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        # Parse via the canonical reader.
+        sys.path.insert(0, str(REPO_ROOT / "template" / "scripts"))
+        import read_shared_conventions as rsc  # type: ignore
+        os.environ["DEV_SKILLS_CONFIG_FILE"] = str(self.tmp / ".agents" / "dev-skills.yaml")
+        try:
+            parsed = rsc.load(self.tmp)
+        finally:
+            os.environ.pop("DEV_SKILLS_CONFIG_FILE", None)
+        self.assertEqual(parsed["docs_root"], "agent-docs")
+        self.assertEqual(parsed["skills"]["terminology"]["filename"], "terms.md")
+        self.assertEqual(parsed["skills"]["developer-diary"]["subdir"], "diary")
+
+    def test_rejects_hash_in_docs_root(self):
+        result = _run(
+            "--non-interactive", "--docs-root", "agent#docs",
+            cwd=self.tmp,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("forbidden character", result.stderr)
+
     def test_print_resolves(self):
         target = self.tmp / ".agents" / "dev-skills.yaml"
         target.parent.mkdir()
