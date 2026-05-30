@@ -53,6 +53,17 @@ DEVELOPER_DIARY_ROOT_DIR=/tmp/test-diary  # env var wins over both files
 
 Full env-var table and the project-root detection rules are in [`docs/install.md`](docs/install.md).
 
+### Project conventions (one-line setup)
+
+Set one docs-folder convention for every skill in the project:
+
+```sh
+# Create <project_root>/.agents/dev-skills.yaml with docs_root: agent-docs
+python3 scripts/setup-conventions.py --non-interactive --docs-root agent-docs
+```
+
+See [`docs/install.md`](docs/install.md#shared-conventions) for the full schema and resolution rules.
+
 ## Skills in this repository
 
 <!-- Update this table when you add a skill. -->
@@ -64,6 +75,7 @@ Full env-var table and the project-root detection rules are in [`docs/install.md
 | [`reason-through`](skills/reason-through/SKILL.md) | Multi-perspective reasoning framework. Dispatches up to 23 specialist reasoning agents in parallel and synthesises their outputs into one integrated answer with a falsifiable terminal claim. |
 | [`update-todos`](skills/update-todos/SKILL.md) | Captures deferred decisions, design inconsistencies, convention violations, missing tests, and open questions as atomic markdown notes in `doc/TODOs/` with full context. Invoke with `capture`, `clarify`, `list`, `resolve`, `review`, `maintenance`, `health`, or `import`. |
 | [`terminology`](skills/terminology/SKILL.md) | Curates the project's shared technical vocabulary in a single glossary file (default `doc/terminology.md`). Invoke with `note` (or `/note-term <…>`), `get`, `review`, or `validate`. |
+| [`create-tutorial`](skills/create-tutorial/SKILL.md) | Generate a textbook-style technical tutorial for a software component. Invoke with `/create-tutorial <topic>`. Writes to `tutorials_dir` (project-only Pattern 2 key; falls through to `.agents/dev-skills.yaml`). |
 
 ## Authoring a new skill
 

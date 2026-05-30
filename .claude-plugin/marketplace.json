@@ -17,7 +17,8 @@
         "./skills/developer-diary",
         "./skills/reason-through",
         "./skills/update-todos",
-        "./skills/terminology"
+        "./skills/terminology",
+        "./skills/create-tutorial"
       ]
     }
   ]

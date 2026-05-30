@@ -32,6 +32,8 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] `scripts/configure.sh` prompts for missing values, is idempotent, accepts `--repair`.
 - [ ] Configuration never writes outside `~/.config/<skill-name>/`.
 - [ ] Schema is documented in `references/config-schema.md` with an example file.
+- [ ] If the skill has path-typed keys, the resolver consults `<project_root>/.agents/dev-skills.yaml` between project-skill and user-skill layers (see `docs/authoring-guide.md` -> Consulting the shared conventions file).
+- [ ] The canonical reader at `template/scripts/read_shared_conventions.py` has been stamped into the skill via `python3 scripts/refresh-shared-reader.py`. `python3 evals/run.py` reports no drift.
 
 ## State and side effects
 

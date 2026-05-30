@@ -83,6 +83,47 @@ ls .claude/skills/   .agents/skills/
 
 Each of these should show a directory per skill with a `SKILL.md` inside.
 
+## Shared conventions
+
+A single project-scope file `<project_root>/.agents/dev-skills.yaml` lets one declaration drive every skill's output paths. Create it once; every Pattern-2 skill in this repo reads it at runtime.
+
+```yaml
+# .agents/dev-skills.yaml
+schema: dev-skills/v1
+docs_root: agent-docs        # the only mandatory line beyond schema
+
+skills:                      # optional per-skill block
+  terminology:
+    filename: terms.md       # -> agent-docs/terms.md
+```
+
+**Create it** (interactive):
+
+```sh
+python3 scripts/setup-conventions.py
+```
+
+**Create it non-interactively** (CI):
+
+```sh
+python3 scripts/setup-conventions.py --non-interactive --docs-root agent-docs \
+    --terminology-filename terms.md
+```
+
+The first-use prompt in each skill's `configure.py` also offers to create a minimal `.agents/dev-skills.yaml` (with just `schema` and `docs_root`) instead of writing per-skill config -- pick that option if you want one convention for the whole project.
+
+**Resolution order** (first match wins, per key):
+
+1. Per-key environment variable (e.g. `TERMINOLOGY_FILE`).
+2. Per-skill project config (`<proj>/.terminology/config.yaml`).
+3. Shared conventions file (`<proj>/.agents/dev-skills.yaml`).
+4. Per-skill user config (`~/.config/<skill>/config.yaml`).
+5. Built-in default.
+
+**Collision safety:** the mandatory `schema: dev-skills/v1` marker means a foreign tool with the same filename is detected and ignored (the shared layer is skipped; per-skill config + defaults still apply).
+
+**Escape hatch:** `DEV_SKILLS_CONFIG_FILE=<path>` points at an alternate file if a genuine name collision occurs.
+
 ## Per-skill runtime configuration
 
 Skills in this repo follow a uniform configuration pattern:
@@ -130,6 +171,8 @@ python3 scripts/configure.py --print
 | `reason-through` | `REASON_THROUGH_ORCHESTRATOR_MODEL_TIER` | Override the orchestrator-model tier hint. |
 | `example-skill` | `EXAMPLE_SKILL_API_ENDPOINT` | (Reference only.) |
 | `example-skill` | `EXAMPLE_SKILL_PROJECT_ID` | (Reference only.) |
+| (shared) | `DEV_SKILLS_CONFIG_FILE` | Path to the shared conventions file (default `<proj>/.agents/dev-skills.yaml`). |
+| `create-tutorial` | `CREATE_TUTORIAL_TUTORIALS_DIR` | Override where generated tutorials are written. |
 
 ### Project root detection
 

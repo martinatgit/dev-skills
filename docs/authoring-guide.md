@@ -78,6 +78,19 @@ Skills that need configuration use **Pattern 2 (lazy, two-scope, Python helpers)
 6. Never modify files outside the two configured paths during configuration.
 7. Never commit a config file to the repo.
 
+### Consulting the shared conventions file
+
+A skill that has path-typed keys should also read `<project_root>/.agents/dev-skills.yaml` between its project-skill and user-skill resolution layers, so a project-wide `docs_root: <X>` flips that skill's output path without any per-skill configuration.
+
+Implementation:
+
+1. The canonical reader lives at `template/scripts/read_shared_conventions.py` and is stamped into your skill's `scripts/` by `python3 scripts/refresh-shared-reader.py`. The drift check in `evals/run.py` catches forgotten refreshes.
+2. Your `resolve_config.py` adds a small `_compose_from_shared(shared, project_root)` helper that maps the shared file's keys onto your skill's keys (e.g. `<docs_root>/skills.<skill-name>.subdir` -> your `root_dir`).
+3. Your `resolve_all()` loop slots the shared layer between project-skill and user-skill, with env-var and project-skill still winning.
+4. Your `configure.py` first-use prompt grows a fork that offers to create `.agents/dev-skills.yaml` with just `schema` + `docs_root` instead of per-skill config. 15-line minimal writer; see `skills/terminology/scripts/configure.py:write_shared_conventions_minimal` for the canonical version.
+
+See `docs/install.md` -> Shared conventions for the user-facing contract.
+
 ### Write-directory configuration
 
 If your skill writes user-visible files (e.g. a diary, a TODO tree, generated reports), expose a `root_dir` config key. It must be:
