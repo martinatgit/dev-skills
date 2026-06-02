@@ -203,11 +203,30 @@ No write happens before this gate is cleared. A pre-emptive Edit is a contract v
 
 ## Phase 10 — Apply (direct path)
 
-For each amendment in the approved plan, perform a single `Edit` call. **For every category below, construct `old_string` with enough leading context (typically at least the preceding sentence, or the full table-row anchor) that the match is unique within the file.** If still ambiguous after one sentence of leading context, expand further before invoking `Edit`. Never use `replace_all` unless the token is genuinely unique repo-context-free (rare).
+Apply in the strict sub-step order below. The ordering is a safety invariant, not a convenience: it guarantees that an interrupted pass is *detectable* rather than silently half-written.
+
+### 10a — Re-read and re-anchor (mandatory, before any write)
+
+The Phase 9 approval gate introduces an arbitrary pause between the Phase 1 read and the first write. The file may have changed in that window (the user, another tool, or a git operation). **Re-read the target entry from disk now** and compare it against the Phase 1 content:
+
+- If the regions you are about to edit are byte-identical to what Phase 1 saw, proceed — re-derive every `old_string` anchor against this fresh read.
+- If any cited region changed since Phase 1, **stop**. Report `STALE TARGET: entry changed since analysis` and tell the user to re-run `/developer-diary maintain` so the amendment plan is rebuilt against current content. Never apply a plan built on stale text.
+
+### 10b — Apply content amendments (every category EXCEPT the "Last updated" stamp)
+
+For each content amendment in the approved plan, perform a single `Edit` call. **Construct `old_string` with enough leading context (typically at least the preceding sentence, or the full table-row anchor) that the match is unique within the file.** If still ambiguous after one sentence of leading context, expand further before invoking `Edit`. Never use `replace_all` unless the token is genuinely unique repo-context-free (rare).
 
 - **Reference rewrites:** exact-string substitution at the cited line. The token itself plus its leading context forms `old_string`; `new_string` substitutes the moved token only.
 - **Outward-link annotations:** match `old_string` against the targeted paragraph tail with leading context per the uniqueness rule above; `new_string` is `<existing tail><space><annotation>`. Same rule for list-item annotations: include the preceding bullet's anchor text.
-- **Structural updates** ("Child nodes" / "Peers" / "Relevant related diary nodes" tables): edit the relevant table row, using the row's Index/Feature-name column as the leading anchor. For "Last updated", prepend a new dated maintenance line above the existing top entry; `old_string` anchors on the heading `## Last updated\n\n` plus the first existing dated line for uniqueness.
+- **Structural updates** ("Child nodes" / "Peers" / "Relevant related diary nodes" tables): edit the relevant table row, using the row's Index/Feature-name column as the leading anchor.
+
+**Mid-sequence failure is a hard stop — there is no transaction.** If any `Edit` in this sub-step fails to match (anchor not found, or not unique), **stop immediately**. Do not continue with the remaining amendments. Do not proceed to 10c. Report `PARTIAL APPLY: amendment <N> of <M> failed`, list exactly which amendments were applied and which were not, and tell the user the recourse is `git restore <entry path>` to return to a clean state, then re-run the pass. Because the "Last updated" stamp (10c) is not yet written, the absence of a new maintenance line is the reliable signal that the pass did not complete.
+
+### 10c — Stamp "Last updated" LAST
+
+Only after every content amendment in 10b has succeeded, prepend a new dated maintenance line above the existing top entry. `old_string` anchors on the heading `## Last updated\n\n` plus the first existing dated line for uniqueness. This is deliberately the final write: the new line's presence means the pass completed; its absence means it did not.
+
+### 10d — Verify schema
 
 After all amendments, re-read the entry and verify every required schema section is still present (the same list as Phase 1). If a section disappeared, report `POST-EDIT STRUCTURAL DEFECT` and stop — do not attempt repair. The user's recourse is `git restore` followed by `developer-diary review`.
 
@@ -251,6 +270,8 @@ Produce a one-paragraph chat summary of what changed, referencing the Phase 8 re
 | Drift detected but discharge is ambiguous | Default to D-orphan rather than guessing. |
 | User rejects the amendment plan | Stop. Do not write. Offer to refine the analysis. |
 | Schema validation fails after apply | Report explicitly. Do not attempt auto-repair (belongs to `developer-diary review`). |
+| Target entry changed during the Phase 9 approval pause | Phase 10a re-read detects it. Report `STALE TARGET` and stop; user re-runs the pass so the plan rebuilds against current content. |
+| An `Edit` fails mid-sequence in Phase 10b | Hard stop — no transaction. Report `PARTIAL APPLY: amendment <N> of <M>`, list applied vs unapplied, recourse is `git restore <entry path>`. The "Last updated" stamp is written last, so its absence proves the pass did not complete. |
 | Required section missing in target entry on load | Report structural defect and stop. |
 | Argument cannot be resolved to a valid path | Report the resolution attempt and stop. |
 | Reference of type requirement/TODO encountered but corresponding config key unset | Silently exclude from inventory; do not warn. The exclusion is reported as `0` in the Phase 8 "Reference inventory" section. |
