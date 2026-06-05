@@ -1,5 +1,5 @@
 ---
-name: debugger-expert
+name: debugger
 description: >
   Invoke for debugger/tracer design, trace semantics, instrumentation architecture,
   event model design and completeness, breakpoint/watchpoint/spy-point formal
