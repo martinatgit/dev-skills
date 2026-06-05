@@ -1,5 +1,5 @@
 ---
-name: formal-methods-expert
+name: formal-methods
 description: >
   Invoke for constraint satisfaction, SAT/SMT, CLP(FD/Z), theorem proving, temporal logic,
   TLA+, model checking, or formal verification questions. Use when selecting solvers or
