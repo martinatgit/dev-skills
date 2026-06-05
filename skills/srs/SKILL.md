@@ -1,5 +1,5 @@
 ---
-name: srs-expert
+name: srs
 description: >
   Invoke for synchronous reactive systems design, specification, implementation, or
   review. Covers tick architecture, signal semantics, synchronous hypothesis, clock
