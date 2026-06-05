@@ -5,7 +5,7 @@ description: Generate a comprehensive, textbook-style technical tutorial for a n
 
 # Create a Technical Tutorial
 
-Create a technical tutorial for $ARGUMENTS 
+Create a technical tutorial for the topic supplied by the user (see Inputs below).
 
 A technical tutorial serves as:
 - A long-term knowledge artifact for developers
@@ -26,6 +26,16 @@ Resolution order (first match wins):
 4. Built-in default `doc/tutorials`.
 
 See [`references/config-schema.md`](references/config-schema.md).
+
+## Inputs
+
+The user provides a topic — a component, feature, or subsystem to document. Acceptable shapes:
+
+- A folder or file path (`src/auth/middleware.ts`).
+- A symbolic name (`event-stream-processor`).
+- A free-text description (`the new tenant-isolation module`).
+
+Optionally, the user may supply a target filename. If absent, derive a kebab-case filename from the topic.
 
 ## Workflow
 
