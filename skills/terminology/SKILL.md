@@ -1,11 +1,11 @@
 ---
 name: terminology
-description: Curates a project's shared technical vocabulary in a single glossary file (default doc/terminology.md). Invoke with `note` to capture or update a term (triggered by /note-term <free-form term>), `get` to retrieve one or more terms in a paste-ready format, `review` to scan the glossary for drift, contradictions, semantic overlap, and easily-inferable entries, or `validate` to sanity-check standards-derived terms against their cited sources (degrades gracefully offline). Use whenever the user types /note-term, says "add a term to the glossary", "define X in this project", "what does X mean here", "fix the terminology", "the glossary is out of date", "review terminology for drift", or otherwise refers to project-specific vocabulary, naming, or definitions — even if phrased casually like "write down what we mean by X". Prefer this skill over ad-hoc edits to doc/terminology.md or to any file named glossary/vocabulary/terms; the skill enforces the table schema, prose framing, and de-duplication logic that hand-edits routinely break. Do not use for engineering decisions, design notes, or session handoff — that is `developer-diary`. Do not use for action items, deferred decisions, or TODOs — that is `update-todos`. Terminology is neither of those; it is the durable shared dictionary that makes both of those legible.
+description: Curates a project's shared technical vocabulary in a single glossary file (default doc/terminology.md). Invoke with `define` to capture or update a term (triggered by /define-term <free-form term>), `get` to retrieve one or more terms in a paste-ready format, `review` to scan the glossary for drift, contradictions, semantic overlap, and easily-inferable entries, or `validate` to sanity-check standards-derived terms against their cited sources (degrades gracefully offline). Use whenever the user types /define-term, says "add a term to the glossary", "define X in this project", "what does X mean here", "fix the terminology", "the glossary is out of date", "review terminology for drift", or otherwise refers to project-specific vocabulary, naming, or definitions — even if phrased casually like "write down what we mean by X". Prefer this skill over ad-hoc edits to doc/terminology.md or to any file named glossary/vocabulary/terms; the skill enforces the table schema, prose framing, and de-duplication logic that hand-edits routinely break. Do not use for engineering decisions, design notes, or session handoff — that is `developer-diary`. Do not use for action items, deferred decisions, or TODOs — that is `update-todos`. Terminology is neither of those; it is the durable shared dictionary that makes both of those legible.
 ---
 
 # Terminology
 
-A single living glossary of the project's technical vocabulary. One markdown file, one table, one heading per term. The skill captures terms (`note`), retrieves them (`get`), audits them (`review`), and optionally sanity-checks standards-derived entries against their cited source (`validate`).
+A single living glossary of the project's technical vocabulary. One markdown file, one table, one heading per term. The skill captures terms (`define`), retrieves them (`get`), audits them (`review`), and optionally sanity-checks standards-derived entries against their cited source (`validate`).
 
 The default target is `doc/terminology.md` relative to the project root. Path is overridable via env var (`TERMINOLOGY_FILE`) and project-local config (`<project_root>/.terminology/config.yaml`). The skill never writes outside the project tree or `~/.config/terminology/`.
 
@@ -32,7 +32,7 @@ Match the register of a senior engineer writing for other engineers. Definitions
 
 ## When to use
 
-- The user typed `/note-term <text>` (or asked you to "note this term", "add this to the glossary", "define X for the project").
+- The user typed `/define-term <text>` (or asked you to "define this term", "add this to the glossary", "use word X for the project").
 - The user asked what a specific term means *in this project* and you should consult the glossary first.
 - The user asked you to retrieve one or more terms for use elsewhere (commit message, spec section, review comment).
 - The user asked you to review, clean up, or audit the glossary; or you noticed concrete drift while doing other work and want to surface it.
@@ -48,16 +48,16 @@ Match the register of a senior engineer writing for other engineers. Definitions
 The skill is invoked as:
 
 ```
-/terminology [note | get | review | validate] [arguments]
+/terminology [define | get | review | validate] [arguments]
 ```
 
 Or, equivalently for the most common path, via the user-facing slash command:
 
 ```
-/note-term <free-form term description>
+/define-term <free-form term description>
 ```
 
-Which the host agent maps to `terminology note <free-form term description>`.
+Which the host agent maps to `terminology define <free-form term description>`.
 
 Mode-specific arguments are documented in the per-mode action files (see [References](#references)).
 
@@ -109,7 +109,7 @@ Every invocation begins with:
 
 After Step 0, follow the action file matching the requested mode (paths relative to this SKILL.md):
 
-- `note`     → [`actions/note-term.md`](actions/note-term.md)
+- `define`     → [`actions/define-term.md`](actions/define-term.md)
 - `get`      → [`actions/get-term.md`](actions/get-term.md)
 - `review`   → [`actions/review-terms.md`](actions/review-terms.md)
 - `validate` → [`actions/validate-terms.md`](actions/validate-terms.md)
@@ -118,7 +118,7 @@ After Step 0, follow the action file matching the requested mode (paths relative
 
 ## Glossary file structure
 
-When `note` is invoked against a non-existent `terminology_file`, the skill creates the file from this exact scaffold. The skill never silently rewrites existing prose — only the table is updated programmatically.
+When `define` is invoked against a non-existent `terminology_file`, the skill creates the file from this exact scaffold. The skill never silently rewrites existing prose — only the table is updated programmatically.
 
 ```md
 # Project Terminology
@@ -131,7 +131,7 @@ When `note` is invoked against a non-existent `terminology_file`, the skill crea
 
 <two to four short paragraphs explaining why a shared vocabulary matters for THIS
 project. The seed prose below is a starting point; tighten and re-voice it during
-the first real `note` invocation so it sounds like the project, not a template.>
+the first real `define` invocation so it sounds like the project, not a template.>
 
 Ordinary English words carry narrow technical meanings in this codebase. Where the
 same word means something different in the wider world, the project meaning wins
@@ -172,16 +172,16 @@ The motivation prose and status block are written once and edited prose-style. T
 
 Mode-specific. Detailed in each action file. Summary:
 
-- `note` — emits a unified-diff-style summary of the row written, plus a single confirmation line. If a load-bearing field was ambiguous, asks exactly one clarifying question first.
+- `define` — emits a unified-diff-style summary of the row written, plus a single confirmation line. If a load-bearing field was ambiguous, asks exactly one clarifying question first.
 - `get` — emits the requested entries in the caller-selected format (`row`, `definition-only`, or `blockquote`). Default is `row`.
 - `review` — emits a structured report with sections: Drift, Contradictions, Overlap, Inferability, Stale-disambiguation. Never writes the file. The user decides what to act on.
 - `validate` — emits a Validation section appended to the `review` report (or standalone if called alone). Each finding is one line: term, source cited, sanity-check result, confidence.
 
 ## Examples
 
-### Example 1 — `/note-term Run is the persisted artefact for one engine execution; abbreviated R; not the verb`
+### Example 1 — `/define-term Run is the persisted artefact for one engine execution; abbreviated R; not the verb`
 
-`note` parses out:
+`define` parses out:
 
 - Term: `Run`
 - Abbreviations: `R`
@@ -193,7 +193,7 @@ If `doc/terminology.md` does not exist, the skill creates it from the scaffold a
 
 ### Example 2 — `get Run, Engine, Snapshot --format blockquote`
 
-The skill emits a single markdown blockquote per term, suitable for pasting into a spec or review comment. Unknown terms produce an explicit "not in glossary" line with a one-line suggestion to `/note-term` them.
+The skill emits a single markdown blockquote per term, suitable for pasting into a spec or review comment. Unknown terms produce an explicit "not in glossary" line with a one-line suggestion to `/define-term` them.
 
 ### Example 3 — `review`
 
@@ -216,7 +216,7 @@ A dispatchable subagent, `terminology-curator`, runs the same workflow in isolat
 
 - [`references/config-schema.md`](references/config-schema.md) — configuration schema, env vars, CLI surface.
 - [`references/file-format.md`](references/file-format.md) — full specification of `terminology_file`: scaffold, table semantics, motivation-prose contract, what `review` is allowed to touch.
-- [`actions/note-term.md`](actions/note-term.md) — `note` procedure.
+- [`actions/define-term.md`](actions/define-term.md) — `define` procedure.
 - [`actions/get-term.md`](actions/get-term.md) — `get` procedure.
 - [`actions/review-terms.md`](actions/review-terms.md) — `review` procedure.
 - [`actions/validate-terms.md`](actions/validate-terms.md) — `validate` procedure.
