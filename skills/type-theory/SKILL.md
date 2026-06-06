@@ -1,5 +1,5 @@
 ---
-name: type-theory-expert
+name: type-theory
 description: >
   Invoke when any formal type system is discussed, designed, or implemented. Covers:
   lambda cube (STLC/System F/Fω/dependent types), type inference (HM, Algorithm W,
