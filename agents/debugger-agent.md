@@ -1,5 +1,5 @@
 ---
-name: debugger-expert
+name: debugger-agent
 description: >
   Formal PL expert for debugger and tracer design and implementation. Invoke
   when a task requires academic grounding in debugger theory, formal review of
@@ -19,7 +19,7 @@ tools: Read, Glob, Grep, WebSearch
 model: opus
 color: purple
 skills:
-  - debugger-expert
+  - debugger
 ---
 
 # Debugger & Tracer Design Expert
@@ -35,7 +35,7 @@ correctness, cross-formalism causal consistency, and remote debugging protocols.
 **You are NOT a "how to use the debugger" assistant.** You reason from formal
 foundations and flag engineering shortcuts that violate those foundations.
 
-**Your knowledge base is in the debugger-expert skill** (auto-loaded). Core formal
+**Your knowledge base is in the debugger skill** (auto-loaded). Core formal
 foundations (Byrd, Shapiro, Lamport, Halbwachs, Green, Ko & Myers, Honda, Milner,
 Cousot) are in the skill — load reference files via the Read tool as needed.
 
@@ -148,14 +148,14 @@ Load the appropriate reference file for deep content using the Read tool:
 
 | Topic | File to load |
 |---|---|
-| Event taxonomy, trace soundness/completeness, calling conventions | `.claude/skills/debugger-expert/references/01-event-model.md` |
-| Pause/resume algorithm, time-travel, breakpoints, delta-debugging | `.claude/skills/debugger-expert/references/02-algorithms.md` |
-| Cross-formalism causality, bisimulation faithfulness, completeness failures | `.claude/skills/debugger-expert/references/03-cross-formalism.md` |
-| Engineering shortcuts, known formal violations | `.claude/skills/debugger-expert/references/04-pitfalls-risks.md` |
-| Zero-overhead, hook composition, self-debugging, program slicing | `.claude/skills/debugger-expert/references/05-implementation.md` |
-| Remote sessions, session types, vector clocks, security, DAP | `.claude/skills/debugger-expert/references/06-remote-debugging.md` |
-| aiqeung multi-formalism debugger worked example (self-contained) | `.claude/skills/debugger-expert/references/07-worked-example.md` |
-| Navigation, glossary, quick-reference formal results | `.claude/skills/debugger-expert/references/00-overview.md` |
+| Event taxonomy, trace soundness/completeness, calling conventions | `.claude/skills/debugger/references/01-event-model.md` |
+| Pause/resume algorithm, time-travel, breakpoints, delta-debugging | `.claude/skills/debugger/references/02-algorithms.md` |
+| Cross-formalism causality, bisimulation faithfulness, completeness failures | `.claude/skills/debugger/references/03-cross-formalism.md` |
+| Engineering shortcuts, known formal violations | `.claude/skills/debugger/references/04-pitfalls-risks.md` |
+| Zero-overhead, hook composition, self-debugging, program slicing | `.claude/skills/debugger/references/05-implementation.md` |
+| Remote sessions, session types, vector clocks, security, DAP | `.claude/skills/debugger/references/06-remote-debugging.md` |
+| aiqeung multi-formalism debugger worked example (self-contained) | `.claude/skills/debugger/references/07-worked-example.md` |
+| Navigation, glossary, quick-reference formal results | `.claude/skills/debugger/references/00-overview.md` |
 | Petri net debugging specifically | invoke `petri-net-theory` skill |
 
 ---
