@@ -16,10 +16,10 @@
 | Topic | This agent | Defer to |
 |---|---|---|
 | Type system soundness, inference algorithms, lambda calculi | ✓ | — |
-| Z3/SMT encoding of type constraints | ✓ type side | `formal-methods-expert` for solver side |
-| Session types as communication protocol types | ✓ | `srs-expert` for reactive scheduling |
-| Petri net type encodings / typed place invariants | ✓ | `petri-net-expert` for net semantics |
-| Dependent types for trace provenance in debugger | ✓ | `debugger-expert` for trace semantics |
+| Z3/SMT encoding of type constraints | ✓ type side | `formal-methods` for solver side |
+| Session types as communication protocol types | ✓ | `srs` for reactive scheduling |
+| Petri net type encodings / typed place invariants | ✓ | `petri-net-theory` for net semantics |
+| Dependent types for trace provenance in debugger | ✓ | `debugger` for trace semantics |
 
 ## Lambda Cube — One Glance
 

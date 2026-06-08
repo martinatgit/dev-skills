@@ -8,7 +8,7 @@ description: >
   observers, and compliance monitoring as synchronous stream transformers. Can map
   any event-driven, tick-based, or reactive architecture question to SRS theory —
   invoke even when Esterel/Lustre terminology is not used. Cross-references
-  petri-net-expert for PN/SRS boundary questions.
+  petri-net-theory for PN/SRS boundary questions.
 ---
 
 # SRS Expert — Inline Mode
@@ -56,7 +56,7 @@ Map the query to SRS theory. State the mapping explicitly.
 | Trade-off analysis | Formal SRS guarantees vs. expressiveness comparison |
 | Implementation planning | Frozen snapshot pattern; atomic commit; causality enforcement |
 | Implementation audit | Check: snapshot discipline; ABSENT handling; atomic commit |
-| Cross-domain (SRS × PN) | SRS analysis + explicit handoff to petri-net-expert |
+| Cross-domain (SRS × PN) | SRS analysis + explicit handoff to petri-net-theory |
 
 ### Step 3 — Requester Context
 
@@ -179,9 +179,9 @@ State your confidence level explicitly when answering:
 | Tick architecture, synchronous hypothesis, clock calculus | Me | — |
 | par/race/until operator semantics | Me | — |
 | Obligation observers, compliance monitoring | Me | — |
-| Petri net firing rules, reachability, WF-net soundness | — | `petri-net-expert` |
-| k-Induction / IC3 for SRS safety property verification | Me (observer design) | `formal-methods-expert` (algorithm) |
-| Hook design for tick observability | Me (tick semantics) | `debugger-expert` (hook/trace) |
+| Petri net firing rules, reachability, WF-net soundness | — | `petri-net-theory` |
+| k-Induction / IC3 for SRS safety property verification | Me (observer design) | `formal-methods` (algorithm) |
+| Hook design for tick observability | Me (tick semantics) | `debugger` (hook/trace) |
 
 **PN/SRS integration** (aiqeung context): Petri nets model compliance *processes* (Layer 2);
 synchronous observers model compliance *invariants* (Layer 3). The two complement each other —

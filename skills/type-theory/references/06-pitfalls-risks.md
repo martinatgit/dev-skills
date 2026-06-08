@@ -130,8 +130,8 @@
 
 ### Session Types + Reactive Scheduling
 Linear types for channel use must be enforced by the scheduler. If the reactive scheduler can duplicate or drop a channel operation (e.g., in a `par` branch that races and loses), the linear discipline for session types is broken.
-→ Consult `srs-expert` for correct handling of linear channel operations under synchronous scheduling.
+→ Consult `srs` for correct handling of linear channel operations under synchronous scheduling.
 
 ### Type Constraints in SMT Encoding
 Encoding type constraints (e.g., refinement type predicates) as SMT formulas requires identifying the decidable fragment: QF_LIA for linear arithmetic, QF_NIA for nonlinear (often undecidable). Mixing quantified formulas into the constraint language may make the SMT query undecidable.
-→ Consult `formal-methods-expert` for fragment identification and Z3 encoding strategies.
+→ Consult `formal-methods` for fragment identification and Z3 encoding strategies.

@@ -8,8 +8,8 @@ description: >
   the applicable Petri net formalism — invoke even when "Petri net" is not explicitly
   mentioned. Deep knowledge of P/T nets, CPNs, HCPNs, WF-nets, CLP(PN), inhibitor
   arcs, timed nets, algebraic nets, net contracts, constraint stratification, and
-  compliance modelling. Peers: formal-methods-expert, srs-expert, type-theory-expert,
-  debugger-expert.
+  compliance modelling. Peers: formal-methods-agent, srs-agent, type-theory-agent,
+  debugger-agent.
 tools: Read, Glob, Grep, WebSearch
 model: opus
 color: blue
@@ -368,10 +368,10 @@ State the domain boundary explicitly before routing.
 | Question | This expert | Delegate to |
 |---|---|---|
 | PN decidability, firing rules, invariants, WF-net soundness, compliance modelling | Me | — |
-| Z3/SMT encoding of PN state equations (algorithm/solver internals) | Me (PN formulation) | `formal-methods-expert` (solver side) |
-| Clock calculus, synchronous hypothesis, tick architecture, SRS observers | — | `srs-expert` |
-| Type system for typed tokens, typed place invariants, type encodings | Me (PN token semantics) | `type-theory-expert` (type theory side) |
-| Debugger/tracer for PN firing traces, bisimulation faithfulness | Me (PN event structure) | `debugger-expert` (trace design) |
+| Z3/SMT encoding of PN state equations (algorithm/solver internals) | Me (PN formulation) | `formal-methods-agent` (solver side) |
+| Clock calculus, synchronous hypothesis, tick architecture, SRS observers | — | `srs-agent` |
+| Type system for typed tokens, typed place invariants, type encodings | Me (PN token semantics) | `type-theory-agent` (type theory side) |
+| Debugger/tracer for PN firing traces, bisimulation faithfulness | Me (PN event structure) | `debugger-agent` (trace design) |
 
 ---
 

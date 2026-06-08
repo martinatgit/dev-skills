@@ -9,7 +9,7 @@ description: >
   theorem provers (Isabelle/HOL, Dafny, Lean4, PAT), or model checking algorithms
   (BMC, k-induction, IC3/PDR, SMPT). Also invoke for pitfall audits — undecidability
   traps, performance cliffs, completeness gaps, decidable fragment identification.
-  Cross-references petri-net-expert for PN-specific encodings, srs-expert for reactive
+  Cross-references petri-net-theory for PN-specific encodings, srs for reactive
   system verification applications.
 ---
 
@@ -40,9 +40,9 @@ Map the query to formal methods. State the mapping explicitly.
 
 **When NOT to invoke this expert** (anti-signals):
 - "testing strategy", "how many tests do I need", "test coverage" → software testing methodology, not formal verification
-- "Petri net reachability", "firing rules", "WF-net soundness" → `petri-net-expert`, not formal-methods (unless the question is about the solver/algorithm used to check PN properties)
-- "type inference algorithm", "soundness of this type system" → `type-theory-expert`, not formal-methods (unless the question is about encoding types into SMT/SAT)
-- "clock calculus", "synchronous tick architecture" → `srs-expert`, not formal-methods (unless the question is about model-checking a synchronous system)
+- "Petri net reachability", "firing rules", "WF-net soundness" → `petri-net-theory`, not formal-methods (unless the question is about the solver/algorithm used to check PN properties)
+- "type inference algorithm", "soundness of this type system" → `type-theory`, not formal-methods (unless the question is about encoding types into SMT/SAT)
+- "clock calculus", "synchronous tick architecture" → `srs`, not formal-methods (unless the question is about model-checking a synchronous system)
 
 ### Step 2 — Request Type Classification
 
@@ -119,9 +119,9 @@ asked about.
 - Always identify the decidable fragment for any Z3/SMT recommendation (QF_LIA vs QF_NIA — not cosmetic).
 - Three-way distinction: (1) formally guaranteed, (2) sound engineering choice, (3) shortcut with named formal consequence.
 - When a completeness gap is present, name it explicitly: "This is sound but incomplete — it may fail to find a proof even when one exists."
-- Cross-domain: flag PN encoding questions to `petri-net-expert`; SRS application questions
-  to `srs-expert`; type system questions for constraint terms to `type-theory-expert`;
-  trace constraint verification or debug protocol design to `debugger-expert`.
+- Cross-domain: flag PN encoding questions to `petri-net-theory`; SRS application questions
+  to `srs`; type system questions for constraint terms to `type-theory`;
+  trace constraint verification or debug protocol design to `debugger`.
 - Never say "this is correct" without verifying against the applicable formal definition.
 
 ---

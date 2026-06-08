@@ -76,7 +76,7 @@ interface ModuleView {
   chooses OCaml semantics to ensure that two contexts loading the same vocabulary module
   share the same predicate identity.
 
-**When to invoke type-theory-expert for this area:**
+**When to invoke type-theory for this area:**
 - Deciding between applicative and generative module semantics for Layer 5
 - Soundness of the view/theory-morphism check (does the mapping preserve all required predicates?)
 - Type-checking module composition (protecting/extending/including and their substructural meanings — see §2 below)
@@ -134,7 +134,7 @@ in linear logic: it marks a resource as "definitely available and unmodified". `
 affine: the resource (module predicate set) may grow but not shrink. `including` drops the
 substructural restriction entirely.
 
-**When to invoke type-theory-expert for this area:**
+**When to invoke type-theory for this area:**
 - Verifying that a proposed composition sequence maintains the monotonicity invariant
 - Deciding which mode to use when combining two vocabularies that share predicate names
 - Formal soundness of the composition algebra (does the mode lattice form a coherent partial order?)
@@ -199,7 +199,7 @@ The **F-algebra** perspective (category theory): each vocabulary defines a funct
 fixed point) is the term syntax itself; the deontic clauses loaded into the solver are one
 specific F-algebra morphism (the "evaluator") from syntax to solver facts.
 
-**When to invoke type-theory-expert for this area:**
+**When to invoke type-theory for this area:**
 - Deciding whether a new vocabulary should expose `assert.*` vs `query.*` builders vs both
 - Proving that the F-algebra composition of two vocabularies is coherent (no shared functor
   constructors with conflicting arities)
@@ -271,7 +271,7 @@ types (□ for stable, universally-available knowledge; ◇ for eventually-deriv
 the modal logic vocabulary becomes the type system for knowledge propagation across reasoning
 contexts.
 
-**When to invoke type-theory-expert for this area:**
+**When to invoke type-theory for this area:**
 - Deciding which modal logic (K/T/S4/S5/D) to use for a given reasoning context
 - Formal analysis of the D-axiom requirement for deontic vocabularies
 - Designing typed staging semantics for multi-context reasoning chains using the Pfenning-Davies correspondence
@@ -334,7 +334,7 @@ the open predicate is abstract from the consumer's perspective until all contrib
 collected and the module is "sealed" at load time. After sealing, the predicate's extension
 is fixed and the existential is eliminated.
 
-**When to invoke type-theory-expert for this area:**
+**When to invoke type-theory for this area:**
 - Formal soundness of the export algebra (is the covariance of `open` predicates sound?)
 - Analysing whether the `protecting/extending/including` lattice is a coherent subtype lattice
 - Designing a type-level check that catches predicate arity mismatches across contributions
@@ -350,7 +350,7 @@ is fixed and the existential is eliminated.
 | `vocab/X.ts` `assert.*` / `query.*` builders | Tagless-final algebras, F-algebras | §3 |
 | `ModalOptions` K/T/S4/S5/D | Modal comonads, Pfenning-Davies correspondence | §4 |
 | `Module` record type, `open`, sealing | Record types, width/depth subtyping, existential types | §5 |
-| Layer 6 vocabulary strata (0–3) | Graded types / stratified type systems | See `06-pitfalls-risks.md` for NAF-stratification; formal-methods-expert for constraint strata |
+| Layer 6 vocabulary strata (0–3) | Graded types / stratified type systems | See `06-pitfalls-risks.md` for NAF-stratification; formal-methods for constraint strata |
 
 ---
 

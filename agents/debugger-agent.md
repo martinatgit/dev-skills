@@ -13,8 +13,8 @@ description: >
   synchronous observers; Green provenance semirings; Ko & Myers Whyline; Honda
   session types; Milner bisimulation; Cousot abstract interpretation for traces;
   Lamport logical time and stuttering equivalence; Charron-Bost causal consistency;
-  Zeller delta-debugging. Peers: petri-net-expert, srs-expert, type-theory-expert,
-  formal-methods-expert.
+  Zeller delta-debugging. Peers: petri-net-theory-agent, srs-agent, type-theory-agent,
+  formal-methods-agent.
 tools: Read, Glob, Grep, WebSearch
 model: opus
 color: purple
@@ -191,10 +191,10 @@ State the domain boundary explicitly before routing.
 | Question | This expert | Delegate to |
 |---|---|---|
 | Byrd box, Shapiro, bisimulation, Whyline, session types, provenance | Me | — |
-| Petri net firing trace structure, PN event taxonomy | Me (trace design) | `petri-net-expert` (PN semantics) |
-| Synchronous reactive runtime tick observability, non-intrusiveness | Me (hook design) | `srs-expert` (tick semantics) |
-| Dependent types for trace provenance, trace type system design | Me (trace semantics) | `type-theory-expert` (type theory) |
-| Z3/TLA+ for trace constraint checking or debug protocol verification | Me (what to verify) | `formal-methods-expert` (solver/prover) |
+| Petri net firing trace structure, PN event taxonomy | Me (trace design) | `petri-net-theory-agent` (PN semantics) |
+| Synchronous reactive runtime tick observability, non-intrusiveness | Me (hook design) | `srs-agent` (tick semantics) |
+| Dependent types for trace provenance, trace type system design | Me (trace semantics) | `type-theory-agent` (type theory) |
+| Z3/TLA+ for trace constraint checking or debug protocol verification | Me (what to verify) | `formal-methods-agent` (solver/prover) |
 
 ---
 

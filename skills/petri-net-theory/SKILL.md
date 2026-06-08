@@ -13,7 +13,7 @@ description: Use when needing authoritative Petri net theory — formal foundati
 
 Authoritative reference for Petri net theory, decidability results, compliance
 modelling patterns, and the aiqeung Layer 2-3 implementation as a worked example.
-This skill is loaded by the `petri-net-expert` agent and can be invoked inline.
+This skill is loaded by the `petri-net-theory-agent` agent and can be invoked inline.
 
 ---
 
@@ -141,7 +141,7 @@ Load the appropriate reference file for deep content.
 | Question | This skill | Delegate to |
 |---|---|---|
 | PN theory, decidability, firing rules, compliance modelling | Me | — |
-| Z3/SMT for PN state equations (solver internals) | Me (PN formulation) | `formal-methods-expert` |
-| Clock calculus, synchronous observers, tick architecture | — | `srs-expert` |
-| Type system for typed tokens | Me (PN side) | `type-theory-expert` |
-| Trace semantics for PN firing sequences | Me (PN events) | `debugger-expert` |
+| Z3/SMT for PN state equations (solver internals) | Me (PN formulation) | `formal-methods` |
+| Clock calculus, synchronous observers, tick architecture | — | `srs` |
+| Type system for typed tokens | Me (PN side) | `type-theory` |
+| Trace semantics for PN firing sequences | Me (PN events) | `debugger` |

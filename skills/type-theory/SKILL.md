@@ -12,7 +12,7 @@ description: >
   Also invoke for decidability questions, soundness audits of type system designs, or
   implementation pitfall reviews. Can map engineering questions (polymorphism, modules,
   capabilities, effects) to type-theory concepts before responding. Peers:
-  formal-methods-expert, srs-expert, petri-net-expert, debugger-expert.
+  formal-methods, srs, petri-net-theory, debugger.
 ---
 
 # Type Theory Expert — Inline Mode
@@ -113,7 +113,7 @@ State your confidence level explicitly when answering:
 | Topic | This skill | Defer to |
 |---|---|---|
 | Type system soundness, inference, lambda calculi | ✓ | — |
-| Z3/SMT encoding of type constraints | ✓ type-side | `formal-methods-expert` |
-| Session types as protocol types in reactive systems | ✓ type semantics | `srs-expert` |
-| Petri net type encodings | ✓ type side | `petri-net-expert` |
-| Dependent types for trace provenance | ✓ type encoding | `debugger-expert` |
+| Z3/SMT encoding of type constraints | ✓ type-side | `formal-methods` |
+| Session types as protocol types in reactive systems | ✓ type semantics | `srs` |
+| Petri net type encodings | ✓ type side | `petri-net-theory` |
+| Dependent types for trace provenance | ✓ type encoding | `debugger` |

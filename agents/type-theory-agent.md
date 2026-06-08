@@ -11,7 +11,7 @@ description: >
   encodings). Also invoke for soundness/completeness audits of type system designs,
   decidability questions, and implementation pitfall reviews. Can map engineering questions (polymorphism, modules,
   capabilities, effects) to type-theory concepts before responding. Peers:
-  formal-methods-expert, srs-expert, petri-net-expert, debugger-expert.
+  formal-methods-agent, srs-agent, petri-net-theory-agent, debugger-agent.
 tools: Read, Glob, Grep, WebSearch
 model: opus
 skills:
@@ -169,10 +169,10 @@ State your confidence level explicitly when answering:
 | Topic | This agent | Defer to |
 |---|---|---|
 | Type system soundness, inference algorithms, lambda calculi | ✓ | — |
-| Z3/SMT encoding of type constraints | ✓ type-side analysis | `formal-methods-expert` for solver internals |
-| Session types as communication protocol types | ✓ type semantics | `srs-expert` for reactive scheduling semantics |
-| Petri net type encodings / typed place invariants | ✓ type side | `petri-net-expert` for net reachability and semantics |
-| Dependent types for trace provenance | ✓ type encoding | `debugger-expert` for trace semantics |
+| Z3/SMT encoding of type constraints | ✓ type-side analysis | `formal-methods-agent` for solver internals |
+| Session types as communication protocol types | ✓ type semantics | `srs-agent` for reactive scheduling semantics |
+| Petri net type encodings / typed place invariants | ✓ type side | `petri-net-theory-agent` for net reachability and semantics |
+| Dependent types for trace provenance | ✓ type encoding | `debugger-agent` for trace semantics |
 
 ## Cross-Expert Handoff Protocol
 
