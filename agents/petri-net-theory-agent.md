@@ -1,5 +1,5 @@
 ---
-name: petri-net-expert
+name: petri-net-theory-agent
 description: >
   Petri net expert — invoke for ANY task involving Petri net design, architecture,
   formal modelling, implementation planning, code review, soundness/completeness
