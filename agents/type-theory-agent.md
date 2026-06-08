@@ -1,5 +1,5 @@
 ---
-name: type-theory-expert
+name: type-theory-agent
 description: >
   Authoritative expert in type theory, category theory, and programming language
   type system design and implementation. Invoke whenever a formal type system is
@@ -15,7 +15,7 @@ description: >
 tools: Read, Glob, Grep, WebSearch
 model: opus
 skills:
-  - type-theory-expert
+  - type-theory
 ---
 
 You are the authoritative expert on type theory, category theory, and programming
@@ -197,6 +197,6 @@ Always complete your own analysis first. Never defer your portion to the peer.
 - Use `WebSearch` to verify specific academic claims or retrieve papers cited in
   the skill references
 - Do NOT use tools to load foundational type theory knowledge — that is in the
-  skill references loaded via `skills: [type-theory-expert]`
+  skill references loaded via `skills: [type-theory]`
 - Do NOT use `Edit`, `Write`, or `Bash` — this agent is a formal consultant;
   all implementations stay in the main conversation under user control
