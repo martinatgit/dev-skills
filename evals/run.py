@@ -117,6 +117,67 @@ def check_shared_reader_drift() -> list[str]:
     return problems
 
 
+def check_agent_skill_pairing() -> list[str]:
+    """Each agents/<name>-agent.md must pair with a skill.
+
+    Naming rule: agent name '<name>-agent' implies a skill 'skills/<name>/'.
+    """
+    problems: list[str] = []
+    agents_dir = REPO_ROOT / "agents"
+    if not agents_dir.is_dir():
+        return problems
+    for md in sorted(agents_dir.glob("*-agent.md")):
+        stem = md.stem  # e.g. 'improve-prompt-agent'
+        if not stem.endswith("-agent"):
+            continue
+        skill_name = stem[:-len("-agent")]
+        skill_dir = SKILLS_DIR / skill_name
+        if not skill_dir.is_dir():
+            problems.append(
+                f"{md}: paired skill 'skills/{skill_name}/' not found"
+            )
+    return problems
+
+
+def check_agent_format_parity() -> list[str]:
+    """Each agents/<name>.md must have a matching .toml; name+description equal."""
+    problems: list[str] = []
+    agents_dir = REPO_ROOT / "agents"
+    if not agents_dir.is_dir():
+        return problems
+    for md in sorted(agents_dir.glob("*.md")):
+        if md.name == "README.md":
+            continue
+        toml_path = md.with_suffix(".toml")
+        if not toml_path.exists():
+            problems.append(f"{md}: missing TOML sibling at {toml_path.name}")
+            continue
+        md_text = md.read_text(encoding="utf-8")
+        try:
+            fm_end = md_text.find("\n---\n", 4)
+            fm = md_text[4:fm_end]
+            md_name_m = re.search(r"^name:\s*(\S+)", fm, re.M)
+            md_desc_m = re.search(r"^description:\s*(.+)", fm, re.M)
+            md_name = md_name_m.group(1) if md_name_m else None
+            md_desc = (md_desc_m.group(1) if md_desc_m else "").strip().lstrip(">|").strip()
+        except Exception as e:
+            problems.append(f"{md}: cannot parse frontmatter ({e})")
+            continue
+        try:
+            import tomllib
+            with open(toml_path, "rb") as f:
+                td = tomllib.load(f)
+        except Exception as e:
+            problems.append(f"{toml_path}: cannot parse TOML ({e})")
+            continue
+        if md_name != td.get("name"):
+            problems.append(
+                f"{md.name} vs {toml_path.name}: name mismatch "
+                f"({md_name!r} vs {td.get('name')!r})"
+            )
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skill", help="Check one skill only (by folder name)")
@@ -136,6 +197,8 @@ def main() -> int:
         all_problems.extend(check_no_placeholders())
         all_problems.extend(check_python_scripts())
         all_problems.extend(check_shared_reader_drift())
+        all_problems.extend(check_agent_skill_pairing())
+        all_problems.extend(check_agent_format_parity())
 
     for skill_md in targets:
         all_problems.extend(check_frontmatter(skill_md))
