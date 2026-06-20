@@ -83,6 +83,56 @@ ls .claude/skills/   .agents/skills/
 
 Each of these should show a directory per skill with a `SKILL.md` inside.
 
+## Installing agents
+
+Agents in this repo ship in two formats targeting different hosts.
+
+### Claude Code
+
+Either via the plugin marketplace (recommended):
+
+```
+/plugin marketplace add martinatgit/dev-skills
+/plugin install dev-skills@martinatgit
+```
+
+This installs all skills and all `agents/*.md` files. Manual alternative:
+
+```sh
+cp dev-skills/agents/*.md ~/.claude/agents/        # user scope
+cp dev-skills/agents/*.md .claude/agents/          # project scope
+```
+
+### Codex CLI
+
+Run the host-detecting installer:
+
+```sh
+python3 scripts/install-agents.py                  # auto-detect, current scope
+python3 scripts/install-agents.py -g               # force user scope
+python3 scripts/install-agents.py --agents improve-prompt-agent  # subset
+python3 scripts/install-agents.py --dry-run        # preview
+```
+
+Or manual:
+
+```sh
+cp dev-skills/agents/*.toml ~/.codex/agents/       # user scope
+cp dev-skills/agents/*.toml .codex/agents/         # project scope
+```
+
+### Cursor, Windsurf, Goose
+
+These hosts do not have a file-based subagent slot today. Skills are the portable alternative; install them via `npx skills add martinatgit/dev-skills` (see [Quick start](#quick-start--multi-agent-install)).
+
+### Verifying the agents install
+
+```sh
+ls ~/.claude/agents/    # Claude Code, user scope
+ls ~/.codex/agents/     # Codex CLI, user scope
+ls .claude/agents/ .codex/agents/  # project scope
+```
+
 ## Shared conventions
 
 A single project-scope file `<project_root>/.agents/dev-skills.yaml` lets one declaration drive every skill's output paths. Create it once; every Pattern-2 skill in this repo reads it at runtime.
