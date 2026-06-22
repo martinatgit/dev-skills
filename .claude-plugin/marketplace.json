@@ -18,7 +18,21 @@
         "./skills/reason-through",
         "./skills/update-todos",
         "./skills/terminology",
-        "./skills/create-tutorial"
+        "./skills/create-tutorial",
+        "./skills/improve-prompt",
+        "./skills/formal-methods",
+        "./skills/debugger",
+        "./skills/srs",
+        "./skills/type-theory",
+        "./skills/petri-net-theory"
+      ],
+      "agents": [
+        "./agents/improve-prompt-agent.md",
+        "./agents/formal-methods-agent.md",
+        "./agents/petri-net-theory-agent.md",
+        "./agents/srs-agent.md",
+        "./agents/type-theory-agent.md",
+        "./agents/debugger-agent.md"
       ]
     }
   ]
