@@ -16,6 +16,21 @@ The tutorial must be **self-contained**, requiring no external context to unders
 
 ---
 
+## When to use
+
+- The user types `/create-tutorial <topic>` or asks for "a tutorial on X".
+- The user wants a durable, self-contained walkthrough of a component, feature, or subsystem — not a chat answer.
+- A new module, API surface, or workflow has just landed and needs textbook-style documentation for future engineers.
+
+## When not to use
+
+- Inline chat explanations (just answer).
+- Short notes or session handoff — use `developer-diary` instead.
+- API reference docs only (the tutorial format is broader; use a tighter reference doc if reference is all you need).
+- Bug fixes or how-to-troubleshoot writeups — those belong elsewhere.
+
+---
+
 ## Configuration
 
 Resolution order (first match wins):
@@ -67,7 +82,7 @@ Write a **textbook-style technical tutorial** with the following structure:
 ### Prerequisites
 - What should the reader already know
 - What must be installed
-- Necessary and available configuration 
+- Necessary and available configuration
 
 ### 2. System Architecture
 - High-level architecture overview
@@ -79,7 +94,7 @@ Write a **textbook-style technical tutorial** with the following structure:
 - Key abstractions and mental models
 - Terminology definitions
 - Important invariants
-- Relevant fix points 
+- Relevant fix points
 
 ### 4. API and Functional Overview
 For each major API / function:
@@ -135,6 +150,28 @@ For each major API / function:
   - code blocks for examples
 - Avoid vague language like “simple” or “easy”
 - Include ASCII or mermaid diagrams where helpful
+
+---
+
+## Examples
+
+### Example 1 — typical case
+
+**User:** "Write a tutorial for the new tenant-isolation middleware."
+
+**Skill output:** A markdown file at `<tutorials_dir>/tenant-isolation-middleware.md` containing all 10 sections (Introduction, Prerequisites, System Architecture, Core Concepts, API and Functional Overview, Worked Examples, Implementation Insights, Comparative Analysis, Integration Guidance, Outlook, Testing Strategy). The tutorial reads as a self-contained textbook chapter; no external context is required to understand it.
+
+### Example 2 — edge case (component without code)
+
+**User:** "Tutorial for the event-stream-processor — I have the spec but no code yet."
+
+**Skill output:** Same structure, but the Implementation Insights and Testing Strategy sections clearly label inferred-from-spec content vs. implemented behavior. The `## Inputs` section captures that the topic is a spec-only target so a future reader understands the labelling.
+
+## Troubleshooting
+
+- **`tutorials_dir` not resolved.** First-use path: run `python3 scripts/configure.py --scope project` and answer the prompt, or set the env var `CREATE_TUTORIAL_TUTORIALS_DIR`, or add `docs_root` to `.agents/dev-skills.yaml`.
+- **Topic too narrow.** If the user says "write a tutorial for `parseDate()`" — that's reference docs territory, not a tutorial. Ask whether they want a reference instead.
+- **File would overwrite an existing tutorial.** The skill overwrites by default. If unwanted, ask the user for a different filename before writing.
 
 ---
 
