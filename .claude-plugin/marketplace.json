@@ -28,6 +28,7 @@
       ],
       "agents": [
         "./agents/improve-prompt-agent.md",
+        "./agents/create-tutorial-agent.md",
         "./agents/formal-methods-agent.md",
         "./agents/petri-net-theory-agent.md",
         "./agents/srs-agent.md",
