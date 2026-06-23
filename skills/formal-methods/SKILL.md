@@ -1,22 +1,51 @@
 ---
 name: formal-methods
 description: >
-  Invoke for constraint satisfaction, SAT/SMT, CLP(FD/Z), theorem proving, temporal logic,
-  TLA+, model checking, or formal verification questions. Use when selecting solvers or
-  algorithms, auditing formal system designs for soundness or completeness, designing
-  propagator engines, reviewing CLP or CP architectures, working with Z3 (CDCL(T),
-  theory solvers, UserPropagator, WASM bindings), TLA+ (TLC, Apalache, TLAPS, Quint),
-  theorem provers (Isabelle/HOL, Dafny, Lean4, PAT), or model checking algorithms
-  (BMC, k-induction, IC3/PDR, SMPT). Also invoke for pitfall audits — undecidability
-  traps, performance cliffs, completeness gaps, decidable fragment identification.
-  Cross-references petri-net-theory for PN-specific encodings, srs for reactive
-  system verification applications.
+  Use whenever the user asks about SAT/SMT/CLP/CP, constraint satisfaction, theorem
+  proving, temporal logic, TLA+, model checking, decidability, or formal verification —
+  even if phrased casually ("is this provable?", "will this terminate?"). Prefer this
+  over generic CS advice for formal-method questions. Covers SAT (CDCL, two-watched
+  literals, 1-UIP, VSIDS), SMT/Z3 (CDCL(T), EUF, Nelson-Oppen, UserPropagator),
+  CLP/CP (propagators, LCG, OR-Tools), TLA+/LTL/CTL (TLC, Apalache, TLAPS, Quint),
+  theorem proving (Isabelle/HOL, Dafny, Lean4, PAT/CSP), and model checking (BMC,
+  k-induction, IC3/PDR, SMPT). Do not use for: software testing strategy (testing
+  methodology, not verification); type-system soundness (use `type-theory`);
+  Petri-net-specific encodings (use `petri-net-theory`); reactive-system clock calculus
+  (use `srs`); trace/debug protocol design (use `debugger`).
 ---
 
 # Formal Methods Expert
 
 *Authoritative reference for constraint satisfaction, SAT/SMT, CLP/CP, theorem proving,
 temporal logic, and model-based verification.*
+
+---
+
+## When to use
+
+- "Will this terminate?" / "Does this loop exit?" → decidability analysis.
+- "Express as a constraint / formula" → SAT/SMT/CLP selection.
+- "Verify property P always holds" → model checking or theorem proving.
+- "CLP", "constraint propagator", "arc consistency" → CLP/CP domain.
+- "Temporal property", "always eventually" → LTL/CTL, TLA+.
+- "State explosion" → BMC, IC3/PDR, or abstraction.
+- "Z3", "SAT solver", "SMT" by name → direct domain.
+- "Need proof, not just testing" → theorem proving or model checking.
+
+## When not to use
+
+- "Testing strategy", "how many tests do I need", "test coverage" → software testing methodology, not formal verification.
+- "Petri net reachability", "firing rules", "WF-net soundness" → `petri-net-theory`, not formal-methods (unless the question is about the underlying solver/algorithm).
+- "Type inference algorithm", "soundness of this type system" → `type-theory`, not formal-methods (unless the question is about encoding types into SMT/SAT).
+- "Clock calculus", "synchronous tick architecture" → `srs`, not formal-methods (unless the question is about model-checking a synchronous system).
+- "Trace semantics", "debug session protocols" → `debugger`, not formal-methods.
+
+## Inputs
+
+A formal-methods question, optionally accompanied by codebase context. The skill operates in two modes:
+
+- **Domain-general:** algorithm theory, decidability questions, solver selection — no project context needed.
+- **Project-specific:** review of an existing implementation; the skill performs the project-onboarding pre-flight (read `CLAUDE.md` / `README.md` / `AGENTS.md`) before answering.
 
 ---
 
@@ -126,6 +155,22 @@ asked about.
 
 ---
 
+## Examples
+
+### Example 1 — theory query
+
+**User:** "Is `QF_NIA` decidable? If I have a formula with `x*y > 5 && y < 10`, will Z3 always terminate?"
+
+**Skill output:** States `QF_NIA` decidability (undecidable in general, even for the quantifier-free fragment with non-linear integer arithmetic per Matiyasevich; Z3 may not terminate). Names the decidable fragment (`QF_LIA`); offers reformulation tactics if applicable. Cites Cook-Levin and the relevant Z3 docs. Confidence: High.
+
+### Example 2 — design-review query
+
+**User:** "Audit this propagator engine — it uses arc consistency only, no LCG. Is that sound?"
+
+**Skill output:** States "sound but exponentially slower on hard instances; arc consistency alone has no explanation clauses, so the solver lacks the conflict-driven backjumping that LCG enables." Names the formal foundation (Schulte & Stuckey 2008; Feydy & Stuckey 2009 for LCG). Flags the completeness gap explicitly. Confidence: High.
+
+---
+
 ## Confidence Calibration
 
 State your confidence level explicitly when answering:
@@ -135,6 +180,12 @@ State your confidence level explicitly when answering:
 | **High** | Answer grounded in curated reference base | Topic covered in skill reference files |
 | **Medium** | Answer requires loading a reference file to verify details | Topic is in scope but specifics need checking |
 | **Low — verify independently** | Beyond curated references; based on training data | Preface: "This topic is outside my curated reference base. The following is engineering judgment — verify independently." |
+
+## Troubleshooting
+
+- **The question is cross-domain (e.g. "verify this Petri-net implementation").** Answer the formal-methods slice and explicitly hand off the domain-specific encoding to the peer skill (`petri-net-theory`, `srs`, `type-theory`, or `debugger`).
+- **The user asks for proof but the property is testing-shaped.** Push back politely: name the formal-vs-empirical distinction; offer both options.
+- **Z3 / TLC / solver-by-name is invoked but the question is actually about the *project's* encoding.** Pre-flight: read the project index doc first, then answer with the project's component names rather than generic solver names.
 
 ## Topic → Reference File Routing
 
