@@ -1,21 +1,62 @@
 ---
 name: type-theory
 description: >
-  Invoke when any formal type system is discussed, designed, or implemented. Covers:
-  lambda cube (STLC/System F/Fω/dependent types), type inference (HM, Algorithm W,
-  bidirectional, constraint-based, algebraic subtyping, unification), advanced type
-  systems (GADTs, substructural/linear/affine, refinement/liquid types, gradual typing,
-  session types, graded types, row types, intersection/union types), category-theoretic
-  foundations (functors, monads, adjunctions, Yoneda lemma, profunctors, F-algebras,
-  monoidal categories), and PL implementation techniques (NbE, elaboration, metavariable
-  solving, coverage checking, HKT encodings, parametricity, type-level programming).
-  Also invoke for decidability questions, soundness audits of type system designs, or
-  implementation pitfall reviews. Can map engineering questions (polymorphism, modules,
-  capabilities, effects) to type-theory concepts before responding. Peers:
-  formal-methods, srs, petri-net-theory, debugger.
+  Authoritative reference for formal type systems. Use whenever the user asks about type
+  inference, type-system design, soundness, decidability, lambda cube (STLC/System F/Fω/
+  dependent), advanced systems (GADTs, linear, refinement, gradual, session, graded,
+  row, intersection/union), or category-theoretic foundations (functors, monads,
+  adjunctions, Yoneda). Use even when phrased casually ("is our type system sound?",
+  "how do I infer types here?"). Do not use for: SAT/SMT solver internals (use
+  `formal-methods`); Petri-net modelling (use `petri-net-theory`); synchronous-system
+  clock calculus (use `srs`); debugger / trace protocol design (use `debugger`).
 ---
 
 # Type Theory Expert — Inline Mode
+
+## When to use
+
+- Any formal type system being discussed, designed, or implemented.
+- Lambda cube (STLC, System F, Fω, dependent types).
+- Type inference (HM, Algorithm W, bidirectional, constraint-based, algebraic subtyping, unification).
+- Advanced systems: GADTs, substructural (linear, affine), refinement / liquid, gradual, session, graded, row, intersection/union.
+- Category-theoretic foundations (functors, monads, adjunctions, Yoneda, profunctors, F-algebras).
+- PL implementation: NbE, elaboration, metavariable solving, coverage, HKT encodings, parametricity, type-level programming.
+- Decidability and soundness audits of type-system designs.
+
+## When not to use
+
+- SAT/SMT solver questions — use `formal-methods`.
+- Petri-net or workflow modelling — use `petri-net-theory`.
+- Synchronous-system clock calculus — use `srs`.
+- Trace / debugger protocol design — use `debugger`.
+
+## Inputs
+
+A type-theory question. The skill operates in three modes:
+
+- **Theory query:** formal definitions, decidability results, complexity proofs.
+- **Design review:** an existing type system to audit for soundness.
+- **Implementation planning:** inference algorithm, metavariable handling, elaboration.
+
+## Examples
+
+### Example 1 — soundness audit
+
+**User:** "Our row-polymorphism system allows record extension with duplicate fields. Sound?"
+
+**Skill output:** States the row-polymorphism soundness condition (no duplicate labels in a closed row); identifies the unsoundness; recommends either the "presence/absence" lattice or row-difference operator. Cites Wand 1987 and Leijen 2005. Confidence: High.
+
+### Example 2 — inference algorithm
+
+**User:** "Should we use HM or bidirectional checking for our DSL with optional type annotations?"
+
+**Skill output:** Comparison table: HM (full inference, no annotations needed, decidable for the let-rank-1 fragment) vs. bidirectional (annotations required at function boundaries, modular, handles higher-rank). Recommends bidirectional given the "optional annotations" requirement. Names the three most likely implementation mistakes (subsumption-vs-coercion confusion, missing instantiation rule, annotation propagation). Confidence: High.
+
+## Troubleshooting
+
+- **The question conflates type-system soundness with runtime safety.** Disentangle: soundness is "well-typed programs don't go wrong"; runtime safety includes resource bounds, memory safety, etc. Different formal lenses.
+- **The user wants to encode types into SAT/SMT.** Hand off the solver-side to `formal-methods` while keeping the type-theory framing here.
+- **Category-theory abstraction without concrete grounding.** Always tie the answer back to a concrete type-system feature; pure CT without grounding rarely helps an implementer.
 
 ## Intake Protocol
 
