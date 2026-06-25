@@ -1,14 +1,14 @@
 ---
 name: srs
 description: >
-  Invoke for synchronous reactive systems design, specification, implementation, or
-  review. Covers tick architecture, signal semantics, synchronous hypothesis, clock
-  calculus, constructive causality, par/race/until operators, three-phase tick
-  (snapshot-compute-commit), ReactiveExpr/Lustre-style operator semantics, obligation
-  observers, and compliance monitoring as synchronous stream transformers. Can map
-  any event-driven, tick-based, or reactive architecture question to SRS theory —
-  invoke even when Esterel/Lustre terminology is not used. Cross-references
-  petri-net-theory for PN/SRS boundary questions.
+  Authoritative reference for synchronous reactive systems. Use whenever the user asks
+  about tick architecture, signal semantics, synchronous hypothesis, clock calculus,
+  constructive causality, par/race/until operators, three-phase ticks, Lustre / Esterel
+  operator semantics, or reactive obligation observers. Use even if "synchronous" or
+  "Lustre" is not mentioned — any tick-based or event-driven architecture maps here.
+  Do not use for: Petri-net reachability (use `petri-net-theory`); type-system soundness
+  (use `type-theory`); SAT/SMT solver internals (use `formal-methods`); trace semantics
+  or debug protocols (use `debugger`).
 ---
 
 # SRS Expert — Inline Mode
@@ -18,6 +18,49 @@ for the aiqeung project. This is not a general reactive programming assistant �
 a formal SRS theory and implementation expert grounded in the academic foundations of
 Esterel, Lustre, Signal, Berry, Halbwachs, and Colaço/Pouzet, with deep knowledge of
 how those foundations are realized in aiqeung Layer 3.
+
+## When to use
+
+- Synchronous reactive systems design, specification, implementation, or review.
+- Topics: tick architecture, signal semantics, synchronous hypothesis, clock calculus, constructive causality, par/race/until operators.
+- Three-phase tick design (snapshot-compute-commit).
+- ReactiveExpr / Lustre-style operator semantics.
+- Obligation observers and compliance monitoring as synchronous stream transformers.
+- Even if Esterel / Lustre terminology is not used — any event-driven or tick-based architecture maps here.
+
+## When not to use
+
+- Petri-net reachability or workflow soundness — use `petri-net-theory`.
+- Type-system soundness or inference — use `type-theory`.
+- SAT/SMT solver questions — use `formal-methods`.
+- Trace semantics or debugger protocol — use `debugger`.
+
+## Inputs
+
+An SRS design question. The skill operates in two modes:
+
+- **Domain-general:** synchronous-hypothesis theory, operator algebra, clock calculus.
+- **Project-specific:** review of an existing tick implementation; pre-flight to read project index docs first.
+
+## Examples
+
+### Example 1 — tick architecture design
+
+**User:** "Should our compliance monitor use a one-phase or three-phase tick?"
+
+**Skill output:** Names the snapshot-compute-commit pattern; analyses whether your monitor has observable intermediate states that would break the synchronous hypothesis under single-phase ticks; recommends three-phase if cross-signal coherence matters. Cites the relevant clock-calculus rules. Confidence: High.
+
+### Example 2 — operator semantics
+
+**User:** "What's the constructive-causality requirement for our `until` operator?"
+
+**Skill output:** States the constructive-causality fixpoint condition; flags non-constructive cycles; gives the rejection rule. Names the three most likely implementation mistakes (instantaneous-feedback loops, signal-not-stable-at-tick-boundary, late commit). Confidence: High.
+
+## Troubleshooting
+
+- **The system is not actually synchronous.** Ask: does every signal have a well-defined value at every tick? If no, the synchronous hypothesis doesn't hold — fall back to `formal-methods` for asynchronous-system reasoning.
+- **The question is about tick-driven implementation in a non-Lustre language.** The theory applies; the patterns may not map cleanly. Name the mismatch explicitly.
+- **Cross-formalism (SRS + PN, SRS + types).** Answer the SRS slice; hand off the domain encoding to the peer skill.
 
 ---
 
