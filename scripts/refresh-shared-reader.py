@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Refresh the per-skill copies of `read_shared_conventions.py` from the template.
+"""Refresh the per-skill copies of the stamped scripts from the template.
 
-The canonical reader lives at `template/scripts/read_shared_conventions.py`.
-This script copies it byte-for-byte into every skill that has a `scripts/`
-directory. Run after editing the template; commit the per-skill copies.
+The canonical copies live at `template/scripts/<name>`. This script copies
+each byte-for-byte into every skill that ships that script. Run after
+editing a template; commit the per-skill copies.
 
 `evals/run.py` enforces drift detection (byte-compare each copy against the
 template), so forgetting to run this will fail the eval.
@@ -20,6 +20,8 @@ import shutil
 import sys
 from pathlib import Path
 
+STAMPED_SCRIPTS = ("read_shared_conventions.py", "find_project_root.py")
+
 
 def find_skill_script_dirs(skills_root: Path):
     return sorted(p for p in skills_root.glob("*/scripts") if p.is_dir())
@@ -33,7 +35,7 @@ Examples:
     python3 scripts/refresh-shared-reader.py --check             # dry-run
 """
     parser = argparse.ArgumentParser(
-        description="Refresh per-skill copies of read_shared_conventions.py "
+        description="Refresh per-skill copies of the stamped scripts "
                     "from the canonical template.",
         epilog=epilog,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -50,25 +52,34 @@ Examples:
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).resolve()
-    template = repo_root / "template" / "scripts" / "read_shared_conventions.py"
     skills_root = repo_root / "skills"
 
-    if not template.exists():
-        print("error: template not found at %s" % template, file=sys.stderr)
-        return 2
-
-    canonical = template.read_bytes()
     drift = []
     copied = []
-    for scripts_dir in find_skill_script_dirs(skills_root):
-        target = scripts_dir / "read_shared_conventions.py"
-        if target.exists() and target.read_bytes() == canonical:
+    missing = []
+    for filename in STAMPED_SCRIPTS:
+        template = repo_root / "template" / "scripts" / filename
+        if not template.exists():
+            missing.append(str(template.relative_to(repo_root)))
             continue
-        if args.check:
-            drift.append(str(target.relative_to(repo_root)))
-        else:
-            shutil.copyfile(str(template), str(target))
-            copied.append(str(target.relative_to(repo_root)))
+        canonical = template.read_bytes()
+        for scripts_dir in find_skill_script_dirs(skills_root):
+            target = scripts_dir / filename
+            if not target.exists():
+                continue  # Skill does not ship this helper; not drift.
+            if target.read_bytes().replace(b"\r\n", b"\n") == \
+                    canonical.replace(b"\r\n", b"\n"):
+                continue
+            if args.check:
+                drift.append(str(target.relative_to(repo_root)))
+            else:
+                shutil.copyfile(str(template), str(target))
+                copied.append(str(target.relative_to(repo_root)))
+
+    if missing:
+        print("error: template(s) not found: %s" % ", ".join(missing),
+              file=sys.stderr)
+        return 2
 
     if args.check:
         if drift:

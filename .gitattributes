@@ -1,0 +1,7 @@
+# Stamped skill scripts are byte-compared by evals/run.py. Normalise line
+# endings so the drift check cannot false-positive on a Windows checkout.
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf

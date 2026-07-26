@@ -151,20 +151,36 @@ def check_python_scripts() -> list[str]:
     return problems
 
 
-def check_shared_reader_drift() -> list[str]:
-    """Byte-compare each skill's stamped reader against the canonical template."""
-    template = REPO_ROOT / "template" / "scripts" / "read_shared_conventions.py"
-    if not template.exists():
-        return []  # Template absent; refresher hasn't been introduced.
-    canonical = template.read_bytes()
-    problems = []
-    for copy in sorted(SKILLS_DIR.glob("*/scripts/read_shared_conventions.py")):
-        if copy.read_bytes() != canonical:
-            problems.append(
-                "%s: differs from canonical template at %s "
-                "(run: python3 scripts/refresh-shared-reader.py)"
-                % (copy.relative_to(REPO_ROOT), template.relative_to(REPO_ROOT))
-            )
+# Scripts stamped identically into every skill that ships them. Drift here is
+# always a bug: these files carry cross-skill invariants (project-root
+# detection, shared-conventions parsing) that must not vary per skill.
+STAMPED_SCRIPTS = (
+    "read_shared_conventions.py",
+    "find_project_root.py",
+)
+
+
+def check_stamped_script_drift() -> list[str]:
+    """Byte-compare each skill's stamped scripts against the canonical template.
+
+    Comparison is newline-insensitive: `.gitattributes` pins these files to LF,
+    but a checkout with core.autocrlf=true will materialise CRLF locally and
+    that is not drift.
+    """
+    problems: list[str] = []
+    for filename in STAMPED_SCRIPTS:
+        template = REPO_ROOT / "template" / "scripts" / filename
+        if not template.exists():
+            continue  # Template absent; refresher hasn't been introduced.
+        canonical = template.read_bytes().replace(b"\r\n", b"\n")
+        for copy in sorted(SKILLS_DIR.glob("*/scripts/" + filename)):
+            if copy.read_bytes().replace(b"\r\n", b"\n") != canonical:
+                problems.append(
+                    "%s: differs from canonical template at %s "
+                    "(run: python3 scripts/refresh-shared-reader.py)"
+                    % (copy.relative_to(REPO_ROOT),
+                       template.relative_to(REPO_ROOT))
+                )
     return problems
 
 
@@ -187,7 +203,7 @@ def main() -> int:
         all_problems.extend(check_registration())
         all_problems.extend(check_no_placeholders())
         all_problems.extend(check_python_scripts())
-        all_problems.extend(check_shared_reader_drift())
+        all_problems.extend(check_stamped_script_drift())
 
     for skill_md in targets:
         all_problems.extend(check_frontmatter(skill_md))

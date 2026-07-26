@@ -13,11 +13,11 @@ import run  # type: ignore  # noqa: E402
 class DriftCheckTest(unittest.TestCase):
     def test_no_drift_today(self):
         """Once Task 2 stamps the per-skill copies, drift must be zero."""
-        problems = run.check_shared_reader_drift()
+        problems = run.check_stamped_script_drift()
         self.assertEqual(problems, [], "\n".join(problems))
 
     def test_drift_check_function_exists(self):
-        self.assertTrue(callable(getattr(run, "check_shared_reader_drift", None)))
+        self.assertTrue(callable(getattr(run, "check_stamped_script_drift", None)))
 
 
 if __name__ == "__main__":

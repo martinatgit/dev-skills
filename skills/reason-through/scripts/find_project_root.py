@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -33,6 +34,7 @@ DEFAULT_MARKERS = (
 
 
 def find_project_root(start: Path, markers: tuple[str, ...]) -> Path | None:
+    """Walk upward from start, returning the first dir containing any marker."""
     home = Path.home().resolve()
     cur = start.resolve()
     while True:
@@ -41,9 +43,9 @@ def find_project_root(start: Path, markers: tuple[str, ...]) -> Path | None:
                 return cur
         parent = cur.parent
         if parent == cur:
-            return None
+            return None  # filesystem root
         if cur == home:
-            return None
+            return None  # do not escape into the home directory
         cur = parent
 
 
