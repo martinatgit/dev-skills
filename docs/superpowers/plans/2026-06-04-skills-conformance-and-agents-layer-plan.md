@@ -775,7 +775,9 @@ for b in sorted(set(bad)):
 print('checked', len(skills), 'skills')
 "
 ```
-Expected: no `DANGLING` lines. (This heuristic catches the `-expert`/`-theory` family, which is where the dangling references clustered. Phase 1 Task 12 re-runs the broader grep after the renames.)
+Expected: exactly one `DANGLING` line — `skills/reason-through/SKILL.md nestjs-expert`. That one is real but **pre-existing and out of scope**: `reason-through`'s "When not to use" list cites `nestjs-expert` as a more-specific skill, and this repo ships no such skill. It is untouched by this task; record it as a follow-up and proceed. No `petri-net-expert` line may remain.
+
+(This heuristic matches any backticked `*-expert`/`*-theory` token, so it catches references to skills outside this repo as well as inside it. Phase 1 Task 12 re-runs the broader grep after the renames.)
 
 - [ ] **Step 7: Run evals and commit**
 
