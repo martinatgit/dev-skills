@@ -86,7 +86,7 @@ Skills that need configuration use **Pattern 2 (lazy, two-scope, Python helpers)
 1. Two scopes:
    - User scope at `~/.config/<skill-name>/config.yaml` (or `$XDG_CONFIG_HOME/<skill-name>/config.yaml`).
    - Project scope at `<project_root>/.<skill-name>/config.yaml`. `<project_root>` is detected by walking upward from the cwd looking for VCS / language-manifest / agent-config markers.
-2. Resolution order (first match wins): env var → project-local → user-level (non-path keys only) → built-in default.
+2. Resolution order (first match wins): env var → project-skill config → `.agents/dev-skills.yaml` → user-skill config → built-in default. Path-typed keys skip the user-skill layer entirely.
 3. **Path-typed keys are project-only.** A user-installed skill must not bleed one project's writes into another. The resolver refuses to read path-typed keys from the user-level layer.
 4. Three Python helpers ship per skill: `scripts/configure.py`, `scripts/resolve_config.py`, `scripts/find_project_root.py`. Stdlib only. Mode `0600` on POSIX.
 5. On first use with a missing path key, the agent prompts the user once, persists the answer to project-local config, and never asks again in that project.
@@ -95,7 +95,7 @@ Skills that need configuration use **Pattern 2 (lazy, two-scope, Python helpers)
 
 ### Consulting the shared conventions file
 
-A skill that has path-typed keys should also read `<project_root>/.agents/dev-skills.yaml` between its project-skill and user-skill resolution layers, so a project-wide `docs_root: <X>` flips that skill's output path without any per-skill configuration.
+The `.agents/dev-skills.yaml` layer in the resolution order above is `<project_root>/.agents/dev-skills.yaml`. A skill that has path-typed keys reads it as the third layer, between project-skill and user-skill, so a project-wide `docs_root: <X>` flips that skill's output path without any per-skill configuration.
 
 Implementation:
 
