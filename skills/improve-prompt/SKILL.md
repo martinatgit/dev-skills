@@ -21,7 +21,8 @@ The skill emits **exactly one** of:
    ("Let me know if you need adjustments."), no markdown fence around the
    prompt unless the target system requires fenced output. This is the
    default emission.
-2. **Up to 3 clarifying questions** via `AskUserQuestion`. Permitted **only**
+2. **Up to 3 clarifying questions**, asked as one consolidated question (see
+   [Asking the user](#asking-the-user)). Permitted **only**
    when the ambiguity gate (workflow step 6) fires. After the user answers,
    restart from step 1.
 
@@ -75,10 +76,18 @@ scaffolding.
 6. **Ambiguity gate.** Fire when any of: a 5-whys field is `unknown` and
    blocks the prompt; the inputs self-conflict; the purpose is genuinely
    multi-class and templates do not compose. On fire: halt, ask **≤3**
-   targeted questions via `AskUserQuestion`, then restart from step 1. The
+   targeted questions (see [Asking the user](#asking-the-user)), then restart from step 1. The
    gate may also fire mid-critique (Stage E) if the checklist surfaces
    structural ambiguity.
 7. **Emit.** The prompt alone, per the output contract above.
+
+## Asking the user
+
+Ask **exactly one** consolidated question covering every uncertain field, with
+2–4 concrete options per field where the choice space is closed. Never ask
+sequential follow-ups. A host that exposes a structured question tool will
+render the options natively; a host that does not will render them as prose.
+Both satisfy this contract — do not name either mechanism.
 
 ## Reference files (load on demand inside the workflow)
 
@@ -105,7 +114,7 @@ they were distilled into the references at skill-creation time).
    spec, edge-case rules (`a == 0`, complex discriminant), and "Output only
    the code". PAL-flavoured per `[PAL-dominates-arithmetic]`.
 3. **`write a blog post`** → ambiguity gate fires; ask up to 3 targeted
-   questions covering audience, length, and tone via `AskUserQuestion`.
+   questions covering audience, length, and tone (see [Asking the user](#asking-the-user)).
 
 ## Cross-references
 

@@ -1,0 +1,36 @@
+# Host adaptation
+
+A skill in this repo must run unmodified on every skills-compatible agent. That
+rules out naming a host's tools in skill prose: `AskUserQuestion` is Claude Code
+only, `Agent`/`subagent_type` is Claude Code only, Codex CLI names the same
+capabilities differently, and Cursor/Windsurf/Goose differ again.
+
+## The rule
+
+Write **intent**, not a tool call.
+
+| Don't write | Write |
+|---|---|
+| "Ask via `AskUserQuestion`." | "Ask the user a single consolidated question covering every uncertain field." |
+| "Dispatch with the `Agent` tool." | "Dispatch N sub-agents in parallel, one per family." |
+| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../../agents/foo-agent.md)." |
+
+If the intent genuinely needs a per-host translation table, put it in the
+skill's `references/host-notes.md` and link it from the workflow step. The
+canonical example is
+[`skills/reason-through/references/host-notes.md`](../skills/reason-through/references/host-notes.md).
+
+## Structured questioning without a host tool
+
+Hosts that expose a structured question tool will use it; hosts that don't fall
+back to plain prose. Both satisfy the same contract, so state the contract:
+
+> Ask **exactly one** consolidated question covering every uncertain field.
+> Offer 2–4 concrete options per field where the choice space is closed. Do not
+> ask sequential follow-ups.
+
+## Referring to agents
+
+Agents ship from `agents/` in this repo and are installed per host by
+`scripts/install-agents.py`. Always link the repo-relative source path, never a
+host's installed location (`~/.claude/agents/`, `~/.codex/agents/`).

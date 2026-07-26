@@ -104,7 +104,8 @@ If during Stages A–C the critique uncovered that the 5-whys answers were
 themselves uncertain (e.g. the success criterion is genuinely undefined, or
 two purpose classes are equally plausible and templates do not compose), the
 ambiguity gate fires **now** rather than at gate time. Halt; ask the user up
-to 3 targeted questions via `AskUserQuestion`; restart the workflow.
+to 3 targeted questions (see [Asking the user](../SKILL.md#asking-the-user));
+restart the workflow.
 
 This is the only legitimate path back to step 1 after critique. It is **not**
 a free reflection loop — it is triggered by a specific structural ambiguity

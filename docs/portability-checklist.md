@@ -36,6 +36,8 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] No Bun, no uv, no `#!/usr/bin/env -S` shebangs, no Node version pins.
 - [ ] No external package installs at any point.
 - [ ] No tool-specific files inside the skill (no `allowed-tools` in frontmatter, no `agents/openai.yaml` unless documented).
+- [ ] No host-specific tool name appears in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent; put any per-host translation in `references/host-notes.md`. See [`docs/host-adaptation.md`](host-adaptation.md).
+- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` appears in skill prose. Link the repo-relative `agents/<name>-agent.md` source instead.
 - [ ] No symlinks.
 
 ## Configuration (if applicable)

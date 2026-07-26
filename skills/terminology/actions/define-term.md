@@ -18,7 +18,7 @@ Extract these five fields from the user's text. Use natural-language understandi
 - **Comments on use** — short, prescriptive, opinionated. May be empty. Capture rules about capitalisation, scope, when to abbreviate, when not to use the term, etc.
 - **Disambiguate from** — a comma-separated list of other glossary terms. Only fill if the user explicitly named a confusable neighbour, or if you can see one in the current glossary that is genuinely easy to mix up. **Do not invent disambiguations.**
 
-If the user's input is so loose that one of `Term` or `Definition` cannot be filled with confidence, ask **exactly one** clarifying question via `AskUserQuestion` covering all uncertain load-bearing fields. Do not ask multiple sequential questions.
+If the user's input is so loose that one of `Term` or `Definition` cannot be filled with confidence, ask **exactly one** clarifying question covering all uncertain load-bearing fields, offering 2–4 concrete options per field. Do not ask multiple sequential questions.
 
 ## 2. Load the existing glossary
 

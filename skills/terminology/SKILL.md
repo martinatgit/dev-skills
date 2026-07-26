@@ -210,7 +210,12 @@ The skill reads `terminology_file`, grep-scans the repo for code symbols and fil
 
 ## Companion agent
 
-A dispatchable subagent, `terminology-curator`, runs the same workflow in isolation — useful when a long-running task wants terminology curation done as a parallel subtask without polluting the main context. The agent file lives at `.claude/agents/terminology-curator.md` in projects that adopt this skill; it delegates to this skill rather than re-implementing it.
+The same workflow can be run by a dispatchable sub-agent, which is useful when a
+long-running task wants terminology curation done as a parallel subtask without
+polluting the main context. The agent delegates to this skill rather than
+re-implementing it — see [`agents/`](../../agents/) for the definitions this
+repository ships and [`docs/install.md`](../../docs/install.md) for how to
+install them.
 
 ## References
 
