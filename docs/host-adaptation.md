@@ -13,7 +13,7 @@ Write **intent**, not a tool call.
 |---|---|
 | "Ask via `AskUserQuestion`." | "Ask the user a single consolidated question covering every uncertain field." |
 | "Dispatch with the `Agent` tool." | "Dispatch N sub-agents in parallel, one per family." |
-| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../../agents/foo-agent.md)." |
+| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../agents/foo-agent.md)." |
 
 If the intent genuinely needs a per-host translation table, put it in the
 skill's `references/host-notes.md` and link it from the workflow step. The
@@ -32,8 +32,10 @@ back to plain prose. Both satisfy the same contract, so state the contract:
 ## Referring to agents
 
 Agents ship from `agents/` in this repo and are installed per host by
-`scripts/install-agents.py`. When pointing readers at where an agent's
-definition lives, link the repo-relative source path, never a host's
+`scripts/install-agents.py` — that script does not exist on this branch yet
+(a later task adds it); until it ships, this describes the intended
+mechanism, not a command you can run today. When pointing readers at where
+an agent's definition lives, link the repo-relative source path, never a host's
 installed location (`~/.claude/agents/`, `~/.codex/agents/`) — that path is
 per-user and doesn't exist until install. Citing a host's install path as an
 illustrative example inside explanatory prose (e.g. why a config key must
