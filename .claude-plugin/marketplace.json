@@ -18,7 +18,15 @@
         "./skills/reason-through",
         "./skills/update-todos",
         "./skills/terminology",
-        "./skills/create-tutorial"
+        "./skills/create-tutorial",
+        "./skills/chargebee",
+        "./skills/debugger-expert",
+        "./skills/formal-methods-expert",
+        "./skills/improve-prompt",
+        "./skills/petri-net-theory",
+        "./skills/sanity-design-analysis",
+        "./skills/srs-expert",
+        "./skills/type-theory-expert"
       ]
     }
   ]

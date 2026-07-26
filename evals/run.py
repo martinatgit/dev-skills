@@ -60,6 +60,57 @@ def check_marketplace() -> list[str]:
     return []
 
 
+def _readme_registered_skills() -> set[str]:
+    """Skill names linked from the README skills table."""
+    readme = REPO_ROOT / "README.md"
+    if not readme.exists():
+        return set()
+    text = readme.read_text(encoding="utf-8")
+    return set(re.findall(r"\]\(skills/([^/)]+)/SKILL\.md\)", text))
+
+
+def _marketplace_registered_skills() -> set[str]:
+    """Skill names listed in every plugins[].skills array."""
+    if not MARKETPLACE.exists():
+        return set()
+    try:
+        data = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()  # check_marketplace() reports the parse error separately.
+    names: set[str] = set()
+    for plugin in data.get("plugins", []):
+        for entry in plugin.get("skills", []):
+            names.add(Path(entry).name)
+    return names
+
+
+def check_registration() -> list[str]:
+    """Every skills/<name>/ must appear in BOTH the README table and marketplace.
+
+    Without this, `/plugin install` (marketplace) and `npx skills add` (whole
+    tree) ship different skill sets. There is deliberately no exemption list:
+    an unregistered skill is always a bug, never a decision.
+    """
+    on_disk = {p.parent.name for p in SKILLS_DIR.glob("*/SKILL.md")}
+    problems: list[str] = []
+
+    for name in sorted(on_disk - _marketplace_registered_skills()):
+        problems.append(
+            f"skills/{name}: not listed in {MARKETPLACE.relative_to(REPO_ROOT)} "
+            f"(plugins[].skills) — /plugin install will not ship it"
+        )
+    for name in sorted(on_disk - _readme_registered_skills()):
+        problems.append(
+            f"skills/{name}: not linked from the README skills table"
+        )
+    for name in sorted(_marketplace_registered_skills() - on_disk):
+        problems.append(
+            f"{MARKETPLACE.relative_to(REPO_ROOT)}: lists './skills/{name}' "
+            f"but no such skill directory exists"
+        )
+    return problems
+
+
 def check_no_placeholders() -> list[str]:
     """Reject {{...}} placeholders in user-facing surfaces only.
 
@@ -133,6 +184,7 @@ def main() -> int:
     else:
         targets = sorted(SKILLS_DIR.glob("*/SKILL.md"))
         all_problems.extend(check_marketplace())
+        all_problems.extend(check_registration())
         all_problems.extend(check_no_placeholders())
         all_problems.extend(check_python_scripts())
         all_problems.extend(check_shared_reader_drift())
