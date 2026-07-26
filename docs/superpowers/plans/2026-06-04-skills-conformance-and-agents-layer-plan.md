@@ -2,19 +2,67 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Bring seven skills to authoring-guide conformance, drop `-expert` suffixes from four skill names, and restructure `agents/` as a first-class multi-host layer with Claude Code Markdown + Codex CLI TOML in parallel.
+**Goal:** Close the drift that makes the library inconsistent for automated installers, bring nine skills to authoring-guide conformance, drop `-expert` suffixes from four skill names, and restructure `agents/` as a first-class multi-host layer with Claude Code Markdown + Codex CLI TOML in parallel.
 
-**Architecture:** Two phases. Phase 1 (PR 1) is mostly mechanical — renames, file moves, new Python scripts, docs. Phase 2 (PR 2) is per-skill content conformance with no further renames. Markdown is the canonical agent format; TOML siblings are generated. The installer is per-host (Claude Code Markdown via plugin marketplace, Codex CLI TOML via `scripts/install-agents.py`).
+**Architecture:** Three phases. Phase 0 (PR 0) is guardrails — register every skill and add the eval checks that make registration, stamped-script, and cross-reference drift impossible to reintroduce; it must land first so Phases 1 and 2 execute against a repo that fails loudly. Phase 1 (PR 1) is mostly mechanical — renames, file moves, new Python scripts, docs. Phase 2 (PR 2) is per-skill content conformance with no further renames. Markdown is the canonical agent format; TOML siblings are generated. The installer is per-host (Claude Code Markdown via plugin marketplace, Codex CLI TOML via `scripts/install-agents.py`).
 
-**Tech Stack:** Python 3 stdlib (no external packages), YAML for skill frontmatter, TOML for Codex agents, pytest for tests, Git for version control.
+**Tech Stack:** Python 3.12 stdlib (no external packages — floor declared in Phase 0 Task 0.4), YAML for skill frontmatter, TOML for Codex agents, `unittest` for tests, Git for version control.
 
 **Spec reference:** [`docs/superpowers/specs/2026-06-04-skills-conformance-and-agents-layer-design.md`](../specs/2026-06-04-skills-conformance-and-agents-layer-design.md).
 
-**Working branch:** `feature/shared-skill-config`. Two PRs to be merged in order.
+**Working branch:** `feature/shared-skill-config`. Three PRs to be merged in order.
+
+---
+
+## Revision note — 2026-07-26 consistency review
+
+A consistency review of `skills/` after the spec was written surfaced five gaps the original plan did not cover. This revision adds **Phase 0** (Tasks 0.1–0.6) and three Phase 2 tasks (39.1–39.3), and amends Tasks 12, 16, 20, 22, 23, 33, and 40.
+
+Tasks added or amended by this revision are numbered with a decimal (`0.1`, `39.2`) so no original task number changes. Every task listed below traces to a review item:
+
+| Item | Problem found | Tasks |
+|---|---|---|
+| 1 | 8 of 14 skills unregistered; `/plugin install` and `npx skills add` ship different sets; `evals/run.py` cannot detect it | 0.1, amended 20 / 22 / 23 |
+| 2 | `find_project_root.py` forked into 4 contents across 7 copies; only its sibling `read_shared_conventions.py` is drift-checked | 0.2 |
+| 3 | `petri-net-expert` referenced 13× inside `skills/` but no such skill exists; README advertises `/note-term`, skill implements `/define-term` | 0.3, amended 12 |
+| 4 | Checklist says `configure.sh` (every skill ships `configure.py`) and states a 3-layer resolution order (it is 5); no Python floor documented; `actions/` `resources/` `schemas/` undocumented | 0.4 |
+| 5 | `AskUserQuestion` invoked unconditionally in 2 skills; 2 skills reference `.claude/` paths that no install route ships | 0.5, amended 26 |
+
+**Decisions taken during this revision** (they change scope vs. the spec — see Self-review "Spec-to-plan delta"):
+
+1. **All 14 skills register, no exemptions.** `chargebee` and `sanity-design-analysis` join the marketplace and README in Task 0.1, and get full conformance passes in Tasks 39.2 and 39.3. The spec's §2.2 non-goal ("registering or restructuring `skills/sanity-design-analysis/`") is superseded: leaving any skill unregistered keeps the two install routes divergent, which is the exact defect Item 1 exists to fix.
+2. **`terminology` gets a paired agent.** `agents/terminology-agent.{md,toml}` ships in Task 39.1, making the "Companion agent" section in `skills/terminology/SKILL.md` describe something the repo actually distributes. Agent count rises from 7 to 8.
+3. **Python floor is 3.12.** Declared in Task 0.4. This is above the syntax already in use (PEP 604 needs 3.10) and makes `tomllib` — which Task 16's parity check imports — a guaranteed stdlib member rather than a silent 3.11+ assumption.
 
 ---
 
 ## File Structure
+
+### New files (Phase 0)
+
+| Path | Purpose |
+|---|---|
+| `.gitattributes` | `*.py text eol=lf` — without it the byte-compare drift checks false-positive on Windows checkouts (see Task 0.2). |
+| `tests/test_registration_check.py` | Unit tests for `check_registration()`. |
+| `tests/test_stamped_script_drift.py` | Unit tests for the generalised stamped-script drift check. |
+| `docs/host-adaptation.md` | Repo-wide rule for host-specific tool names; the pattern `reason-through` already uses locally. |
+
+### Modified files (Phase 0)
+
+| Path | Change |
+|---|---|
+| `README.md` | 8 new skill rows (all 14 skills registered, pre-rename names). |
+| `.claude-plugin/marketplace.json` | 8 new skill paths (14 total, pre-rename names). |
+| `evals/run.py` | `check_registration()`; `check_shared_reader_drift` generalised to `check_stamped_script_drift`. |
+| `scripts/refresh-shared-reader.py` | Stamps both canonical scripts, not just the reader. |
+| `skills/{developer-diary,update-todos,terminology,reason-through}/scripts/find_project_root.py` | Reconciled to the canonical template. |
+| `docs/portability-checklist.md` | `configure.sh`→`configure.py`; correct 5-layer resolution order; directory taxonomy; Python floor. |
+| `docs/authoring-guide.md` | `root_dir` naming rule reconciled with the checklist; Python floor; directory taxonomy; YAML house style. |
+| `CONTRIBUTING.md` | Python 3.12 floor. |
+| `skills/{debugger-expert,srs-expert,type-theory-expert,formal-methods-expert,petri-net-theory}/**` | `petri-net-expert` → `petri-net-theory` (dangling skill cross-refs). |
+| `skills/terminology/{SKILL.md,actions/get-term.md}` | `/note-term` → `/define-term`; host-neutral companion-agent prose. |
+| `skills/improve-prompt/SKILL.md` | `AskUserQuestion` → host-neutral intent language. |
+| `skills/terminology/actions/define-term.md` | `AskUserQuestion` → host-neutral intent language. |
 
 ### New files (Phase 1)
 
@@ -50,15 +98,1178 @@
 
 | Path | Change |
 |---|---|
-| `README.md` | New "Agents in this repository" section; 6 new skill rows. |
+| `README.md` | New "Agents in this repository" section; 4 renamed skill rows (rows themselves added in Phase 0 Task 0.1). |
 | `docs/install.md` | New "Installing agents" subsection. |
-| `.claude-plugin/marketplace.json` | New `agents:` array; 6 new skill paths; 4 renamed skill paths. |
-| `evals/run.py` | Two new checks (pairing + parity). |
+| `.claude-plugin/marketplace.json` | New `agents:` array; 4 renamed skill paths (paths themselves added in Phase 0 Task 0.1). |
+| `evals/run.py` | Two new checks (pairing + parity), alongside `check_registration` from Phase 0. |
 | `skills/create-tutorial/SKILL.md` | Strip `$ARGUMENTS`; replace with portable Inputs reference. |
 
 ### Modified files (Phase 2)
 
-Seven skill `SKILL.md` files (one per skill) plus seven `evals/fixtures/<name>/prompts.json` files plus the new `agents/create-tutorial-agent.{md,toml}` pair.
+Nine skill `SKILL.md` files (one per skill: the original seven plus `chargebee` and `sanity-design-analysis`), nine `evals/fixtures/<name>/prompts.json` files, and two new agent pairs — `agents/create-tutorial-agent.{md,toml}` and `agents/terminology-agent.{md,toml}`.
+
+---
+
+## Phase 0 — Guardrails and Hygiene
+
+Each task lands as one commit. The phase ends with a single PR (PR 0) opened against `main` (or against `feature/shared-skill-config` if the parallel sprint hasn't merged).
+
+**Why this phase runs first.** Every task here either adds a check that makes a class of drift impossible, or fixes drift that already shipped. Landing them before the renames means the rename churn in Phase 1 executes against a repo that fails loudly on a missed reference, a forgotten registration, or a forked stamped script — instead of silently absorbing them the way the current repo did.
+
+**Ordering constraint.** Task 0.1 must register skills *and* add the enforcing check in the same commit. Splitting them leaves `evals/run.py` red across every intervening task, which would break the `Expected: OK` verification step in each one.
+
+**Naming note.** Phase 0 runs before the Phase 1 renames, so it uses the *current* skill folder names (`formal-methods-expert`, `debugger-expert`, `srs-expert`, `type-theory-expert`). Phase 1 Task 12 updates the entries Phase 0 creates.
+
+### Task 0.1: Register all 14 skills and enforce it in `evals/run.py`
+
+Addresses review item 1. Today `README.md` and `.claude-plugin/marketplace.json` list 6 skills while `skills/` contains 14, so `/plugin install dev-skills@martinatgit` ships 6 and `npx skills add martinatgit/dev-skills` — which copies the whole tree — ships 14. The two documented install routes deliver different libraries. `check_marketplace()` cannot catch this: it only asserts the JSON parses.
+
+**Files:**
+- Modify: `evals/run.py`
+- Modify: `README.md`
+- Modify: `.claude-plugin/marketplace.json`
+- Create: `tests/test_registration_check.py`
+
+- [ ] **Step 1: Add `check_registration()` to `evals/run.py`**
+
+Edit `evals/run.py`. After `check_marketplace()`, add:
+
+```python
+def _readme_registered_skills() -> set[str]:
+    """Skill names linked from the README skills table."""
+    readme = REPO_ROOT / "README.md"
+    if not readme.exists():
+        return set()
+    text = readme.read_text(encoding="utf-8")
+    return set(re.findall(r"\]\(skills/([^/)]+)/SKILL\.md\)", text))
+
+
+def _marketplace_registered_skills() -> set[str]:
+    """Skill names listed in every plugins[].skills array."""
+    if not MARKETPLACE.exists():
+        return set()
+    try:
+        data = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()  # check_marketplace() reports the parse error separately.
+    names: set[str] = set()
+    for plugin in data.get("plugins", []):
+        for entry in plugin.get("skills", []):
+            names.add(Path(entry).name)
+    return names
+
+
+def check_registration() -> list[str]:
+    """Every skills/<name>/ must appear in BOTH the README table and marketplace.
+
+    Without this, `/plugin install` (marketplace) and `npx skills add` (whole
+    tree) ship different skill sets. There is deliberately no exemption list:
+    an unregistered skill is always a bug, never a decision.
+    """
+    on_disk = {p.parent.name for p in SKILLS_DIR.glob("*/SKILL.md")}
+    problems: list[str] = []
+
+    for name in sorted(on_disk - _marketplace_registered_skills()):
+        problems.append(
+            f"skills/{name}: not listed in {MARKETPLACE.relative_to(REPO_ROOT)} "
+            f"(plugins[].skills) — /plugin install will not ship it"
+        )
+    for name in sorted(on_disk - _readme_registered_skills()):
+        problems.append(
+            f"skills/{name}: not linked from the README skills table"
+        )
+    for name in sorted(_marketplace_registered_skills() - on_disk):
+        problems.append(
+            f"{MARKETPLACE.relative_to(REPO_ROOT)}: lists './skills/{name}' "
+            f"but no such skill directory exists"
+        )
+    return problems
+```
+
+Then in `main()`, inside the `else:` branch (the repo-wide checks), add after `check_marketplace()`:
+
+```python
+        all_problems.extend(check_registration())
+```
+
+- [ ] **Step 2: Run it and confirm it reports the 8 unregistered skills**
+
+Run: `python3 evals/run.py`
+
+Expected: `FAIL` listing 16 problems — 8 skills missing from the marketplace and the same 8 missing from the README:
+
+```
+chargebee, debugger-expert, formal-methods-expert, improve-prompt,
+petri-net-theory, sanity-design-analysis, srs-expert, type-theory-expert
+```
+
+If the list differs from those 8, stop and reconcile before continuing — the check is reporting real state, not a fixture.
+
+- [ ] **Step 3: Add the 8 missing rows to the README skills table**
+
+Edit `README.md`. After the `create-tutorial` row in the skills table, insert (alphabetical):
+
+```markdown
+| [`chargebee`](skills/chargebee/SKILL.md) | Chargebee billing and subscription development guidance: Product Catalog 1.0/2.0, hosted checkout and Chargebee.js, payment intents (3DS/SCA), webhooks and event ordering, dunning, entitlements. Loads detailed references on demand. |
+| [`debugger-expert`](skills/debugger-expert/SKILL.md) | Authoritative reference for debugger and tracer design: trace semantics, event-model design, breakpoint/spy-point semantics, cross-formalism coherence, time-travel replay, remote debug protocols. |
+| [`formal-methods-expert`](skills/formal-methods-expert/SKILL.md) | Authoritative reference for SAT/SMT, CLP/CP, theorem proving, temporal logic, TLA+, and model checking. Use for algorithm selection, decidability analysis, propagator engine review, formal-system audits. |
+| [`improve-prompt`](skills/improve-prompt/SKILL.md) | Transform rough user-intent text into one polished, paste-ready LLM prompt. Evidence-guarded against the well-replicated failure modes of prompt engineering (CoT misuse, persona-on-factual, lost-in-middle, unwrapped untrusted input). |
+| [`petri-net-theory`](skills/petri-net-theory/SKILL.md) | Authoritative reference for Petri net theory: formal foundations, decidability, compliance modelling, P/T, CPN, and WF-net patterns. |
+| [`sanity-design-analysis`](skills/sanity-design-analysis/SKILL.md) | Analyse a software design for simplicity and maintainability. Produces a structured report covering mental model, assumptions, narrative, rules, happy/error paths, conflicts, diagrams, and a build-from-scratch tutorial. |
+| [`srs-expert`](skills/srs-expert/SKILL.md) | Authoritative reference for synchronous reactive systems: tick architecture, signal semantics, clock calculus, constructive causality. |
+| [`type-theory-expert`](skills/type-theory-expert/SKILL.md) | Authoritative reference for formal type systems: lambda cube, type inference (HM, bidirectional), advanced systems (GADTs, refinement, gradual, session, graded), category-theoretic foundations. |
+```
+
+(Phase 1 Task 20 rewrites the four `-expert` rows to their renamed paths. Registering them under the current names first is deliberate: it means the check is live *before* the rename churn, so a missed rename fails the eval instead of silently unregistering a skill.)
+
+- [ ] **Step 4: Add the 8 missing paths to the marketplace**
+
+Edit `.claude-plugin/marketplace.json`. Replace the `plugins[0].skills` array with:
+
+```json
+      "skills": [
+        "./skills/example-skill",
+        "./skills/developer-diary",
+        "./skills/reason-through",
+        "./skills/update-todos",
+        "./skills/terminology",
+        "./skills/create-tutorial",
+        "./skills/chargebee",
+        "./skills/debugger-expert",
+        "./skills/formal-methods-expert",
+        "./skills/improve-prompt",
+        "./skills/petri-net-theory",
+        "./skills/sanity-design-analysis",
+        "./skills/srs-expert",
+        "./skills/type-theory-expert"
+      ]
+```
+
+- [ ] **Step 5: Write the regression test**
+
+Create `tests/test_registration_check.py`:
+
+```python
+"""Tests for check_registration() in evals/run.py."""
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+RUN = REPO_ROOT / "evals" / "run.py"
+
+
+def _skeleton(tmp: Path) -> Path:
+    """Copy the parts of the repo evals/run.py reads."""
+    for sub in ("evals", "skills", "template"):
+        if (REPO_ROOT / sub).is_dir():
+            shutil.copytree(REPO_ROOT / sub, tmp / sub)
+    (tmp / ".claude-plugin").mkdir()
+    shutil.copyfile(
+        REPO_ROOT / ".claude-plugin" / "marketplace.json",
+        tmp / ".claude-plugin" / "marketplace.json",
+    )
+    shutil.copyfile(REPO_ROOT / "README.md", tmp / "README.md")
+    return tmp
+
+
+def _run(cwd: Path):
+    return subprocess.run(
+        [sys.executable, str(cwd / "evals" / "run.py")],
+        capture_output=True, text=True, cwd=cwd,
+    )
+
+
+class RegistrationCheckTests(unittest.TestCase):
+    def test_repo_is_fully_registered(self):
+        """Every skill on disk is in both the README and the marketplace."""
+        result = subprocess.run(
+            [sys.executable, str(RUN)], capture_output=True, text=True,
+            cwd=REPO_ROOT,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_detects_skill_missing_from_marketplace(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = _skeleton(Path(td))
+            mp = root / ".claude-plugin" / "marketplace.json"
+            data = json.loads(mp.read_text(encoding="utf-8"))
+            dropped = data["plugins"][0]["skills"].pop()
+            mp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            result = _run(root)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(Path(dropped).name, result.stdout)
+
+    def test_detects_skill_missing_from_readme(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = _skeleton(Path(td))
+            readme = root / "README.md"
+            text = readme.read_text(encoding="utf-8")
+            readme.write_text(
+                text.replace("](skills/terminology/SKILL.md)", "](#)"),
+                encoding="utf-8",
+            )
+            result = _run(root)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("terminology", result.stdout)
+
+    def test_detects_marketplace_entry_without_directory(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = _skeleton(Path(td))
+            mp = root / ".claude-plugin" / "marketplace.json"
+            data = json.loads(mp.read_text(encoding="utf-8"))
+            data["plugins"][0]["skills"].append("./skills/does-not-exist")
+            mp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            result = _run(root)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("does-not-exist", result.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+- [ ] **Step 6: Verify green**
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+Run: `python3 -m json.tool .claude-plugin/marketplace.json > /dev/null && echo VALID`
+Expected: `VALID`.
+
+Run: `python3 -m unittest tests.test_registration_check -v`
+Expected: 4 tests, all pass.
+
+Run:
+```bash
+python3 -c "
+import json, pathlib
+d = json.load(open('.claude-plugin/marketplace.json'))
+mp = {pathlib.Path(s).name for s in d['plugins'][0]['skills']}
+disk = {p.parent.name for p in pathlib.Path('skills').glob('*/SKILL.md')}
+assert mp == disk, f'mismatch: {mp ^ disk}'
+print('registered:', len(mp))
+"
+```
+Expected: `registered: 14`.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add evals/run.py README.md .claude-plugin/marketplace.json tests/test_registration_check.py
+git commit -m "$(cat <<'EOF'
+feat(evals): register all 14 skills and enforce registration
+
+skills/ held 14 skills but README.md and marketplace.json listed 6, so
+/plugin install shipped 6 while `npx skills add` (which copies the whole
+tree) shipped 14 — the two documented install routes delivered different
+libraries.
+
+Register the 8 missing skills and add check_registration() so the gap
+cannot reopen. The check is symmetric: it also fails on a marketplace
+entry with no matching directory, which makes the Phase 1 renames safe.
+
+No exemption list by design — an unregistered skill is always a bug.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 0.2: Drift-check `find_project_root.py` and reconcile its forks
+
+Addresses review item 2. `read_shared_conventions.py` is byte-identical across all 6 skills that ship it, because `check_shared_reader_drift()` enforces it. Its sibling `find_project_root.py` has no such check and has forked into **4 distinct contents across 7 copies**:
+
+| Content (newline-normalised) | Lines | Copies |
+|---|---|---|
+| canonical | 76 | `template/`, `create-tutorial`, `example-skill` |
+| fork A | 71 | `developer-diary`, `update-todos` |
+| fork B | 71 | `terminology` |
+| fork C | 74 | `reason-through` |
+
+Project-root detection is the foundation of the "path-typed keys are project-only" guarantee. Four implementations means four possible answers to "which project am I in".
+
+**Line-ending hazard.** `skills/example-skill/scripts/find_project_root.py` is content-identical to the template but stored **LF** where the template is **CRLF**, so a naive `read_bytes()` comparison flags it as drift. The existing reader check passes only because all 7 of its copies happen to share one line ending in the current working tree — it is one `git config core.autocrlf` change away from failing. Add `.gitattributes` before generalising the check.
+
+**Files:**
+- Create: `.gitattributes`
+- Modify: `evals/run.py`
+- Modify: `scripts/refresh-shared-reader.py`
+- Modify: `skills/{developer-diary,update-todos,terminology,reason-through}/scripts/find_project_root.py`
+- Create: `tests/test_stamped_script_drift.py`
+
+- [ ] **Step 1: Pin line endings**
+
+Create `.gitattributes`:
+
+```
+# Stamped skill scripts are byte-compared by evals/run.py. Normalise line
+# endings so the drift check cannot false-positive on a Windows checkout.
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+```
+
+Then renormalise the working tree:
+
+```bash
+git add --renormalize .
+git status --short | head -20
+```
+
+Expected: modified entries for files that were stored CRLF. Review that the diff is line-endings-only:
+
+```bash
+git diff --cached --stat | tail -3
+git diff --cached --ignore-all-space --stat | tail -3
+```
+Expected: the first shows changed files; the second shows no content changes (or only the files you are about to edit in Step 3).
+
+- [ ] **Step 2: Confirm the forks against the normalised tree**
+
+Run:
+```bash
+python3 -c "
+import pathlib, hashlib
+def h(p):
+    b = pathlib.Path(p).read_bytes().replace(b'\r\n', b'\n')
+    return hashlib.md5(b).hexdigest()[:8], len(b.splitlines())
+files = ['template/scripts/find_project_root.py'] + sorted(
+    str(p) for p in pathlib.Path('skills').glob('*/scripts/find_project_root.py'))
+for f in files:
+    print('%s %3d  %s' % (*h(f), f))
+"
+```
+Expected: 7 lines. The `template/` hash must appear for `create-tutorial` and `example-skill`; the other four skills show three other hashes.
+
+- [ ] **Step 3: Stamp the canonical file into the four forked skills**
+
+The canonical version is `template/scripts/find_project_root.py`. The forks are cosmetic-plus (dropped `import os`, quoted return annotation, `%`-formatting instead of f-strings, trimmed argparse help) but not behaviourally identical in their error text, so replace rather than merge:
+
+```bash
+for s in developer-diary update-todos terminology reason-through; do
+  cp template/scripts/find_project_root.py "skills/$s/scripts/find_project_root.py"
+  echo "stamped $s"
+done
+```
+
+Then confirm each still runs standalone (every skill's `configure.py` shells out to it):
+
+```bash
+for s in create-tutorial developer-diary example-skill reason-through terminology update-todos; do
+  printf '%-18s ' "$s"
+  python3 "skills/$s/scripts/find_project_root.py" --from . || echo "FAILED"
+done
+```
+Expected: 6 lines, each printing the repo root path.
+
+- [ ] **Step 4: Generalise the drift check in `evals/run.py`**
+
+Replace `check_shared_reader_drift()` with:
+
+```python
+# Scripts stamped identically into every skill that ships them. Drift here is
+# always a bug: these files carry cross-skill invariants (project-root
+# detection, shared-conventions parsing) that must not vary per skill.
+STAMPED_SCRIPTS = (
+    "read_shared_conventions.py",
+    "find_project_root.py",
+)
+
+
+def check_stamped_script_drift() -> list[str]:
+    """Byte-compare each skill's stamped scripts against the canonical template.
+
+    Comparison is newline-insensitive: `.gitattributes` pins these files to LF,
+    but a checkout with core.autocrlf=true will materialise CRLF locally and
+    that is not drift.
+    """
+    problems: list[str] = []
+    for filename in STAMPED_SCRIPTS:
+        template = REPO_ROOT / "template" / "scripts" / filename
+        if not template.exists():
+            continue  # Template absent; refresher hasn't been introduced.
+        canonical = template.read_bytes().replace(b"\r\n", b"\n")
+        for copy in sorted(SKILLS_DIR.glob("*/scripts/" + filename)):
+            if copy.read_bytes().replace(b"\r\n", b"\n") != canonical:
+                problems.append(
+                    "%s: differs from canonical template at %s "
+                    "(run: python3 scripts/refresh-shared-reader.py)"
+                    % (copy.relative_to(REPO_ROOT),
+                       template.relative_to(REPO_ROOT))
+                )
+    return problems
+```
+
+In `main()`, replace the `check_shared_reader_drift()` call with `check_stamped_script_drift()`.
+
+- [ ] **Step 5: Teach the refresher to stamp both files**
+
+Edit `scripts/refresh-shared-reader.py`. Add the module-level tuple after the imports:
+
+```python
+STAMPED_SCRIPTS = ("read_shared_conventions.py", "find_project_root.py")
+```
+
+Replace the body of `main()` between `canonical = template.read_bytes()` and the `if args.check:` reporting block with a loop over `STAMPED_SCRIPTS`:
+
+```python
+    drift = []
+    copied = []
+    missing = []
+    for filename in STAMPED_SCRIPTS:
+        template = repo_root / "template" / "scripts" / filename
+        if not template.exists():
+            missing.append(str(template.relative_to(repo_root)))
+            continue
+        canonical = template.read_bytes()
+        for scripts_dir in find_skill_script_dirs(skills_root):
+            target = scripts_dir / filename
+            if not target.exists():
+                continue  # Skill does not ship this helper; not drift.
+            if target.read_bytes().replace(b"\r\n", b"\n") == \
+                    canonical.replace(b"\r\n", b"\n"):
+                continue
+            if args.check:
+                drift.append(str(target.relative_to(repo_root)))
+            else:
+                shutil.copyfile(str(template), str(target))
+                copied.append(str(target.relative_to(repo_root)))
+
+    if missing:
+        print("error: template(s) not found: %s" % ", ".join(missing),
+              file=sys.stderr)
+        return 2
+```
+
+Delete the now-dead `template` / `canonical` assignments and the `if not template.exists()` guard above the loop. Update the module docstring's first line to:
+
+```
+"""Refresh the per-skill copies of the stamped scripts from the template."""
+```
+
+Note the `--check` mode is newline-insensitive but the write path copies the template verbatim; with `.gitattributes` in place both agree.
+
+- [ ] **Step 6: Write the regression test**
+
+Create `tests/test_stamped_script_drift.py`:
+
+```python
+"""Tests for the generalised stamped-script drift check."""
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+STAMPED = ("read_shared_conventions.py", "find_project_root.py")
+
+
+def _skeleton(tmp: Path) -> Path:
+    for sub in ("evals", "skills", "template"):
+        shutil.copytree(REPO_ROOT / sub, tmp / sub)
+    (tmp / ".claude-plugin").mkdir()
+    shutil.copyfile(
+        REPO_ROOT / ".claude-plugin" / "marketplace.json",
+        tmp / ".claude-plugin" / "marketplace.json",
+    )
+    shutil.copyfile(REPO_ROOT / "README.md", tmp / "README.md")
+    return tmp
+
+
+def _run(cwd: Path):
+    return subprocess.run(
+        [sys.executable, str(cwd / "evals" / "run.py")],
+        capture_output=True, text=True, cwd=cwd,
+    )
+
+
+class StampedScriptDriftTests(unittest.TestCase):
+    def test_repo_has_no_drift(self):
+        result = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "evals" / "run.py")],
+            capture_output=True, text=True, cwd=REPO_ROOT,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_every_stamped_script_is_identical_across_skills(self):
+        """The invariant itself, independent of evals/run.py."""
+        for filename in STAMPED:
+            canonical = (REPO_ROOT / "template" / "scripts" / filename)
+            expected = canonical.read_bytes().replace(b"\r\n", b"\n")
+            copies = sorted(
+                (REPO_ROOT / "skills").glob("*/scripts/" + filename))
+            self.assertGreater(len(copies), 0, f"no copies of {filename}")
+            for copy in copies:
+                self.assertEqual(
+                    copy.read_bytes().replace(b"\r\n", b"\n"), expected,
+                    f"{copy} differs from {canonical}",
+                )
+
+    def test_detects_forked_find_project_root(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = _skeleton(Path(td))
+            target = root / "skills" / "terminology" / "scripts" / \
+                "find_project_root.py"
+            target.write_text(
+                target.read_text(encoding="utf-8") + "\n# local fork\n",
+                encoding="utf-8",
+            )
+            result = _run(root)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("find_project_root.py", result.stdout)
+
+    def test_crlf_copy_is_not_drift(self):
+        """A CRLF checkout must not be reported as drift."""
+        with tempfile.TemporaryDirectory() as td:
+            root = _skeleton(Path(td))
+            target = root / "skills" / "example-skill" / "scripts" / \
+                "find_project_root.py"
+            data = target.read_bytes().replace(b"\r\n", b"\n")
+            target.write_bytes(data.replace(b"\n", b"\r\n"))
+            result = _run(root)
+            self.assertEqual(result.returncode, 0,
+                             result.stdout + result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+- [ ] **Step 7: Verify green**
+
+Run: `python3 scripts/refresh-shared-reader.py --check`
+Expected: `OK -- no drift.`
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+Run: `python3 -m unittest tests.test_stamped_script_drift tests.test_refresh_shared_reader tests.test_drift_check -v`
+Expected: all pass. If `tests/test_drift_check.py` or `tests/test_refresh_shared_reader.py` reference `check_shared_reader_drift` by name, update those references to `check_stamped_script_drift` — that rename is part of this task.
+
+Run: `python3 -m unittest discover tests/ 2>&1 | tail -3`
+Expected: `OK`.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add -A
+git commit -m "$(cat <<'EOF'
+fix(skills): drift-check find_project_root.py and reconcile its forks
+
+read_shared_conventions.py was byte-identical across all 6 skills because
+evals/run.py enforced it. Its sibling find_project_root.py had no check and
+had forked into 4 distinct contents across 7 copies — four different answers
+to "which project am I in", which is what the project-only guarantee for
+path-typed config keys rests on.
+
+- Generalise check_shared_reader_drift into check_stamped_script_drift over
+  a STAMPED_SCRIPTS tuple; teach refresh-shared-reader.py the same list.
+- Stamp the canonical template into the 4 forked skills.
+- Add .gitattributes pinning these files to LF. The byte-compare was one
+  core.autocrlf change away from false-positiving; example-skill's copy was
+  already content-identical but LF where the template was CRLF.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 0.3: Fix dangling cross-references and the `/note-term` mismatch
+
+Addresses review item 3. Two independent broken pointers, both in always-loaded context:
+
+1. **`petri-net-expert` is referenced 13× inside `skills/` but no such skill exists.** The skill is `petri-net-theory`; `petri-net-expert` is the *agent* name. An agent instructed to hand off to `petri-net-expert` finds nothing installed. `skills/petri-net-theory/SKILL.md:16` compounds it by telling the reader the skill "is loaded by the `petri-net-expert` agent" — describing an artefact neither install route ships.
+2. **`README.md:77` advertises `/note-term`; the skill implements `/define-term`.** A stale `/note-term` also survives in `skills/terminology/actions/get-term.md:67`. The wrong name is what reaches agents through the README.
+
+Phase 1 Task 12 sweeps the *rename* fallout. This task fixes references that are broken **today**, independent of any rename.
+
+**Files:**
+- Modify: `skills/petri-net-theory/SKILL.md`
+- Modify: `skills/{debugger-expert,formal-methods-expert,srs-expert,type-theory-expert}/SKILL.md` and their `references/*.md`
+- Modify: `README.md`
+- Modify: `skills/terminology/actions/get-term.md`
+
+- [ ] **Step 1: Enumerate the dangling skill-side references**
+
+Run:
+```bash
+grep -rn 'petri-net-expert' skills/ | sed 's/:.*//' | sort | uniq -c | sort -rn
+```
+Expected: 13 hits across `debugger-expert/SKILL.md`, `formal-methods-expert/SKILL.md` (+ `references/00-overview.md`), `srs-expert/SKILL.md`, `type-theory-expert/SKILL.md` (+ `references/00-overview.md`), and `petri-net-theory/SKILL.md`.
+
+- [ ] **Step 2: Rewrite them to the real skill name**
+
+Inside `skills/` only, `petri-net-expert` → `petri-net-theory`:
+
+```bash
+grep -rl 'petri-net-expert' skills/ | while read -r f; do
+  python3 - "$f" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1])
+t = p.read_text(encoding="utf-8")
+p.write_text(t.replace("petri-net-expert", "petri-net-theory"), encoding="utf-8")
+print("updated", p)
+PY
+done
+```
+
+Do **not** run this over `agents/` — `agents/petri-net-expert.md` is a real file and Phase 1 Task 8 renames it to `petri-net-theory-agent`.
+
+- [ ] **Step 3: Fix the self-referential line in `petri-net-theory/SKILL.md`**
+
+Step 2 turns line 16 into "This skill is loaded by the `petri-net-theory` agent", which still names an agent that does not exist until Phase 1 Task 8. Replace the line with host-neutral prose:
+
+```markdown
+This skill can be invoked inline, or loaded by a dispatchable agent that delegates to it. See [`agents/`](../../agents/) for the agent definitions this repository ships.
+```
+
+- [ ] **Step 4: Fix the `/note-term` mismatch**
+
+In `README.md`, the `terminology` row currently reads:
+
+```
+Invoke with `note` (or `/note-term <…>`), `get`, `review`, or `validate`.
+```
+
+Replace with:
+
+```
+Invoke with `define` (or `/define-term <…>`), `get`, `review`, or `validate`.
+```
+
+In `skills/terminology/actions/get-term.md:67`, replace `/note-term` with `/define-term`.
+
+- [ ] **Step 5: Verify no dangling references remain**
+
+Run:
+```bash
+grep -rn 'petri-net-expert' skills/ README.md || echo "CLEAN: no dangling petri-net-expert in skills/"
+grep -rn 'note-term' skills/ README.md || echo "CLEAN: no stale note-term"
+```
+Expected: both `CLEAN` lines.
+
+- [ ] **Step 6: Verify every skill cross-reference resolves to a real skill**
+
+Run:
+```bash
+python3 -c "
+import pathlib, re
+skills = {p.name for p in pathlib.Path('skills').iterdir() if p.is_dir()}
+bad = []
+for md in pathlib.Path('skills').rglob('*.md'):
+    for m in re.finditer(r'\`([a-z][a-z0-9-]{2,})\`', md.read_text(encoding='utf-8')):
+        name = m.group(1)
+        if name.endswith(('-expert', '-theory')) and name not in skills:
+            bad.append((str(md), name))
+for b in sorted(set(bad)):
+    print('DANGLING', *b)
+print('checked', len(skills), 'skills')
+"
+```
+Expected: no `DANGLING` lines. (This heuristic catches the `-expert`/`-theory` family, which is where the dangling references clustered. Phase 1 Task 12 re-runs the broader grep after the renames.)
+
+- [ ] **Step 7: Run evals and commit**
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+```bash
+git add -A
+git commit -m "$(cat <<'EOF'
+fix(skills): resolve dangling cross-references
+
+Two broken pointers, both in always-loaded context:
+
+- `petri-net-expert` was referenced 13x inside skills/ but names no skill.
+  The skill is `petri-net-theory`; `petri-net-expert` is the agent. Any
+  handoff to it resolved to nothing. petri-net-theory/SKILL.md also claimed
+  to be "loaded by the petri-net-expert agent" — an artefact no install
+  route ships; replaced with host-neutral prose.
+
+- README advertised `/note-term`; the skill implements `/define-term`. The
+  wrong name was what reached agents. Fixed in README and in the leftover
+  in terminology/actions/get-term.md.
+
+agents/petri-net-expert.md is deliberately untouched — Phase 1 Task 8
+renames it.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 0.4: Reconcile the authoring docs with reality
+
+Addresses review item 4. An author following `docs/portability-checklist.md` literally today produces a non-conforming skill: it names `scripts/configure.sh` (every skill ships `configure.py`) and states a 3-layer resolution order (the implemented order has 5 layers, and project beats user — the checklist has it backwards). Three further conventions are enforced in practice but documented nowhere: the Python floor, the `actions/`/`resources/`/`schemas/` directory taxonomy, and the `description` YAML style.
+
+`CLAUDE.md` repeats both errors but is gitignored (`.gitignore:10`), so edits to it do not persist. Per spec §3.8 it is explicitly not updated; `README.md` and `docs/` are the canonical surfaces.
+
+**Files:**
+- Modify: `docs/portability-checklist.md`
+- Modify: `docs/authoring-guide.md`
+- Modify: `CONTRIBUTING.md`
+- Modify: `template/SKILL.md`
+
+- [ ] **Step 1: Fix the two factual errors in the checklist**
+
+In `docs/portability-checklist.md`, under `## Configuration (if applicable)`, replace:
+
+```markdown
+- [ ] Resolution order is env var → user config → project-local → interactive prompt.
+- [ ] `scripts/configure.sh` prompts for missing values, is idempotent, accepts `--repair`.
+```
+
+with:
+
+```markdown
+- [ ] Resolution order is env var → project-skill config → `.agents/dev-skills.yaml` → user-skill config → built-in default. Path-typed keys skip the user-skill layer entirely.
+- [ ] `scripts/configure.py` prompts for missing values, is idempotent, accepts `--repair`.
+```
+
+Also update the config-path line in the same section — path-typed keys live in the project scope, not `~/.config/`:
+
+```markdown
+- [ ] Non-path config is at `~/.config/<skill-name>/config.yaml` with permissions `0600`; path-typed keys are at `<project_root>/.<skill-name>/config.yaml`.
+```
+
+- [ ] **Step 2: Reconcile the `root_dir` naming rule**
+
+`docs/authoring-guide.md:96` mandates a key literally named `root_dir`; the checklist hedges with "`root_dir` (or equivalent path-typed) key". Two skills follow the strict rule (`developer-diary`, `update-todos`) and two do not (`create-tutorial` → `tutorials_dir`, `terminology` → `terminology_file`). Document the actual rule rather than renaming shipped keys.
+
+In `docs/authoring-guide.md`, under `### Write-directory configuration`, replace the opening sentence:
+
+```markdown
+If your skill writes user-visible files (e.g. a diary, a TODO tree, generated reports), expose a `root_dir` config key. It must be:
+```
+
+with:
+
+```markdown
+If your skill writes user-visible files (e.g. a diary, a TODO tree, generated reports), expose exactly one path-typed config key naming the destination. Name it `root_dir` when the skill owns a directory (`developer-diary`, `update-todos`); name it `<thing>_dir` or `<thing>_file` when it owns a specific subtree or single file (`create-tutorial` → `tutorials_dir`, `terminology` → `terminology_file`). Whatever the name, it must be:
+```
+
+- [ ] **Step 3: Document the Python floor**
+
+The scripts already use PEP 604 (`Path | None`, 3.10+) and PEP 585 (`dict[str, str]`, 3.9+), and Task 16's parity check imports `tomllib` (3.11+). Declare **3.12**.
+
+In `docs/portability-checklist.md`, under `## Portability`, replace:
+
+```markdown
+- [ ] Scripts are POSIX bash or Python 3 stdlib or Node.js stdlib only.
+```
+
+with:
+
+```markdown
+- [ ] Scripts are POSIX bash or Python 3.12 stdlib or Node.js stdlib only.
+- [ ] Python scripts run under 3.12 with no deprecation warnings: `python3 -W error::DeprecationWarning skills/<name>/scripts/<script>.py --help`.
+```
+
+In `docs/authoring-guide.md`, under `## Scripts`, replace the first Allowed bullet:
+
+```markdown
+- Python 3 stdlib, no external packages. **Default choice.**
+```
+
+with:
+
+```markdown
+- Python **3.12** stdlib, no external packages. **Default choice.** 3.12 is the floor, not a target: `tomllib` (3.11+) and PEP 604 unions (3.10+) are already used across the repo, and pinning the floor above them keeps the eval scripts and the skill scripts on one baseline.
+```
+
+In `CONTRIBUTING.md`, add to the prerequisites (create a `## Prerequisites` section if none exists):
+
+```markdown
+## Prerequisites
+
+- **Python 3.12 or newer.** Verify with `python3 --version`. The repo's scripts, `evals/run.py`, and the test suite all assume 3.12 stdlib; older interpreters fail at import, not at runtime.
+```
+
+- [ ] **Step 4: Document the directory taxonomy**
+
+The checklist sanctions only `scripts/`, `assets/`, `references/`. In practice skills ship four more, and `evals/run.py:63-71` already hard-codes knowledge of them in `check_no_placeholders()` — the runner knows a taxonomy the docs do not state.
+
+In `docs/portability-checklist.md`, under `## Structure`, replace:
+
+```markdown
+- [ ] Scripts live under `scripts/`, assets under `assets/`, reference docs under `references/`.
+```
+
+with:
+
+```markdown
+- [ ] Every file sits in a sanctioned sub-directory:
+
+  | Directory | Contents | Placeholder-checked |
+  |---|---|---|
+  | `references/` | Reference docs the skill loads on demand. | yes |
+  | `scripts/` | Executable helpers (Python 3.12 stdlib preferred). | no |
+  | `actions/` | One file per invocable sub-command (`capture`, `review`, …). | no |
+  | `resources/` | Output templates, `*.md.tpl`. | no |
+  | `schemas/` | JSON Schema for the skill's structured output. | no |
+  | `agents/` | Sub-agent prompt files the skill dispatches. | no |
+  | `assets/` | Static binary assets. | no |
+
+  `SKILL.md` is the only file permitted at the skill root. "Placeholder-checked" marks the surfaces `evals/run.py` scans for unfilled `{{...}}`; the rest legitimately carry placeholder markers filled at runtime.
+```
+
+In `docs/authoring-guide.md`, under `## SKILL.md structure`, add after the 500-line rule:
+
+```markdown
+Sub-directories are drawn from a fixed set — see the table in [the portability checklist](portability-checklist.md#structure). Do not invent a new one without adding it there and to `check_no_placeholders()` in `evals/run.py`.
+```
+
+- [ ] **Step 5: Pick a `description` YAML house style**
+
+Three block-scalar styles are in use for one field: plain, `>` (folded, keeps a trailing newline on some parsers), `>-` (folded-strip), and one plain scalar with a continuation-line wrap — the fragile form. Standardise on `>-`.
+
+In `docs/authoring-guide.md`, under `## Frontmatter discipline`, after the example block, add:
+
+```markdown
+Descriptions run long. When one exceeds a single line, use the folded-strip block scalar `>-` so the parsed value has no trailing newline and no line-wrapping ambiguity:
+
+```yaml
+---
+name: my-skill
+description: >-
+  First line of the description. Subsequent lines are folded into one
+  paragraph. Use this whenever the user mentions X, Y, or Z.
+---
+```
+
+Do not use a bare `>` (leaves a trailing newline on some parsers) and do not wrap a plain scalar across lines (indentation-sensitive and the easiest form to break).
+```
+
+In `template/SKILL.md`, convert the frontmatter `description` to the `>-` form so new skills inherit the house style by copy.
+
+- [ ] **Step 6: Verify the docs describe the shipped reality**
+
+Run:
+```bash
+grep -rn 'configure\.sh' docs/ template/ && echo "STALE configure.sh reference" || echo "CLEAN"
+```
+Expected: `CLEAN`.
+
+Run:
+```bash
+ls skills/*/scripts/configure.py | wc -l
+```
+Expected: `6` — the number of skills the checklist's Configuration section applies to.
+
+Run:
+```bash
+python3 -c "
+import pathlib
+allowed = {'references','scripts','actions','resources','schemas','agents','assets'}
+bad = []
+for sk in sorted(pathlib.Path('skills').iterdir()):
+    if not sk.is_dir(): continue
+    for child in sk.iterdir():
+        if child.is_dir() and child.name not in allowed:
+            bad.append(f'{sk.name}/{child.name}/ (undocumented directory)')
+        if child.is_file() and child.name != 'SKILL.md':
+            bad.append(f'{sk.name}/{child.name} (file at skill root)')
+for b in bad: print('VIOLATION', b)
+print('checked', len(list(pathlib.Path('skills').iterdir())), 'skills')
+"
+```
+Expected: exactly one violation — `improve-prompt/evidence-appendix.md`, which Phase 2 Task 26 relocates to `references/`. No undocumented directories.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add docs/ CONTRIBUTING.md template/SKILL.md
+git commit -m "$(cat <<'EOF'
+docs: reconcile authoring docs with the shipped implementation
+
+An author following the portability checklist literally produced a
+non-conforming skill. Fixed:
+
+- `scripts/configure.sh` -> `scripts/configure.py` (every skill ships .py).
+- Resolution order stated as 3 layers with user beating project; the
+  implemented order is 5 layers with project beating user.
+- Declared Python 3.12 as the floor. Nothing documented one, yet PEP 604
+  unions (3.10+) and tomllib (3.11+) are already in use.
+- Documented the actual sub-directory taxonomy (actions/, resources/,
+  schemas/, agents/ were enforced by evals/run.py but named nowhere).
+- Reconciled the strict `root_dir` rule in the authoring guide with the
+  four different key names the shipped skills use.
+- Picked `>-` as the house style for multi-line descriptions; four styles
+  were in use including the wrap-sensitive plain-scalar form.
+
+CLAUDE.md repeats two of these errors but is gitignored, so per spec 3.8
+it is deliberately not updated.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 0.5: De-Claude the portable surface
+
+Addresses review item 5. The repo's stated backbone is that every skill runs unmodified on Claude Code **and** Codex CLI. Two skills break it by naming a Claude-Code-only tool as a hard instruction, and two reference `.claude/` paths that no install route ships:
+
+| Location | Problem |
+|---|---|
+| `skills/improve-prompt/SKILL.md:24,78,108` | `AskUserQuestion` invoked as a mandatory step. Codex CLI has no such tool. |
+| `skills/terminology/actions/define-term.md:21` | Same. |
+| `skills/improve-prompt/SKILL.md:112` | References `.claude/agents/prompt-engineer.md`. |
+| `skills/terminology/SKILL.md:213` | References `.claude/agents/terminology-curator.md` — a file that exists in no install route, so the section documents a capability users do not get. |
+
+`reason-through` already solved this: it writes intent ("dispatch N parallel sub-agents") and puts the per-host translation in `references/host-notes.md`. Promote that to a repo-wide rule.
+
+**Files:**
+- Create: `docs/host-adaptation.md`
+- Modify: `docs/portability-checklist.md`
+- Modify: `skills/improve-prompt/SKILL.md`
+- Modify: `skills/terminology/actions/define-term.md`
+- Modify: `skills/terminology/SKILL.md`
+
+- [ ] **Step 1: Write `docs/host-adaptation.md`**
+
+```markdown
+# Host adaptation
+
+A skill in this repo must run unmodified on every skills-compatible agent. That
+rules out naming a host's tools in skill prose: `AskUserQuestion` is Claude Code
+only, `Agent`/`subagent_type` is Claude Code only, Codex CLI names the same
+capabilities differently, and Cursor/Windsurf/Goose differ again.
+
+## The rule
+
+Write **intent**, not a tool call.
+
+| Don't write | Write |
+|---|---|
+| "Ask via `AskUserQuestion`." | "Ask the user a single consolidated question covering every uncertain field." |
+| "Dispatch with the `Agent` tool." | "Dispatch N sub-agents in parallel, one per family." |
+| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../../agents/foo-agent.md)." |
+
+If the intent genuinely needs a per-host translation table, put it in the
+skill's `references/host-notes.md` and link it from the workflow step. The
+canonical example is
+[`skills/reason-through/references/host-notes.md`](../skills/reason-through/references/host-notes.md).
+
+## Structured questioning without a host tool
+
+Hosts that expose a structured question tool will use it; hosts that don't fall
+back to plain prose. Both satisfy the same contract, so state the contract:
+
+> Ask **exactly one** consolidated question covering every uncertain field.
+> Offer 2–4 concrete options per field where the choice space is closed. Do not
+> ask sequential follow-ups.
+
+## Referring to agents
+
+Agents ship from `agents/` in this repo and are installed per host by
+`scripts/install-agents.py`. Always link the repo-relative source path, never a
+host's installed location (`~/.claude/agents/`, `~/.codex/agents/`).
+```
+
+- [ ] **Step 2: Add the rule to the portability checklist**
+
+In `docs/portability-checklist.md`, under `## Portability`, after the "No tool-specific files" item, add:
+
+```markdown
+- [ ] No host-specific tool name appears in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent; put any per-host translation in `references/host-notes.md`. See [`docs/host-adaptation.md`](host-adaptation.md).
+- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` appears in skill prose. Link the repo-relative `agents/<name>-agent.md` source instead.
+```
+
+- [ ] **Step 3: Rewrite the three `AskUserQuestion` sites in `improve-prompt`**
+
+`skills/improve-prompt/SKILL.md:24` — replace:
+
+```markdown
+2. **Up to 3 clarifying questions** via `AskUserQuestion`. Permitted **only**
+```
+
+with:
+
+```markdown
+2. **Up to 3 clarifying questions**, asked as one consolidated question (see
+   [Asking the user](#asking-the-user)). Permitted **only**
+```
+
+At lines 78 and 108, replace `targeted questions via `AskUserQuestion`` and
+`questions covering audience, length, and tone via `AskUserQuestion`` with
+`targeted questions (see [Asking the user](#asking-the-user))` and
+`questions covering audience, length, and tone (see [Asking the user](#asking-the-user))`.
+
+Then add a short section before `## Reference files`:
+
+```markdown
+## Asking the user
+
+Ask **exactly one** consolidated question covering every uncertain field, with
+2–4 concrete options per field where the choice space is closed. Never ask
+sequential follow-ups. A host that exposes a structured question tool will
+render the options natively; a host that does not will render them as prose.
+Both satisfy this contract — do not name either mechanism.
+```
+
+- [ ] **Step 4: Rewrite the `AskUserQuestion` site in `terminology`**
+
+`skills/terminology/actions/define-term.md:21` — replace:
+
+```markdown
+ask **exactly one** clarifying question via `AskUserQuestion` covering all uncertain load-bearing fields
+```
+
+with:
+
+```markdown
+ask **exactly one** clarifying question covering all uncertain load-bearing fields, offering 2–4 concrete options per field
+```
+
+- [ ] **Step 5: Make the terminology companion-agent section host-neutral**
+
+`skills/terminology/SKILL.md:213` names `.claude/agents/terminology-curator.md`, which no install route ships. Task 39.1 ships a real `agents/terminology-agent.{md,toml}`; until then the section must not point at a path that does not exist. Replace the `## Companion agent` body with:
+
+```markdown
+The same workflow can be run by a dispatchable sub-agent, which is useful when a
+long-running task wants terminology curation done as a parallel subtask without
+polluting the main context. The agent delegates to this skill rather than
+re-implementing it — see [`agents/`](../../agents/) for the definitions this
+repository ships and [`docs/install.md`](../../docs/install.md#installing-agents)
+for how to install them.
+```
+
+(Task 39.1 replaces this with a direct link to `agents/terminology-agent.md`.)
+
+- [ ] **Step 6: Verify no host-specific leakage remains**
+
+Run:
+```bash
+grep -rn 'AskUserQuestion\|subagent_type\|TodoWrite' skills/ \
+  --include='*.md' | grep -v 'references/host-notes.md' \
+  && echo "LEAK: host-specific tool named in skill prose" \
+  || echo "CLEAN: no host-specific tool names"
+```
+Expected: `CLEAN`.
+
+Run:
+```bash
+grep -rn '\.claude/\|\.codex/' skills/ --include='*.md' \
+  | grep -v 'references/host-notes.md' \
+  | grep -v 'CLAUDE\.md' \
+  && echo "LEAK: host path in skill prose" \
+  || echo "CLEAN: no host paths"
+```
+Expected: `CLEAN`. (`.claude` also appears as a project-root *marker* inside `scripts/find_project_root.py` — that is correct and is excluded by the `--include='*.md'` filter.)
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A
+git commit -m "$(cat <<'EOF'
+fix(skills): remove host-specific tool names from portable surface
+
+The repo's premise is that every skill runs unmodified on Claude Code and
+Codex CLI, but improve-prompt and terminology invoked `AskUserQuestion` as
+a mandatory step — a Claude Code tool Codex does not have — and two skills
+pointed at `.claude/agents/` paths that no install route ships.
+
+reason-through already solved this by writing intent and keeping the
+per-host translation in references/host-notes.md. Promote that to a repo
+rule in docs/host-adaptation.md, add two checklist items, and rewrite the
+four offending sites to state the contract instead of the mechanism.
+
+terminology's companion-agent section is made host-neutral here; Task 39.1
+ships a real agents/terminology-agent pair and links it directly.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 0.6: Final Phase 0 verification
+
+**Files:** none modified; verification only.
+
+- [ ] **Step 1: Run full evals**
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+- [ ] **Step 2: Run full test suite**
+
+Run: `python3 -m unittest discover tests/ -v 2>&1 | tail -10`
+Expected: `OK`, no failures. Test count is up by at least 8 (4 registration + 4 drift).
+
+- [ ] **Step 3: Confirm both install routes now agree**
+
+Run:
+```bash
+python3 -c "
+import json, pathlib, re
+disk = {p.parent.name for p in pathlib.Path('skills').glob('*/SKILL.md')}
+mp = {pathlib.Path(s).name
+      for s in json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['skills']}
+readme = set(re.findall(r'\]\(skills/([^/)]+)/SKILL\.md\)',
+                        pathlib.Path('README.md').read_text(encoding='utf-8')))
+assert disk == mp == readme, f'disk^mp={disk^mp} disk^readme={disk^readme}'
+print('all three surfaces agree on', len(disk), 'skills')
+"
+```
+Expected: `all three surfaces agree on 14 skills`.
+
+- [ ] **Step 4: Confirm the four guardrails actually fail when violated**
+
+Each check added in this phase must be demonstrated to fail, not just to pass. Run:
+
+```bash
+python3 -m unittest \
+  tests.test_registration_check.RegistrationCheckTests.test_detects_skill_missing_from_marketplace \
+  tests.test_registration_check.RegistrationCheckTests.test_detects_skill_missing_from_readme \
+  tests.test_stamped_script_drift.StampedScriptDriftTests.test_detects_forked_find_project_root \
+  tests.test_stamped_script_drift.StampedScriptDriftTests.test_crlf_copy_is_not_drift \
+  -v
+```
+Expected: 4 tests, all pass (each asserts the negative case).
+
+- [ ] **Step 5: Open PR 0**
+
+```bash
+git push -u origin feature/shared-skill-config
+gh pr create --title "Guardrails: registration, stamped-script drift, cross-references, docs (PR 0/3)" --body "$(cat <<'EOF'
+## Summary
+Fixes five consistency defects found reviewing `skills/`, and adds the checks that stop each from reopening. Lands before the rename work so Phase 1 executes against a repo that fails loudly.
+
+- **Registration.** `skills/` held 14 skills; README and marketplace listed 6. `/plugin install` and `npx skills add` shipped different libraries. All 14 registered; `check_registration()` added with no exemption list.
+- **Stamped scripts.** `find_project_root.py` had forked into 4 contents across 7 copies with no drift check. Generalised the reader check to a `STAMPED_SCRIPTS` tuple, reconciled the forks, and added `.gitattributes` — the byte-compare was one `core.autocrlf` change away from false-positiving.
+- **Cross-references.** `petri-net-expert` was referenced 13x inside `skills/` but names no skill. README advertised `/note-term`; the skill implements `/define-term`.
+- **Docs.** The portability checklist named `configure.sh` and stated the resolution order backwards. Declared a Python 3.12 floor, documented the real sub-directory taxonomy, and picked a house YAML style for `description`.
+- **Portability.** `AskUserQuestion` was a mandatory step in two skills; two skills pointed at `.claude/` paths no install route ships. New `docs/host-adaptation.md` promotes the `reason-through` pattern to a repo rule.
+
+PR 1 follows with renames and the agents layer; PR 2 with per-skill content conformance.
+
+## Test plan
+- [x] \`python3 evals/run.py\` returns \`OK — checked 14 skill(s).\`
+- [x] \`python3 -m unittest discover tests/\` passes.
+- [x] Disk, README, and marketplace agree on all 14 skills.
+- [x] Each new guardrail has a test proving it fails on the negative case.
+- [x] No host-specific tool name or \`.claude/\` path remains in skill prose.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+- [ ] **Step 6: Merge PR 0 before starting Phase 1**
+
+Phase 1's renames depend on `check_registration()` being live — it is what turns a missed rename into an eval failure instead of a silently unregistered skill.
 
 ---
 
@@ -464,7 +1675,9 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ### Task 12: Sweep repo for stale references to old names
 
-**Files:** any file outside `agents/` and `skills/` that names a renamed identifier.
+**Amended by the 2026-07-26 revision.** Phase 0 Task 0.3 already rewrote every `petri-net-expert` reference **inside `skills/`** to `petri-net-theory`, because those were dangling *before* any rename — `petri-net-expert` names an agent, never a skill. What remains for this task is the fallout of the four folder renames plus the `agents/` bodies. The original scope note ("any file outside `agents/` and `skills/`") was too narrow: the peer cross-references live in five skills, not just `formal-methods`, and in `references/*.md` as well as `SKILL.md`.
+
+**Files:** every file naming a renamed identifier — `skills/**`, `agents/**`, `README.md`, `docs/**`, `.claude-plugin/marketplace.json`, `template/`.
 
 - [ ] **Step 1: Identify all stale references**
 
@@ -477,20 +1690,41 @@ grep -rn -E '(formal-methods-expert|debugger-expert|srs-expert|type-theory-exper
   . 2>&1 | grep -v "^Binary" | grep -v "evidence-appendix" | grep -v "skills/improve-prompt/"
 ```
 
-Expected: any remaining hits indicate stale references to update. Common hits will be in:
-- `skills/formal-methods/SKILL.md` (the cross-references to peer skills in the description and Reasoning Rules block).
-- The `agents/*-agent.md` body texts (if any cross-reference peer agents by old name).
-- `template/SKILL.md` examples (if they mention any of these names — unlikely but check).
+Expected hits, all from the Phase 1 renames:
+- `skills/formal-methods/SKILL.md` and `skills/formal-methods/references/00-overview.md` — peer cross-references in the description, Reasoning Rules block, and routing tables.
+- `skills/debugger/SKILL.md`, `skills/srs/SKILL.md`, `skills/type-theory/SKILL.md` and their `references/00-overview.md` — the `Peers:` lines and cross-domain routing tables.
+- `agents/*-agent.md` bodies — peer-agent cross-references.
+- `README.md` — the four `-expert` skill rows added in Task 0.1.
+- `.claude-plugin/marketplace.json` — the four `-expert` paths added in Task 0.1.
 
-(References inside `skills/improve-prompt/` and `evidence-appendix.md` to the `prompt-engineer` name will be fixed in Phase 2. Leave them for now and flag them via grep.)
+(References inside `skills/improve-prompt/` to the `prompt-engineer` name are fixed in Phase 2 Task 26. Leave them for now and flag them via grep.)
 
 - [ ] **Step 2: For each hit, replace the old identifier with the new one**
 
-For hits in `skills/formal-methods/SKILL.md`:
-- `petri-net-expert` → `petri-net-theory` (skill cross-ref)
+For hits in `skills/**` (skill-to-skill cross-references):
 - `srs-expert` → `srs`
 - `type-theory-expert` → `type-theory`
 - `debugger-expert` → `debugger`
+- `formal-methods-expert` → `formal-methods`
+
+Sweep all five expert skills, not just `formal-methods` — each carries a `Peers:` line in its frontmatter and a routing table in `SKILL.md` and `references/00-overview.md`:
+
+```bash
+for f in $(grep -rl -E '(formal-methods|debugger|srs|type-theory)-expert' skills/); do
+  python3 - "$f" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1])
+t = p.read_text(encoding="utf-8")
+for old, new in (("formal-methods-expert", "formal-methods"),
+                 ("debugger-expert", "debugger"),
+                 ("srs-expert", "srs"),
+                 ("type-theory-expert", "type-theory")):
+    t = t.replace(old, new)
+p.write_text(t, encoding="utf-8")
+print("updated", p)
+PY
+done
+```
 
 For hits in `agents/*-agent.md` body (cross-references to peers):
 - `petri-net-expert` → `petri-net-theory-agent`
@@ -499,14 +1733,34 @@ For hits in `agents/*-agent.md` body (cross-references to peers):
 - `debugger-expert` → `debugger-agent`
 - `formal-methods-expert` → `formal-methods-agent`
 
+For `README.md` and `.claude-plugin/marketplace.json`: Tasks 20 and 22 own those surfaces. Leave them here — `check_registration()` (Task 0.1) will fail the eval in Step 4 until they are updated, which is the intended forcing function. If you prefer one clean commit, do Tasks 20 and 22 immediately after this one.
+
 - [ ] **Step 3: Re-grep to confirm clean**
 
-Run the same grep command from Step 1. Expected: no remaining hits (the `skills/improve-prompt/` `prompt-engineer` references will be cleaned in Phase 2).
+Run the same grep command from Step 1. Expected: hits only in `README.md` and `.claude-plugin/marketplace.json` (closed by Tasks 20 and 22) and inside `skills/improve-prompt/` (closed by Phase 2 Task 26).
+
+Then confirm no skill cross-references a skill that does not exist:
+
+```bash
+python3 -c "
+import pathlib, re
+skills = {p.parent.name for p in pathlib.Path('skills').glob('*/SKILL.md')}
+bad = set()
+for md in pathlib.Path('skills').rglob('*.md'):
+    for m in re.finditer(r'\`([a-z][a-z0-9-]{2,})\`', md.read_text(encoding='utf-8')):
+        n = m.group(1)
+        if (n.endswith(('-expert','-theory')) or n in {'srs','debugger','formal-methods','type-theory'}) and n not in skills:
+            bad.add((str(md), n))
+for b in sorted(bad): print('DANGLING', *b)
+print('checked', len(skills), 'skills')
+"
+```
+Expected: no `DANGLING` lines.
 
 - [ ] **Step 4: Run evals**
 
 Run: `python3 evals/run.py`
-Expected: `OK — checked 13 skill(s).`
+Expected: `FAIL` from `check_registration()` naming the four renamed skills, until Tasks 20 and 22 land. That failure is correct — it is the guardrail from Task 0.1 catching the rename. Once Tasks 20 and 22 are done, re-run and expect `OK — checked 14 skill(s).`
 
 - [ ] **Step 5: Commit**
 
@@ -1378,12 +2632,16 @@ def check_agent_format_parity() -> list[str]:
     return problems
 ```
 
-Then in `main()`, add the two checks to the `if not args.skill:` branch (alongside the existing checks):
+Then in `main()`, add the two checks to the `if not args.skill:` branch (alongside `check_registration()` from Task 0.1 and `check_stamped_script_drift()` from Task 0.2):
 
 ```python
         all_problems.extend(check_agent_skill_pairing())
         all_problems.extend(check_agent_format_parity())
 ```
+
+`check_agent_format_parity` imports `tomllib`, which is stdlib from Python 3.11. Task 0.4 declares the repo floor at 3.12, so the import needs no guard — but if that decision is ever revisited below 3.11, this check is the first thing that breaks.
+
+Note `check_agent_skill_pairing` and `check_registration` are complementary and both are needed: pairing asserts every agent has a skill, registration asserts every skill is shipped. Neither implies the other.
 
 - [ ] **Step 4: Run tests to verify both pass**
 
@@ -1391,7 +2649,7 @@ Run: `python3 -m unittest tests.test_evals_agent_checks -v`
 Expected: both tests pass.
 
 Run: `python3 evals/run.py`
-Expected: `OK — checked 13 skill(s).`
+Expected: `OK — checked 14 skill(s).`
 
 - [ ] **Step 5: Commit**
 
@@ -1655,18 +2913,20 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Add the 6 missing skill rows to the skills table**
+**Amended by the 2026-07-26 revision.** All 14 skill rows were added in Phase 0 Task 0.1, under their pre-rename names. This task now *updates the four renamed rows* and adds the agents section. `check_registration()` fails the eval until Step 1 is done.
 
-Edit `README.md`. The current skills table is at lines ~67-78. After the `create-tutorial` row, insert these rows (in alphabetical order or grouped by topic, your choice — alphabetical recommended):
+- [ ] **Step 1: Update the four renamed skill rows**
+
+Edit `README.md`. In the skills table, rewrite the four `-expert` rows to their new names and paths (link text and href both change):
 
 ```markdown
 | [`debugger`](skills/debugger/SKILL.md) | Authoritative reference for debugger and tracer design: trace semantics, event-model design, breakpoint/spy-point semantics, cross-formalism coherence, time-travel replay, remote debug protocols. |
 | [`formal-methods`](skills/formal-methods/SKILL.md) | Authoritative reference for SAT/SMT, CLP/CP, theorem proving, temporal logic, TLA+, and model checking. Use for algorithm selection, decidability analysis, propagator engine review, formal-system audits. |
-| [`improve-prompt`](skills/improve-prompt/SKILL.md) | Transform rough user-intent text into one polished, paste-ready LLM prompt. Evidence-guarded against the well-replicated failure modes of prompt engineering (CoT misuse, persona-on-factual, lost-in-middle, unwrapped untrusted input). |
-| [`petri-net-theory`](skills/petri-net-theory/SKILL.md) | Authoritative reference for Petri net theory: formal foundations, decidability, compliance modelling, P/T/CPN/WF-net patterns. |
 | [`srs`](skills/srs/SKILL.md) | Authoritative reference for synchronous reactive systems: tick architecture, signal semantics, clock calculus, constructive causality. |
 | [`type-theory`](skills/type-theory/SKILL.md) | Authoritative reference for formal type systems: lambda cube, type inference (HM, bidirectional), advanced systems (GADTs, refinement, gradual, session, graded), category-theoretic foundations. |
 ```
+
+Re-sort the table alphabetically after the edit if it was sorted before. The `chargebee`, `improve-prompt`, `petri-net-theory`, and `sanity-design-analysis` rows are already correct from Task 0.1 and need no change.
 
 - [ ] **Step 2: Add the new "Agents in this repository" section**
 
@@ -1686,31 +2946,50 @@ Agents are dispatchable subagent definitions paired with skills. They ship in tw
 | [`srs-agent`](agents/srs-agent.md) | `srs` |
 | [`type-theory-agent`](agents/type-theory-agent.md) | `type-theory` |
 | [`debugger-agent`](agents/debugger-agent.md) | `debugger` |
+| [`terminology-agent`](agents/terminology-agent.md) | `terminology` |
 
 See [`docs/agents-guide.md`](docs/agents-guide.md) and [`docs/install.md`](docs/install.md#installing-agents).
 ```
 
-(The `create-tutorial-agent` link will 404 until Task 33 creates it. That's fine — Phase 2 closes the gap.)
+(The `create-tutorial-agent` and `terminology-agent` links will 404 until Tasks 33 and 39.1 create them. That's fine — Phase 2 closes the gap.)
 
 - [ ] **Step 3: Verify**
 
-Run: `grep -cE '^\| \[\`' README.md`
-Expected: 13 (6 original + 6 newly-added skill rows + 7 agent rows = at least 13 table rows; the exact count depends on table formatting).
+Run:
+```bash
+python3 -c "
+import pathlib, re
+t = pathlib.Path('README.md').read_text(encoding='utf-8')
+print('skill rows :', len(re.findall(r'\]\(skills/[^/)]+/SKILL\.md\)', t)))
+print('agent rows :', len(re.findall(r'\]\(agents/[^)]+\.md\)', t)))
+"
+```
+Expected:
+```
+skill rows : 14
+agent rows : 8
+```
 
 Run: `grep -n 'Agents in this repository' README.md`
 Expected: one line.
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).` if Task 22 has already landed; otherwise `check_registration()` still fails on the marketplace side, which Task 22 closes.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add README.md
-git commit -m "docs(README): register all skills and add agents section
+git commit -m "$(cat <<'EOF'
+docs(README): point skill rows at renamed paths, add agents section
 
-Add the 6 previously-unregistered skills to the skills table.
-Add a parallel \"Agents in this repository\" section listing all 7
-paired agents.
+The four -expert rows registered in Task 0.1 now point at their renamed
+folders. New "Agents in this repository" section lists all 8 paired agents
+(create-tutorial-agent and terminology-agent land in Phase 2).
 
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ### Task 21: Update `docs/install.md`
@@ -1797,6 +3076,8 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 **Files:**
 - Modify: `.claude-plugin/marketplace.json`
 
+**Amended by the 2026-07-26 revision.** All 14 skill paths were added in Phase 0 Task 0.1 under their pre-rename names. This task *updates the four renamed paths* and adds the `agents:` array.
+
 - [ ] **Step 1: Update skills array and add agents array**
 
 Edit `.claude-plugin/marketplace.json`. Replace the entire `plugins[0]` object with:
@@ -1813,7 +3094,9 @@ Edit `.claude-plugin/marketplace.json`. Replace the entire `plugins[0]` object w
     "./skills/update-todos",
     "./skills/terminology",
     "./skills/create-tutorial",
+    "./skills/chargebee",
     "./skills/improve-prompt",
+    "./skills/sanity-design-analysis",
     "./skills/formal-methods",
     "./skills/debugger",
     "./skills/srs",
@@ -1831,7 +3114,9 @@ Edit `.claude-plugin/marketplace.json`. Replace the entire `plugins[0]` object w
 }
 ```
 
-(Note: `create-tutorial-agent.md` is omitted because it's created in Phase 2 Task 33. Once Phase 2 lands, that PR will add the entry.)
+The four renamed paths (`formal-methods`, `debugger`, `srs`, `type-theory`) replace their `-expert` predecessors; the other ten are unchanged from Task 0.1.
+
+(Note: `create-tutorial-agent.md` and `terminology-agent.md` are omitted because they're created in Phase 2 Tasks 33 and 39.1. Those tasks add their own entries.)
 
 - [ ] **Step 2: Verify JSON parses and contains expected entries**
 
@@ -1841,30 +3126,42 @@ Expected: `VALID`.
 Run:
 ```bash
 python3 -c "
-import json
+import json, pathlib
 d = json.load(open('.claude-plugin/marketplace.json'))
 plugin = d['plugins'][0]
 print('skills:', len(plugin['skills']))
 print('agents:', len(plugin['agents']))
+disk = {p.parent.name for p in pathlib.Path('skills').glob('*/SKILL.md')}
+listed = {pathlib.Path(s).name for s in plugin['skills']}
+assert disk == listed, f'mismatch: {disk ^ listed}'
+print('marketplace matches disk')
 "
 ```
 Expected:
 ```
-skills: 12
+skills: 14
 agents: 6
+marketplace matches disk
 ```
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).` — `check_registration()` is now satisfied on both surfaces.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add .claude-plugin/marketplace.json
-git commit -m "feat(marketplace): register all skills and add agents array
+git commit -m "$(cat <<'EOF'
+feat(marketplace): point renamed skills at new paths, add agents array
 
-12 skills now listed (was 6). New agents: array carries the 6 paired
-Markdown agents. create-tutorial-agent will be added in Phase 2 once
-the file is created.
+The four -expert paths registered in Task 0.1 now point at their renamed
+folders; 14 skills total. New agents: array carries the 6 paired Markdown
+agents. create-tutorial-agent and terminology-agent are added in Phase 2
+once those files exist.
 
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
 ```
 
 ### Task 23: Final Phase 1 verification
@@ -1874,7 +3171,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - [ ] **Step 1: Run full evals**
 
 Run: `python3 evals/run.py`
-Expected: `OK — checked 13 skill(s).` (No new failures from the agent checks.)
+Expected: `OK — checked 14 skill(s).` (No new failures from the agent checks, and `check_registration()` from Task 0.1 confirms the renames propagated to both README and marketplace.)
 
 - [ ] **Step 2: Run full test suite**
 
@@ -1912,22 +3209,23 @@ This is a manual step. If using GitHub CLI:
 
 ```bash
 git push -u origin feature/shared-skill-config
-gh pr create --title "Skills conformance + agents-layer infrastructure (PR 1/2)" --body "$(cat <<'EOF'
+gh pr create --title "Skills conformance + agents-layer infrastructure (PR 1/3)" --body "$(cat <<'EOF'
 ## Summary
 - Rename four skills to drop \`-expert\` suffix; rename six paired agents to the new \`<skill>-agent\` convention.
 - New \`scripts/generate-codex-agents.py\` and \`scripts/install-agents.py\` (stdlib only).
 - New \`docs/agents-guide.md\`, \`docs/agents-portability-checklist.md\`, \`agents/README.md\`.
-- README skills table now lists all 12 skills; new "Agents in this repository" section.
-- Marketplace JSON ships all 12 skills + 6 Markdown agents.
-- \`evals/run.py\` gains agent-skill pairing + format-parity checks.
+- README skill rows and marketplace paths repointed at the renamed folders (all 14 skills were registered in PR 0); new "Agents in this repository" section.
+- Marketplace JSON ships all 14 skills + 6 Markdown agents.
+- \`evals/run.py\` gains agent-skill pairing + format-parity checks, alongside the registration and stamped-script checks from PR 0.
 
-PR 2 will follow with per-skill content conformance (Examples, Troubleshooting, fixtures, paired \`create-tutorial-agent\`).
+Builds on PR 0 (guardrails). PR 2 will follow with per-skill content conformance (Examples, Troubleshooting, fixtures, paired \`create-tutorial-agent\` and \`terminology-agent\`).
 
 ## Test plan
-- [x] \`python3 evals/run.py\` returns OK.
+- [x] \`python3 evals/run.py\` returns \`OK — checked 14 skill(s).\`
 - [x] \`python3 -m unittest discover tests/\` passes.
 - [x] \`python3 -m json.tool .claude-plugin/marketplace.json\` parses.
 - [x] Grep finds no stale references to old names outside \`skills/improve-prompt/\`.
+- [x] \`check_registration()\` confirms disk, README, and marketplace agree after the renames.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
@@ -1940,7 +3238,11 @@ If the PR is approved and merged, continue with Phase 2 below. If changes are re
 
 ---
 
-## Phase 2 — Content Conformance for Seven Skills
+## Phase 2 — Content Conformance for Nine Skills
+
+**Amended by the 2026-07-26 revision.** The original scope was seven skills. It is now nine: `chargebee` (added to the repo after the spec was written) and `sanity-design-analysis` (explicitly scoped out by spec §2.2) both register in Phase 0 Task 0.1, and registering a skill without conforming it ships a discoverable skill that fails the portability checklist. Tasks 39.2 and 39.3 close that.
+
+Two further gaps the spec classified as "already conformant" are **not** addressed here and are recorded as follow-up work in the Self-review section: `developer-diary` and `update-todos` ship no `## Examples` and no `## Troubleshooting`, both mandatory checklist items.
 
 After Phase 1 merges, the seven skills (`create-tutorial`, `improve-prompt`, `formal-methods`, `debugger`, `srs`, `type-theory`, `petri-net-theory`) need their full template conformance pass and `evals/fixtures/<name>/prompts.json` files. The `create-tutorial-agent` (and its `.toml` sibling) is also created in this phase.
 
@@ -2692,7 +3994,7 @@ Edit `.claude-plugin/marketplace.json`. Add `"./agents/create-tutorial-agent.md"
 - [ ] **Step 6: Verify**
 
 Run: `python3 evals/run.py`
-Expected: `OK — checked 13 skill(s).` including agent-skill pairing and format-parity for `create-tutorial-agent`.
+Expected: `OK — checked 14 skill(s).` including agent-skill pairing and format-parity for `create-tutorial-agent`.
 
 Run: `python3 -m json.tool .claude-plugin/marketplace.json > /dev/null && echo VALID`
 Expected: `VALID`.
@@ -3149,6 +4451,443 @@ git commit -m "test(petri-net-theory): add canonical trigger fixtures
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ```
 
+### Task 39.1: Create `terminology-agent` (Markdown + TOML) and register
+
+Added by the 2026-07-26 revision, closing the last part of review item 5. `skills/terminology/SKILL.md` documents a companion sub-agent; Task 0.5 made the prose host-neutral but the capability still isn't shipped. This task makes it real under the `<skill>-agent` naming rule.
+
+**Files:**
+- Create: `agents/terminology-agent.md`
+- Create: `agents/terminology-agent.toml` (generated)
+- Modify: `skills/terminology/SKILL.md`, `agents/README.md`, `README.md`, `.claude-plugin/marketplace.json`
+
+- [ ] **Step 1: Write the Markdown agent**
+
+Create `agents/terminology-agent.md`:
+
+```markdown
+---
+name: terminology-agent
+description: >-
+  Runs the terminology skill's workflows in isolation. Use whenever another
+  agent or a long-running implementation task wants glossary curation done as a
+  parallel subtask without polluting its own context — capturing terms with
+  /define-term, retrieving terms for use elsewhere, or running a glossary
+  review. Prefer this over inlining glossary edits into a feature-implementation
+  context. Returns a short summary and leaves the glossary file on disk for the
+  parent agent to read.
+tools: Read, Glob, Grep, Write, Edit
+model: opus
+skills:
+  - terminology
+---
+
+You are the `terminology-agent`. You curate one project's shared technical
+vocabulary and nothing else.
+
+## Operating contract
+
+Your outputs are:
+
+1. **The glossary file on disk**, at the resolved `terminology_file` path,
+   conforming to the table schema the `terminology` skill enforces.
+2. **A short summary** to the dispatching agent: which terms were added,
+   updated, or flagged, and the path written. Under ten lines.
+
+Never return the glossary contents inline unless the action is `get` — the
+parent agent reads the file if it needs the full text.
+
+## Workflow
+
+Auto-loaded skill `terminology` specifies the four actions. Dispatch on the
+action named in your task:
+
+- `define` → `actions/define-term.md`
+- `get` → `actions/get-term.md`
+- `review` → `actions/review-terms.md`
+- `validate` → `actions/validate-terms.md`
+
+Resolve `terminology_file` via `scripts/resolve_config.py` before any action.
+If it cannot be resolved, stop and report the exact configure command — do not
+guess a path and do not write to a default location.
+
+## Banned constructs
+
+- Do not hand-edit the glossary outside the skill's table schema.
+- Do not add a term that is inferable from general knowledge; the glossary is
+  for project-specific meaning only.
+- Do not record engineering decisions or action items — those belong to
+  `developer-diary` and `update-todos` respectively. Say so and stop.
+```
+
+- [ ] **Step 2: Generate the TOML sibling**
+
+Run: `python3 scripts/generate-codex-agents.py --agent terminology-agent`
+Expected: `agents/terminology-agent.toml` written.
+
+Verify parity:
+```bash
+python3 -c "
+import tomllib, pathlib, re
+t = tomllib.load(open('agents/terminology-agent.toml','rb'))
+md = pathlib.Path('agents/terminology-agent.md').read_text(encoding='utf-8')
+fm = md[4:md.find('\n---\n', 4)]
+assert t['name'] == re.search(r'^name:\s*(\S+)', fm, re.M).group(1)
+assert t['developer_instructions'].strip()
+print('parity OK:', t['name'])
+"
+```
+Expected: `parity OK: terminology-agent`.
+
+- [ ] **Step 3: Point the skill's companion-agent section at the real file**
+
+In `skills/terminology/SKILL.md`, replace the host-neutral placeholder written in Task 0.5 with a direct link:
+
+```markdown
+The same workflow can be run by [`terminology-agent`](../../agents/terminology-agent.md),
+a dispatchable sub-agent — useful when a long-running task wants terminology
+curation done as a parallel subtask without polluting the main context. The
+agent delegates to this skill rather than re-implementing it. Install it with
+`python3 scripts/install-agents.py --agents terminology-agent`; see
+[`docs/install.md`](../../docs/install.md#installing-agents).
+```
+
+- [ ] **Step 4: Register**
+
+Add `"./agents/terminology-agent.md"` to the `agents:` array in `.claude-plugin/marketplace.json`.
+
+Add the row to the agents table in `agents/README.md` and confirm the `README.md` agents table row added in Task 20 is present.
+
+- [ ] **Step 5: Verify**
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).` — `check_agent_skill_pairing` resolves `terminology-agent` → `skills/terminology/`, and `check_agent_format_parity` finds the TOML sibling.
+
+Run:
+```bash
+python3 -c "
+import json
+a = json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['agents']
+print('agents registered:', len(a))
+"
+```
+Expected: `agents registered: 8`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add agents/terminology-agent.md agents/terminology-agent.toml \
+  agents/README.md README.md .claude-plugin/marketplace.json \
+  skills/terminology/SKILL.md
+git commit -m "$(cat <<'EOF'
+feat(agents): ship terminology-agent
+
+skills/terminology/SKILL.md documented a companion sub-agent at a
+.claude/agents/ path no install route shipped. Task 0.5 made the prose
+host-neutral; this makes the capability real under the <skill>-agent
+naming rule, in both formats, registered in the marketplace.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 39.2: Conform `chargebee/SKILL.md`
+
+Added by the 2026-07-26 revision. `chargebee` entered the repo after the spec was written and has none of the template sections — its body is a `Step 0`–`Step 5` runbook plus `Hard limits`. Task 0.1 made it discoverable; this makes it conformant.
+
+**Files:**
+- Modify: `skills/chargebee/SKILL.md`
+- Create: `evals/fixtures/chargebee/prompts.json`
+
+- [ ] **Step 1: Add `## When to use` and `## When not to use`**
+
+Insert both immediately after the overview paragraph, before `## Step 0`:
+
+```markdown
+## When to use
+
+- The literal token "chargebee" appears (case-insensitive), or a URL under
+  `chargebee.com` / `apidocs.chargebee.com`.
+- The task is framed as subscription billing, checkout, dunning, entitlements,
+  metered/usage billing, or payment-gateway integration and the project already
+  depends on Chargebee.
+- Debugging an error whose payload carries `api_error_code`, `error_code`, or
+  the `chargebee-idempotency-key` header.
+- Writing a tutorial, explainer, or worked example about any of the above.
+
+## When not to use
+
+- **Generic payments work with no Chargebee dependency** — Stripe-only,
+  Adyen-only, or a home-grown biller. Chargebee's object model does not
+  transfer; answer from the gateway's own docs.
+- **Writing the tutorial artefact itself.** This skill supplies the Chargebee
+  content and vocabulary; `create-tutorial` owns the file structure, the output
+  path, and the textbook format. Use both.
+- **Generic subscription-business modelling** (pricing strategy, churn
+  analysis, revenue recognition policy) with no integration work attached.
+```
+
+- [ ] **Step 2: Add `## Inputs`**
+
+Insert after `## When not to use`. This formalises what `Step 1: Confirm constraints` already asks for, so the two must agree — cross-link rather than restate:
+
+```markdown
+## Inputs
+
+Six values determine which reference to load and which code is correct. Confirm
+each from the user or the repo before generating non-trivial code; see
+[Step 1](#step-1-confirm-constraints-before-writing-code) for why each matters.
+
+| Input | Shape | If missing |
+|---|---|---|
+| Site environment | test or live; `{site}.chargebee.com` | Assume **test**; state the assumption. |
+| Product Catalog version | 1.0 (plans/addons) or 2.0 (items/item_prices) | Assume **2.0**; state the assumption. Endpoints and field names differ. |
+| SDK / language | Node, Python, PHP, Java, Go, Ruby, .NET, Laravel, Next.js, or raw HTTP | Ask. Code cannot be written without it. |
+| API version pinning | the `api_version` the consumer will see | Ask if the task touches webhooks. |
+| Payment gateway | Stripe, Adyen, Braintree, … | Ask if the task touches 3DS, dunning, or payment methods. |
+| Region / data residency | US, EU, AU (encoded in the site domain) | Assume from the site domain if supplied. |
+
+Never guess the SDK or the Product Catalog version silently — those two
+determine whether the generated code compiles at all.
+```
+
+- [ ] **Step 3: Add `## Examples`**
+
+Insert before `## Hard limits`. The existing `## Authoring tutorials, explainers, and worked examples` section stays — it is guidance, not a worked example, so rename it to `### Authoring tutorials, explainers, and worked examples` and nest it under the new Examples heading only if it reads naturally; otherwise leave it as a sibling.
+
+```markdown
+## Examples
+
+### Example 1 — typical case (webhook consumer)
+
+**User:** "Our subscription_renewed handler sometimes downgrades customers who
+just upgraded. Can you look at it?"
+
+**Skill output:** Classifies as a webhook-ordering bug and loads
+`references/webhooks_events.md`. Names the cause before reading code: webhooks
+arrive out of order and duplicated, so a stale `subscription_renewed` can
+overwrite a newer state. Prescribes the two always-true rules — persist
+`event.id` for de-duplication (≈3 d 7 h window) and compare
+`content.subscription.resource_version` before applying, discarding lower
+values. Asks for the `event.id`, `event_type`, `api_version`, and the receiver
+log before proposing a patch.
+
+### Example 2 — edge case (constraint conflict)
+
+**User:** "Write me a custom checkout that collects the card on our own form and
+posts it to our API."
+
+**Skill output:** Refuses the requested shape and says why in one sentence: raw
+PAN reaching the merchant backend puts the whole backend in PCI scope, which
+`## Hard limits` forbids. Offers the nearest thing that works — Chargebee.js
+Components for a fully custom UI with tokenised card fields, or Drop-In if the
+customisation need is styling only — and points at
+`references/hosted_chargebeejs.md` for the decision matrix. Does not generate
+the requested code.
+```
+
+- [ ] **Step 4: Add `## Troubleshooting`**
+
+Insert after `## Examples`:
+
+```markdown
+## Troubleshooting
+
+- **Generated code 404s or rejects a field name.** Product Catalog version
+  mismatch — 1.0 uses `plan`/`addon`, 2.0 uses `item`/`item_price`. Confirm the
+  site's version and reload `references/product_catalog.md`.
+- **Webhook handler times out or Chargebee reports failed delivery.** The
+  handler is doing work before acking. Budget is 20 s total on test sites, 60 s
+  on live. Ack first, process async. Retries run 7 times at +2 m, +6 m, +30 m,
+  +1 h, +5 h, +1 d, +2 d.
+- **Duplicate charges or duplicated side effects.** A POST went out without
+  `chargebee-idempotency-key`, or the key was regenerated on retry. One UUID per
+  *logical action*, reused across retries. Estimate APIs do not support
+  idempotency — do not send the header there.
+- **Amounts are 100× wrong.** `amount` fields are integers in minor units.
+- **3DS flow works on test and fails on live.** Test-gateway behaviour is not
+  representative. Re-verify against the real gateway's sandbox.
+```
+
+- [ ] **Step 5: Add fixtures**
+
+Create `evals/fixtures/chargebee/prompts.json` following the shape of
+`evals/fixtures/update-todos/prompts.json` — at least 5 positive prompts drawn
+from the description's trigger list (literal token, event name, dunning, PC
+migration, entitlements gate) and at least 2 negatives with
+`"trigger_expected": false` (a Stripe-only task, and a generic pricing-strategy
+question) to guard against over-triggering on the word "billing".
+
+- [ ] **Step 6: Verify and commit**
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+Run: `grep -cE '^## (When to use|When not to use|Inputs|Examples|Troubleshooting)' skills/chargebee/SKILL.md`
+Expected: `5`.
+
+Run: `wc -l skills/chargebee/SKILL.md`
+Expected: under 500.
+
+```bash
+git add skills/chargebee/SKILL.md evals/fixtures/chargebee/prompts.json
+git commit -m "$(cat <<'EOF'
+docs(chargebee): bring SKILL.md to template conformance
+
+chargebee entered the repo after the conformance spec was written and had
+none of the template sections. Adds When to use / When not to use / Inputs /
+Examples / Troubleshooting and canonical trigger fixtures, including two
+negatives to guard against over-triggering on the word "billing".
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Task 39.3: Conform `sanity-design-analysis/SKILL.md`
+
+Added by the 2026-07-26 revision, superseding spec §2.2's non-goal. Registering the skill in Task 0.1 without conforming it would ship a discoverable skill that fails the portability checklist.
+
+**Files:**
+- Modify: `skills/sanity-design-analysis/SKILL.md`
+- Create: `evals/fixtures/sanity-design-analysis/prompts.json`
+
+- [ ] **Step 1: Add `## When to use` and `## When not to use`**
+
+Insert after `## Role and contract`, before `## Operating rules`:
+
+```markdown
+## When to use
+
+- Any request to review, critique, assess, or "sanity check" a design,
+  architecture, module, component, RFC, design doc, or proposed refactor.
+- Prompts that never say "simplicity": "is this design any good?", "review my
+  architecture", "how would you simplify this?", "what's wrong with this
+  approach?", "propose a way to improve the spec".
+- A design doc or PR arrives and the ask is a written, defensible judgement
+  rather than a code change.
+
+## When not to use
+
+- **Writing new feature code or fixing a specific bug.** This skill analyses;
+  it does not modify. For a bug, use `diagnosing-bugs`.
+- **Designing a module interface from scratch.** That is `codebase-design` and
+  `design-an-interface` — this skill evaluates an existing proposal.
+- **Locking an execution plan** (task order, test coverage, rollout). That is
+  `eng-review`.
+- **Capturing the deferred items the analysis surfaces.** Hand those to
+  `update-todos`; do not let the report become a TODO list.
+```
+
+- [ ] **Step 2: Promote the input description to `## Inputs`**
+
+`## Role and contract` currently ends with a bold `**Input:**` line. Lift it into a proper section placed after `## When not to use`:
+
+```markdown
+## Inputs
+
+A description of a design, in whatever form it exists: prose, a design doc, an
+RFC, a diagram, a directory of source files, a pull request, or a mix.
+
+Treat whatever you are given as the starting point, not the whole truth — follow
+its references. If a load-bearing detail is missing, state the assumption
+explicitly and continue; ask only when the missing detail would materially
+change the analysis and no reasonable assumption can be made (see
+[Operating rules](#operating-rules)).
+```
+
+Remove the now-duplicated `**Input:**` line from `## Role and contract`.
+
+- [ ] **Step 3: Add `## Examples`**
+
+Insert after `## The output contract`, before `## Conventions`:
+
+```markdown
+## Examples
+
+### Example 1 — typical case (design doc under review)
+
+**User:** "Here's the RFC for our new event-routing layer. Is this design any
+good?"
+
+**Skill output:** Runs the full workflow and returns the structured report:
+mental model, assumptions made explicit, narrative walkthrough, the rules the
+design implies, happy and error paths, detected conflicts, diagrams, and a
+build-from-scratch tutorial. Lands on a named target position — the simpler
+design it would argue for in review — rather than stopping at a catalogue of
+problems. Cites real symbols and file paths from the RFC.
+
+### Example 2 — edge case (thin input, no code)
+
+**User:** "We're thinking about splitting the scheduler into a planner and an
+executor. Thoughts?"
+
+**Skill output:** Proceeds rather than blocking. States the assumptions it had
+to make (current scheduler responsibilities, deployment coupling, failure
+semantics) in the Assumptions section where they are visible and challengeable,
+runs the same analysis against the sketch, and marks any conclusion that would
+flip if an assumption is wrong. Asks a clarifying question only where no
+reasonable assumption exists.
+```
+
+- [ ] **Step 4: Add `## Troubleshooting`**
+
+Insert after `## Conventions`, before `## Reference material`:
+
+```markdown
+## Troubleshooting
+
+- **The report reads as generic advice.** The analysis was not grounded in the
+  input. Re-run phase 4 and name real files, symbols, endpoints, or diagram
+  nodes for every claim; drop any claim that cannot be anchored.
+- **No target position, just a problem list.** The contract requires landing on
+  a simpler design you would defend in review. Re-read
+  [What "simpler" means](references/analysis-checklists.md#what-simpler-means)
+  and commit to a position.
+- **The skill started editing code.** It analyses only. The single exception is
+  *recommending* (never writing) a convention document — see
+  [Conventions](#conventions).
+- **The input was a whole repository and the analysis sprawled.** Scope to one
+  design question before phase 2. A repo-wide "is this good?" has no defensible
+  answer; ask which subsystem or decision is under review.
+```
+
+- [ ] **Step 5: Add fixtures**
+
+Create `evals/fixtures/sanity-design-analysis/prompts.json` with at least 5
+positives from the description's trigger list (including at least two that never
+say "simplicity") and at least 2 negatives — a bug report (`diagnosing-bugs`)
+and a new-interface request (`design-an-interface`) — to guard the near-neighbour
+boundaries.
+
+- [ ] **Step 6: Verify and commit**
+
+Run: `python3 evals/run.py`
+Expected: `OK — checked 14 skill(s).`
+
+Run: `grep -cE '^## (When to use|When not to use|Inputs|Examples|Troubleshooting)' skills/sanity-design-analysis/SKILL.md`
+Expected: `5`.
+
+Run: `wc -l skills/sanity-design-analysis/SKILL.md`
+Expected: under 500.
+
+```bash
+git add skills/sanity-design-analysis/SKILL.md \
+  evals/fixtures/sanity-design-analysis/prompts.json
+git commit -m "$(cat <<'EOF'
+docs(sanity-design-analysis): bring SKILL.md to template conformance
+
+The spec scoped this skill out, but Task 0.1 registered it — shipping a
+discoverable skill that fails the portability checklist is worse than
+either extreme. Adds the five missing template sections and canonical
+trigger fixtures with near-neighbour negatives (diagnosing-bugs,
+design-an-interface).
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
 ### Task 40: Final Phase 2 verification
 
 **Files:** none modified; verification only.
@@ -3156,71 +4895,106 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - [ ] **Step 1: Run full evals**
 
 Run: `python3 evals/run.py`
-Expected: `OK — checked 13 skill(s).`
+Expected: `OK — checked 14 skill(s).`
 
 - [ ] **Step 2: Run full test suite**
 
 Run: `python3 -m unittest discover tests/ -v 2>&1 | tail -10`
 Expected: all tests pass.
 
-- [ ] **Step 3: Verify every skill has the template sections**
+- [ ] **Step 3: Verify every skill conformed in this phase has the template sections**
 
 Run:
 ```bash
-for d in create-tutorial improve-prompt formal-methods debugger srs type-theory petri-net-theory; do
+for d in create-tutorial improve-prompt formal-methods debugger srs type-theory \
+         petri-net-theory chargebee sanity-design-analysis; do
   n=$(grep -cE '^## (When to use|When not to use|Inputs|Examples|Troubleshooting)' skills/$d/SKILL.md)
   echo "$d: $n template sections"
 done
 ```
-Expected: every line shows ≥ 5 (one line per skill).
+Expected: every line shows ≥ 5 (one line per skill, 9 lines).
+
+Then survey the whole library so the two known stragglers stay visible rather than silently passing:
+
+```bash
+python3 -c "
+import pathlib, re
+want = ['When to use','When not to use','Inputs','Examples','Troubleshooting']
+for sk in sorted(pathlib.Path('skills').iterdir()):
+    f = sk / 'SKILL.md'
+    if not f.exists(): continue
+    h = [l[3:].strip() for l in f.read_text(encoding='utf-8').splitlines()
+         if l.startswith('## ')]
+    missing = [w for w in want if not any(w.lower() in x.lower() for x in h)]
+    print(f'{sk.name:24} {\"OK\" if not missing else \"missing: \" + \", \".join(missing)}')
+"
+```
+Expected: every skill `OK` except `developer-diary` and `update-todos`, which are missing `Examples` and `Troubleshooting`. Those are the known follow-up recorded in the Self-review section — do not silently pass them, and do not fix them here (out of scope for PR 2).
 
 - [ ] **Step 4: Verify every skill has a fixture**
 
 Run:
 ```bash
-for d in create-tutorial improve-prompt formal-methods debugger srs type-theory petri-net-theory; do
+for d in create-tutorial improve-prompt formal-methods debugger srs type-theory \
+         petri-net-theory chargebee sanity-design-analysis; do
   if [ -f "evals/fixtures/$d/prompts.json" ]; then echo "$d: OK"; else echo "$d: MISSING"; fi
 done
 ```
 Expected: every line ends `OK`.
 
-- [ ] **Step 5: Verify all 7 agents have TOML siblings**
+Then confirm library-wide coverage:
+
+```bash
+python3 -c "
+import pathlib
+skills = {p.parent.name for p in pathlib.Path('skills').glob('*/SKILL.md')}
+have = {p.parent.name for p in pathlib.Path('evals/fixtures').glob('*/prompts.json')}
+print('with fixtures:', len(have), 'of', len(skills))
+print('without:', ', '.join(sorted(skills - have)) or 'none')
+"
+```
+Expected: `with fixtures: 14 of 14`, `without: none`. The three pre-existing fixtures (`developer-diary`, `reason-through`, `update-todos`) plus the nine added in this phase plus `example-skill` and `terminology` — if the latter two are absent, add them here; they are one-line omissions, not a scope change.
+
+- [ ] **Step 5: Verify all 8 agents have TOML siblings**
 
 Run:
 ```bash
 python3 -c "
 import pathlib
 mds = sorted(pathlib.Path('agents').glob('*-agent.md'))
-assert len(mds) == 7, f'expected 7, got {len(mds)}'
+assert len(mds) == 8, f'expected 8, got {len(mds)}: {[m.name for m in mds]}'
 for md in mds:
     toml = md.with_suffix('.toml')
     assert toml.exists(), f'missing {toml}'
 print('OK', len(mds), 'agents with both formats')
 "
 ```
-Expected: `OK 7 agents with both formats`.
+Expected: `OK 8 agents with both formats`.
 
 - [ ] **Step 6: Open PR 2**
 
 ```bash
 git push
-gh pr create --title "Skills conformance — Examples, Troubleshooting, fixtures, create-tutorial-agent (PR 2/2)" --body "$(cat <<'EOF'
+gh pr create --title "Skills conformance — Examples, Troubleshooting, fixtures, two new agents (PR 2/3)" --body "$(cat <<'EOF'
 ## Summary
-- Add When-to-use / When-not-to-use / Inputs / Examples / Troubleshooting sections to 7 skills.
+- Add When-to-use / When-not-to-use / Inputs / Examples / Troubleshooting sections to 9 skills (the original 7 plus \`chargebee\` and \`sanity-design-analysis\`, both registered in PR 0).
 - Relocate \`improve-prompt/evidence-appendix.md\` under \`references/\`.
 - Fix \`improve-prompt\`'s cross-reference to the renamed agent path.
 - Strip \`\$ARGUMENTS\` from \`create-tutorial/SKILL.md\` and replace with portable Inputs.
-- Add \`evals/fixtures/<skill>/prompts.json\` for all 7 skills.
-- Add \`create-tutorial-agent\` (Markdown + TOML); register in marketplace.
+- Add \`evals/fixtures/<skill>/prompts.json\` for all 9 skills; every skill in the library now has one.
+- Add \`create-tutorial-agent\` and \`terminology-agent\` (Markdown + TOML); register both in the marketplace.
 
-Builds on PR 1 (scaffolding, renames, agents-layer infrastructure).
+Builds on PR 0 (guardrails) and PR 1 (scaffolding, renames, agents-layer infrastructure).
+
+## Known follow-up (not in this PR)
+\`developer-diary\` and \`update-todos\` were classified "already conformant" by the spec but ship no \`## Examples\` and no \`## Troubleshooting\`. Verification step 3 surfaces them rather than passing them silently. Tracked for a separate PR.
 
 ## Test plan
-- [x] \`python3 evals/run.py\` returns OK.
+- [x] \`python3 evals/run.py\` returns \`OK — checked 14 skill(s).\`
 - [x] \`python3 -m unittest discover tests/\` passes.
 - [x] Every modified skill has all template sections.
-- [x] Every modified skill has prompts.json.
-- [x] All 7 agents have both .md and .toml siblings.
+- [x] Every skill in the library has prompts.json.
+- [x] All 8 agents have both .md and .toml siblings.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
@@ -3242,10 +5016,34 @@ EOF
 - §3.7 plugin marketplace: covered by Tasks 22, 33.
 - §3.8 documentation surface: covered by Tasks 17 (agents-guide), 18 (portability-checklist), 19 (agents/README), 20 (top README), 21 (install.md).
 - §4 per-skill changes: each subsection has a dedicated task.
-- §5 PR plan: Phases 1 and 2 implemented; PR 3 explicitly absent (as designed).
+- §5 PR plan: Phases 1 and 2 implemented; the spec's "no PR 3" still holds for *conformance* work — the extra PR added here is PR **0**, which runs before, not after.
 - §6 open items: surfaced in the spec; no implementation needed in this plan.
-- §7 risks: rename churn addressed by Task 12 sweep; generator drift caught by eval parity (Task 16).
-- §8 validation: every "After both PRs land" criterion mapped to a verification step in Tasks 23 and 40.
+- §7 risks: rename churn addressed by Task 12 sweep **and** by `check_registration()` (Task 0.1), which converts a missed rename from silent breakage into an eval failure; generator drift caught by eval parity (Task 16).
+- §8 validation: every "After both PRs land" criterion mapped to a verification step in Tasks 0.6, 23, and 40. Note the spec's criterion "README skills table has 13 rows (or 12…)" is superseded — the correct count is **14**, enforced mechanically rather than by inspection.
+
+**Review-item coverage (2026-07-26 revision):**
+
+- Item 1 (registration): Task 0.1 registers all 14 and adds `check_registration()`; Tasks 20, 22 repoint the renamed entries; Tasks 0.6 Step 3, 23 Step 1, and 40 Step 1 verify.
+- Item 2 (stamped-script drift): Task 0.2 generalises the check, reconciles 4 forked copies, and adds `.gitattributes` for the line-ending hazard the existing check was blind to.
+- Item 3 (dangling cross-references): Task 0.3 fixes the 13 `petri-net-expert` references and the `/note-term` mismatch; amended Task 12 broadens the post-rename sweep from one skill to five and adds a dangling-reference assertion.
+- Item 4 (docs vs. reality): Task 0.4 fixes `configure.sh`, the resolution order, the `root_dir` rule, the Python floor, the directory taxonomy, and the YAML house style.
+- Item 5 (host-specific leakage): Task 0.5 adds `docs/host-adaptation.md` and two checklist items and rewrites the four offending sites; Task 26 fixes the `improve-prompt` agent path; Task 39.1 ships `terminology-agent` so the documented capability exists.
+
+**Spec-to-plan delta (introduced by the 2026-07-26 revision):**
+
+This plan now exceeds the spec in three deliberate ways. Each was a decision, not drift:
+
+1. **Spec §2.2 non-goal superseded.** "Registering or restructuring `skills/sanity-design-analysis/`" was out of scope; it now registers (Task 0.1) and conforms (Task 39.3). Rationale: an exemption keeps `/plugin install` and `npx skills add` shipping different libraries, which is the exact defect item 1 exists to close. `chargebee` is likewise in scope despite post-dating the spec.
+2. **Agent inventory grows from 7 to 8.** `terminology-agent` (Task 39.1) is not in spec §3.2. Rationale: `skills/terminology/SKILL.md` documents a companion agent, so either the agent ships or the documentation is false. Naming follows the spec's own `<skill>-agent` rule.
+3. **A Python floor is declared (3.12).** The spec is silent. Rationale: the repo already requires 3.10+ syntax and Task 16's parity check requires `tomllib` (3.11+), so the floor existed implicitly and undocumented. 3.12 covers both with margin.
+
+**Known gaps left open (recorded, not fixed):**
+
+- `developer-diary` and `update-todos` ship no `## Examples` and no `## Troubleshooting` despite the spec classifying them "already conformant". Task 40 Step 3 surfaces them explicitly so they cannot pass silently. Fixing them is a separate PR — folding two more skills into PR 2 would push it past reviewable size.
+- `reason-through` declares `PATH_KEYS = set()` while defaulting `cache_dir` to `~/.cache/reason-through` and `log_dir` to `~/.local/state/reason-through`. Those are path-typed keys readable from user-level config, which the project-only rule forbids, and they write outside the two sanctioned scopes. XDG cache/state dirs are arguably a legitimate exemption — but the rule as written does not grant one and nothing documents it. Needs a decision (amend the rule, or add the keys to `PATH_KEYS`), not a silent fix.
+- `aiqeung` appears in 29 files across 5 skills, including two whole reference files and 9 hits in `srs/SKILL.md`. For a distribution library this is an unexplained internal codename in always-loaded context. Scrub or explicitly frame as an anonymised worked example.
+- The repo has no `LICENSE` and the four peer skills were bulk-ported from AIQURIS upstream with no attribution recorded. Settle before any public release.
+- `evals/run.py` still does not execute `prompts.json` against host agents, so the "≥80% trigger rate" checklist item remains unverifiable for every skill. Unchanged from spec §6; the fixtures this plan adds are the prerequisite for that follow-up.
 
 **Placeholder scan:** no `TBD`, no `TODO`, no "fill in later". Every code block contains the actual content the engineer needs to write.
 
@@ -3254,10 +5052,13 @@ EOF
 - Generator emits `name`, `description`, `developer_instructions` keys per Codex schema in Task 13; Task 16's parity check reads the same fields. Consistent.
 - Installer's `HOSTS` dict in Task 15 uses `.md` for `claude-code` and `.toml` for `codex`; matches the file-extension routing in `plan_installs`. Consistent.
 - Eval check `check_agent_format_parity` in Task 16 looks for the same `*.md` files the generator in Task 13 emits. Consistent.
-- All 7 skill names used across tasks: `create-tutorial`, `improve-prompt`, `formal-methods`, `debugger`, `srs`, `type-theory`, `petri-net-theory`. No `-expert` slips.
-- All 7 agent names: `<skill>-agent` form. No `-expert` slips.
+- All 9 skill names conformed in Phase 2: `create-tutorial`, `improve-prompt`, `formal-methods`, `debugger`, `srs`, `type-theory`, `petri-net-theory`, `chargebee`, `sanity-design-analysis`. No `-expert` slips.
+- All 8 agent names: `<skill>-agent` form. No `-expert` slips.
+- Skill count is **14** everywhere after Task 0.1 (`evals/run.py` output, marketplace array, README table, Task 0.6/23/40 verification steps). Phase 0 uses pre-rename folder names; Phase 1 Tasks 12/20/22 repoint them; `check_registration()` fails if any surface is missed.
+- Check-function names are consistent across tasks: `check_registration` (0.1), `check_stamped_script_drift` (0.2, replacing `check_shared_reader_drift`), `check_agent_skill_pairing` and `check_agent_format_parity` (16). Task 0.2 Step 7 flags the pre-existing tests that reference the old name.
+- Both `.gitattributes` (Task 0.2) and the drift check's `replace(b"\r\n", b"\n")` normalisation are present; either alone would leave the false-positive path open on a mixed checkout.
 
-**Spec-to-plan delta:** none — every requirement in the spec maps to at least one task.
+**Spec-to-plan delta:** every requirement in the spec maps to at least one task. The plan additionally exceeds the spec in three recorded ways — see "Spec-to-plan delta (introduced by the 2026-07-26 revision)" above.
 
 ---
 
