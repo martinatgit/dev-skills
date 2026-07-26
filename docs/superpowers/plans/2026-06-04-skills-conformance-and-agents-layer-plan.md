@@ -1057,7 +1057,7 @@ Write **intent**, not a tool call.
 |---|---|
 | "Ask via `AskUserQuestion`." | "Ask the user a single consolidated question covering every uncertain field." |
 | "Dispatch with the `Agent` tool." | "Dispatch N sub-agents in parallel, one per family." |
-| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../../agents/foo-agent.md)." |
+| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../agents/foo-agent.md)." |
 
 If the intent genuinely needs a per-host translation table, put it in the
 skill's `references/host-notes.md` and link it from the workflow step. The
@@ -1075,9 +1075,10 @@ back to plain prose. Both satisfy the same contract, so state the contract:
 
 ## Referring to agents
 
-Agents ship from `agents/` in this repo and are installed per host by
-`scripts/install-agents.py`. Always link the repo-relative source path, never a
-host's installed location (`~/.claude/agents/`, `~/.codex/agents/`).
+Agents ship from `agents/` in this repo. A per-host installer,
+`scripts/install-agents.py`, lands with the agents-layer work; until then, copy
+the file your host expects by hand. Always link the repo-relative source path,
+never a host's installed location (`~/.claude/agents/`, `~/.codex/agents/`).
 ```
 
 - [ ] **Step 2: Add the rule to the portability checklist**
