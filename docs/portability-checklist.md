@@ -37,7 +37,7 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] No external package installs at any point.
 - [ ] No tool-specific files inside the skill (no `allowed-tools` in frontmatter, no `agents/openai.yaml` unless documented).
 - [ ] No host-specific tool name appears in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent; put any per-host translation in `references/host-notes.md`. See [`docs/host-adaptation.md`](host-adaptation.md).
-- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` appears in skill prose. Link the repo-relative `agents/<name>-agent.md` source instead.
+- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` is cited as where one of *this repo's* files lives — link the repo-relative `agents/<name>-agent.md` source instead. Citing such a path as an illustrative example of a host's install location (e.g. explaining why a config key must be project-scoped) is fine.
 - [ ] No symlinks.
 
 ## Configuration (if applicable)

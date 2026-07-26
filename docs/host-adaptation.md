@@ -32,5 +32,10 @@ back to plain prose. Both satisfy the same contract, so state the contract:
 ## Referring to agents
 
 Agents ship from `agents/` in this repo and are installed per host by
-`scripts/install-agents.py`. Always link the repo-relative source path, never a
-host's installed location (`~/.claude/agents/`, `~/.codex/agents/`).
+`scripts/install-agents.py`. When pointing readers at where an agent's
+definition lives, link the repo-relative source path, never a host's
+installed location (`~/.claude/agents/`, `~/.codex/agents/`) — that path is
+per-user and doesn't exist until install. Citing a host's install path as an
+illustrative example inside explanatory prose (e.g. why a config key must
+stay project-scoped) is fine; the rule is about where a skill sends readers
+to find its own files, not about mentioning that a host path exists.

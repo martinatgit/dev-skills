@@ -1,6 +1,6 @@
 # SRS Expert — Reference Overview
 
-*Navigation map for `.claude/skills/srs-expert/references/`. Load this file first;
+*Navigation map for `skills/srs-expert/references/`. Load this file first;
 it routes to the correct reference for each topic.*
 
 ---
