@@ -833,7 +833,7 @@ In `docs/portability-checklist.md`, under `## Configuration (if applicable)`, re
 with:
 
 ```markdown
-- [ ] Resolution order is env var → project-skill config → `.agents/dev-skills.yaml` → user-skill config → built-in default. Path-typed keys skip the user-skill layer entirely.
+- [ ] Resolution order is env var → project-skill config → `.agents/dev-skills.yaml` → user-skill config → built-in default. Path-typed keys skip the user-skill layer entirely. A skill with no path-typed keys has no shared layer and resolves through four: env var → project-skill config → user-skill config → built-in default.
 - [ ] `scripts/configure.py` prompts for missing values, is idempotent, accepts `--repair`.
 ```
 
@@ -861,7 +861,9 @@ If your skill writes user-visible files (e.g. a diary, a TODO tree, generated re
 
 - [ ] **Step 3: Document the Python floor**
 
-The scripts already use PEP 604 (`Path | None`, 3.10+) and PEP 585 (`dict[str, str]`, 3.9+), and Task 16's parity check imports `tomllib` (3.11+). Declare **3.12**.
+Declare **3.12**.
+
+Get the justification right — the docs this task fixes were wrong, and a new wrong claim is worse than the old one. What is actually true: `evals/run.py` carries un-deferred PEP 585 annotations (needs 3.9+ at import), two files under `tests/` carry un-deferred PEP 604 unions (needs 3.10+ at import), and Task 16's parity check *will* import `tomllib` (3.11+). What is **not** true: `tomllib` is not used anywhere in the repo today, and the scripts under `skills/*/scripts/` all carry `from __future__ import annotations`, so their annotations never evaluate and they do **not** fail at import on an older interpreter. Do not write either of those as present-tense fact.
 
 In `docs/portability-checklist.md`, under `## Portability`, replace:
 
@@ -885,7 +887,7 @@ In `docs/authoring-guide.md`, under `## Scripts`, replace the first Allowed bull
 with:
 
 ```markdown
-- Python **3.12** stdlib, no external packages. **Default choice.** 3.12 is the floor, not a target: `tomllib` (3.11+) and PEP 604 unions (3.10+) are already used across the repo, and pinning the floor above them keeps the eval scripts and the skill scripts on one baseline.
+- Python **3.12** stdlib, no external packages. **Default choice.** 3.12 is the floor, not a target: `evals/run.py` already carries un-deferred PEP 585 annotations (3.9+), two test files carry un-deferred PEP 604 unions (3.10+), and the agent format-parity check added in Phase 1 will import `tomllib` (3.11+). Pinning above all three keeps the eval scripts and the skill scripts on one baseline.
 ```
 
 In `CONTRIBUTING.md`, add to the prerequisites (create a `## Prerequisites` section if none exists):
@@ -893,7 +895,7 @@ In `CONTRIBUTING.md`, add to the prerequisites (create a `## Prerequisites` sect
 ```markdown
 ## Prerequisites
 
-- **Python 3.12 or newer.** Verify with `python3 --version`. The repo's scripts, `evals/run.py`, and the test suite all assume 3.12 stdlib; older interpreters fail at import, not at runtime.
+- **Python 3.12 or newer.** Verify with `python3 --version`. `evals/run.py` and parts of the test suite fail at import on older interpreters, not at runtime. The skill scripts under `skills/*/scripts/` all use `from __future__ import annotations`, so they are more forgiving — but 3.12 is the supported baseline and the only version CI is expected to exercise.
 ```
 
 - [ ] **Step 4: Document the directory taxonomy**
