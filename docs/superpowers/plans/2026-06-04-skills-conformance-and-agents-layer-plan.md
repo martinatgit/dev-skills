@@ -957,9 +957,10 @@ In `template/SKILL.md`, convert the frontmatter `description` to the `>-` form s
 
 Run:
 ```bash
-grep -rn 'configure\.sh' docs/ template/ && echo "STALE configure.sh reference" || echo "CLEAN"
+grep -rn 'configure\.sh' docs/ template/ --exclude-dir=superpowers \
+  && echo "STALE configure.sh reference" || echo "CLEAN"
 ```
-Expected: `CLEAN`.
+Expected: `CLEAN`. (`--exclude-dir=superpowers` is required: the plan and spec under `docs/superpowers/` narrate the `configure.sh` error as history and must keep naming it. Without the exclusion this command reports its own plan file as a stale reference.)
 
 Run:
 ```bash
