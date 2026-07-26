@@ -17,6 +17,19 @@ description: What the skill does, and specific contexts for when to trigger it.
 ---
 ```
 
+Descriptions run long. When one exceeds a single line, use the folded-strip block scalar `>-` so the parsed value has no trailing newline and no line-wrapping ambiguity:
+
+```yaml
+---
+name: my-skill
+description: >-
+  First line of the description. Subsequent lines are folded into one
+  paragraph. Use this whenever the user mentions X, Y, or Z.
+---
+```
+
+Do not use a bare `>` (leaves a trailing newline on some parsers) and do not wrap a plain scalar across lines (indentation-sensitive and the easiest form to break).
+
 Do not add `version`, `owner`, `tags`, `allowed-tools`, `metadata`, or any other field. The open standard's `metadata` namespace is experimental and support varies across agents. Things you add here silently get ignored on half the platforms.
 
 If a platform-specific field genuinely matters (Claude Code `allowed-tools`, a Codex `agents/openai.yaml`), ship it as a sidecar file inside the skill folder and mention it in the skill's README section. Do not bake it into SKILL.md.
@@ -35,6 +48,8 @@ Agents systematically under-trigger. Over-trigger is usually better; you can alw
 ## SKILL.md structure
 
 Keep the body under 500 lines. If you're over, push detail into `references/`.
+
+Sub-directories are drawn from a fixed set — see the table in [the portability checklist](portability-checklist.md#structure). Do not invent a new one without adding it there and to `check_no_placeholders()` in `evals/run.py`.
 
 Suggested sections, in order:
 
@@ -56,7 +71,7 @@ Use imperative verbs ("Read the file", not "The file is read"). Keep steps short
 
 Allowed:
 
-- Python 3 stdlib, no external packages. **Default choice.**
+- Python **3.12** stdlib, no external packages. **Default choice.** 3.12 is the floor, not a target: `tomllib` (3.11+) and PEP 604 unions (3.10+) are already used across the repo, and pinning the floor above them keeps the eval scripts and the skill scripts on one baseline.
 - POSIX bash (must work on macOS's default 3.x). Use only when Python is overkill.
 - Node.js with no external packages beyond what ships with Node.
 
@@ -93,7 +108,7 @@ See `docs/install.md` -> Shared conventions for the user-facing contract.
 
 ### Write-directory configuration
 
-If your skill writes user-visible files (e.g. a diary, a TODO tree, generated reports), expose a `root_dir` config key. It must be:
+If your skill writes user-visible files (e.g. a diary, a TODO tree, generated reports), expose exactly one path-typed config key naming the destination. Name it `root_dir` when the skill owns a directory (`developer-diary`, `update-todos`); name it `<thing>_dir` or `<thing>_file` when it owns a specific subtree or single file (`create-tutorial` → `tutorials_dir`, `terminology` → `terminology_file`). Whatever the name, it must be:
 
 - **Project-only** (never read from user-level config).
 - Resolved via `python3 scripts/resolve_config.py root_dir` at the start of each invocation.

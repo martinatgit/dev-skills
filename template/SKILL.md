@@ -1,6 +1,11 @@
 ---
 name: your-skill-name
-description: One sentence on what this skill does and specific contexts when the agent should trigger it. Be a little pushy — agents under-trigger. Example — "Generate release notes from a git range. Use whenever the user mentions changelogs, release notes, version bumps, or wants to summarize commits for a new tag."
+description: >-
+  One sentence on what this skill does and specific contexts when the agent
+  should trigger it. Be a little pushy — agents under-trigger. Example —
+  "Generate release notes from a git range. Use whenever the user mentions
+  changelogs, release notes, version bumps, or wants to summarize commits for
+  a new tag."
 ---
 
 # Your Skill Name

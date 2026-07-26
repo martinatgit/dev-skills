@@ -2,6 +2,10 @@
 
 Thanks for contributing. A few conventions this repo enforces.
 
+## Prerequisites
+
+- **Python 3.12 or newer.** Verify with `python3 --version`. The repo's scripts, `evals/run.py`, and the test suite all assume 3.12 stdlib; older interpreters fail at import, not at runtime.
+
 ## Universal first
 
 Every skill in this repo must work on at least Claude Code and Codex CLI without modification. Skills with tool-specific quirks go in a fork, not here.

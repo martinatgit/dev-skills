@@ -14,12 +14,25 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] The skill is a single folder under `skills/`.
 - [ ] `SKILL.md` body is under 500 lines.
 - [ ] Detail longer than 30 lines is in `references/`, not in SKILL.md.
-- [ ] Scripts live under `scripts/`, assets under `assets/`, reference docs under `references/`.
+- [ ] Every file sits in a sanctioned sub-directory:
+
+  | Directory | Contents | Placeholder-checked |
+  |---|---|---|
+  | `references/` | Reference docs the skill loads on demand. | yes |
+  | `scripts/` | Executable helpers (Python 3.12 stdlib preferred). | no |
+  | `actions/` | One file per invocable sub-command (`capture`, `review`, …). | no |
+  | `resources/` | Output templates, `*.md.tpl`. | no |
+  | `schemas/` | JSON Schema for the skill's structured output. | no |
+  | `agents/` | Sub-agent prompt files the skill dispatches. | no |
+  | `assets/` | Static binary assets. | no |
+
+  `SKILL.md` is the only file permitted at the skill root. "Placeholder-checked" marks the surfaces `evals/run.py` scans for unfilled `{{...}}`; the rest legitimately carry placeholder markers filled at runtime.
 - [ ] No `README.md` inside the skill folder (SKILL.md is the readme).
 
 ## Portability
 
-- [ ] Scripts are POSIX bash or Python 3 stdlib or Node.js stdlib only.
+- [ ] Scripts are POSIX bash or Python 3.12 stdlib or Node.js stdlib only.
+- [ ] Python scripts run under 3.12 with no deprecation warnings: `python3 -W error::DeprecationWarning skills/<name>/scripts/<script>.py --help`.
 - [ ] No Bun, no uv, no `#!/usr/bin/env -S` shebangs, no Node version pins.
 - [ ] No external package installs at any point.
 - [ ] No tool-specific files inside the skill (no `allowed-tools` in frontmatter, no `agents/openai.yaml` unless documented).
@@ -27,9 +40,9 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 
 ## Configuration (if applicable)
 
-- [ ] Config path is `~/.config/<skill-name>/config.yaml` with permissions `0600`.
-- [ ] Resolution order is env var → user config → project-local → interactive prompt.
-- [ ] `scripts/configure.sh` prompts for missing values, is idempotent, accepts `--repair`.
+- [ ] Non-path config is at `~/.config/<skill-name>/config.yaml` with permissions `0600`; path-typed keys are at `<project_root>/.<skill-name>/config.yaml`.
+- [ ] Resolution order is env var → project-skill config → `.agents/dev-skills.yaml` → user-skill config → built-in default. Path-typed keys skip the user-skill layer entirely.
+- [ ] `scripts/configure.py` prompts for missing values, is idempotent, accepts `--repair`.
 - [ ] Configuration never writes outside `~/.config/<skill-name>/`.
 - [ ] Schema is documented in `references/config-schema.md` with an example file.
 - [ ] If the skill has path-typed keys, the resolver consults `<project_root>/.agents/dev-skills.yaml` between project-skill and user-skill layers (see `docs/authoring-guide.md` -> Consulting the shared conventions file).
