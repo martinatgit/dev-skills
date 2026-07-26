@@ -54,14 +54,28 @@ Examples:
     repo_root = Path(args.repo_root).resolve()
     skills_root = repo_root / "skills"
 
-    drift = []
-    copied = []
+    # Pre-flight: every template must exist before any writes happen. Checking
+    # this inline in the copy loop below would let an earlier STAMPED_SCRIPTS
+    # entry get written to every skill's working tree before a later, missing
+    # template is discovered and the run aborts — a partial mutation paired
+    # with a failure exit code. Fail fast, mutate nothing.
+    templates = {}
     missing = []
     for filename in STAMPED_SCRIPTS:
         template = repo_root / "template" / "scripts" / filename
         if not template.exists():
             missing.append(str(template.relative_to(repo_root)))
-            continue
+        else:
+            templates[filename] = template
+
+    if missing:
+        print("error: template(s) not found: %s" % ", ".join(missing),
+              file=sys.stderr)
+        return 2
+
+    drift = []
+    copied = []
+    for filename, template in templates.items():
         canonical = template.read_bytes()
         for scripts_dir in find_skill_script_dirs(skills_root):
             target = scripts_dir / filename
@@ -75,11 +89,6 @@ Examples:
             else:
                 shutil.copyfile(str(template), str(target))
                 copied.append(str(target.relative_to(repo_root)))
-
-    if missing:
-        print("error: template(s) not found: %s" % ", ".join(missing),
-              file=sys.stderr)
-        return 2
 
     if args.check:
         if drift:

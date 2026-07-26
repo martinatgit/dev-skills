@@ -77,6 +77,49 @@ class RefresherTest(unittest.TestCase):
             )
             self.assertFalse((gamma_scripts / "find_project_root.py").exists())
 
+    def test_missing_template_writes_nothing(self):
+        """A missing template must fail fast with zero writes anywhere.
+
+        Regression test for a partial-mutation bug: the per-template
+        existence check used to run inside the copy loop, so an earlier
+        STAMPED_SCRIPTS entry (read_shared_conventions.py) could already be
+        written into every skill's working tree before a later, missing
+        template (find_project_root.py) was discovered and the run aborted
+        with exit code 2 -- a silent partial mutation paired with a failure
+        exit code. The pre-flight check must reject the whole run before any
+        copyfile() happens.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            tmp = self._populate_fake_repo(Path(td))
+            # Remove the second stamped script's template only; the first
+            # (read_shared_conventions.py) still exists and would normally be
+            # copied first, per STAMPED_SCRIPTS order.
+            (tmp / "template" / "scripts" / "find_project_root.py").unlink()
+
+            result = subprocess.run(
+                [sys.executable, str(REFRESHER), "--repo-root", str(tmp)],
+                capture_output=True, text=True, check=False,
+            )
+
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("find_project_root.py", result.stderr)
+
+            # Zero writes: every stale copy -- including
+            # read_shared_conventions.py, whose template DID exist -- must be
+            # untouched.
+            for skill in ("alpha", "beta"):
+                scripts_dir = tmp / "skills" / skill / "scripts"
+                self.assertEqual(
+                    (scripts_dir / "read_shared_conventions.py").read_text(
+                        encoding="utf-8"),
+                    "# stale\n",
+                )
+                self.assertEqual(
+                    (scripts_dir / "find_project_root.py").read_text(
+                        encoding="utf-8"),
+                    "# stale\n",
+                )
+
     def test_idempotent_no_diff_on_second_run(self):
         with tempfile.TemporaryDirectory() as td:
             tmp = self._populate_fake_repo(Path(td))
