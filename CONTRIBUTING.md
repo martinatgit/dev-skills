@@ -4,7 +4,7 @@ Thanks for contributing. A few conventions this repo enforces.
 
 ## Prerequisites
 
-- **Python 3.12 or newer.** Verify with `python3 --version`. The repo's scripts, `evals/run.py`, and the test suite all assume 3.12 stdlib; older interpreters fail at import, not at runtime.
+- **Python 3.12 or newer.** Verify with `python3 --version`. `evals/run.py` and two test files (`tests/test_check_reference_drift.py`, `tests/test_smoke_end_to_end.py`) use un-deferred `list[str]` / `Path | None` annotations and fail at import under older interpreters. Skill scripts under `skills/*/scripts/` defer annotation evaluation via `from __future__ import annotations` and would still import on older Pythons, but 3.12 is the floor for the whole repo regardless.
 
 ## Universal first
 
@@ -13,9 +13,9 @@ Every skill in this repo must work on at least Claude Code and Codex CLI without
 Concretely:
 
 - Frontmatter contains only `name` and `description`. Nothing else.
-- Scripts use POSIX bash or Python 3 stdlib. No Bun, no Node version pins, no `uv`.
+- Scripts use POSIX bash or Python 3.12 stdlib. No Bun, no Node version pins, no `uv`.
 - The skill does not modify files outside its own directory or `~/.config/<skill-name>/` during any operation.
-- No install scripts. Configuration is lazy — read from `~/.config/<skill-name>/config.yaml` on first use, and prompt via `scripts/configure.sh` if missing.
+- No install scripts. Configuration is lazy — read from `~/.config/<skill-name>/config.yaml` on first use, and prompt via `scripts/configure.py` if missing.
 
 The [portability checklist](docs/portability-checklist.md) is the authoritative list.
 

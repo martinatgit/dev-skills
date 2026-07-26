@@ -41,7 +41,7 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 ## Configuration (if applicable)
 
 - [ ] Non-path config is at `~/.config/<skill-name>/config.yaml` with permissions `0600`; path-typed keys are at `<project_root>/.<skill-name>/config.yaml`.
-- [ ] Resolution order is env var → project-skill config → `.agents/dev-skills.yaml` → user-skill config → built-in default. Path-typed keys skip the user-skill layer entirely.
+- [ ] Resolution order is env var → project-skill config → user-skill config (non-path keys only) → built-in default; skills with path-typed keys insert a `.agents/dev-skills.yaml` layer between project-skill and user-skill config (five layers total — see the bullet below). Path-typed keys always skip the user-skill layer.
 - [ ] `scripts/configure.py` prompts for missing values, is idempotent, accepts `--repair`.
 - [ ] Configuration never writes outside `~/.config/<skill-name>/`.
 - [ ] Schema is documented in `references/config-schema.md` with an example file.
