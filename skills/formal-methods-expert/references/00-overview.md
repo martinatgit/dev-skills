@@ -35,12 +35,12 @@ type: reference
 |---|---|---|
 | CDCL(T) algorithm internals, theory solver interface design | formal-methods-expert | — |
 | EUF, Nelson-Oppen, theory combination correctness | formal-methods-expert | — |
-| Z3 for Petri net state equations (algorithm) | formal-methods-expert | `petri-net-expert` (PN application) |
+| Z3 for Petri net state equations (algorithm) | formal-methods-expert | `petri-net-theory` (PN application) |
 | k-Induction / IC3/PDR algorithm theory | formal-methods-expert | — |
 | k-Induction applied to synchronous Lustre/Scade nodes | formal-methods-expert (algorithm) | `srs-expert` (SRS application) |
 | TLA+ specification design for reactive systems | formal-methods-expert | `srs-expert` if Layer 3 tick semantics involved |
-| Petri net decidability, net contracts, P/T firing rules, soundness | `petri-net-expert` | — |
-| PN reachability via state equation (SMT encoding) | formal-methods-expert + `petri-net-expert` jointly | — |
+| Petri net decidability, net contracts, P/T firing rules, soundness | `petri-net-theory` | — |
+| PN reachability via state equation (SMT encoding) | formal-methods-expert + `petri-net-theory` jointly | — |
 | Clock calculus, three-phase tick, causality, ReactiveExpr | `srs-expert` | — |
 | CLP propagators for synchronous scheduling | formal-methods-expert (propagator engine) | `srs-expert` (SRS semantics) |
 

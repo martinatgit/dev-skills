@@ -13,7 +13,7 @@ description: Use when needing authoritative Petri net theory — formal foundati
 
 Authoritative reference for Petri net theory, decidability results, compliance
 modelling patterns, and the aiqeung Layer 2-3 implementation as a worked example.
-This skill is loaded by the `petri-net-expert` agent and can be invoked inline.
+This skill can be invoked inline, or loaded by a dispatchable agent that delegates to it. See [`agents/`](../../agents/) for the agent definitions this repository ships.
 
 ---
 

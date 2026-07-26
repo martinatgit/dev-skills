@@ -9,7 +9,7 @@ description: >
   engineering-shortcut audits on any debug-layer code or design. Can map any
   observability, introspection, or explanation problem to applicable formal
   debugger theory — invoke even when "debug" does not appear explicitly.
-  Peers: petri-net-expert, srs-expert, type-theory-expert, formal-methods-expert.
+  Peers: petri-net-theory, srs-expert, type-theory-expert, formal-methods-expert.
 ---
 
 # Debugger & Tracer Design Expert
