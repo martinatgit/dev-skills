@@ -27,10 +27,38 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import configure  # type: ignore  # noqa: E402
+import read_shared_conventions  # type: ignore  # noqa: E402
 
 
 def expand(value: str) -> str:
     return os.path.expandvars(os.path.expanduser(value))
+
+
+def _compose_from_shared(shared, project_root):
+    """Return path/tunable overrides for update-todos derived from the shared file.
+
+    Mapping:
+        root_dir <- <docs_root>/skills.update-todos.subdir
+                    (default subdir = "TODOs")
+    Non-path tunables passed through: default_expiry_days.
+
+    inbox_wip_limit and active_wip_limit are deprecated and are NOT passed
+    through from the shared file; the project policy is that deprecated keys
+    are no longer respected anywhere in the resolution chain.
+
+    `project_root` is unused here but kept for signature parity with the
+    other skills' _compose_from_shared helpers.
+    """
+    if shared is None:
+        return {}
+    docs_root = shared.get("docs_root", "doc")
+    block = (shared.get("skills") or {}).get("update-todos", {}) or {}
+    subdir = block.get("subdir") or "TODOs"
+    overrides = {"root_dir": str(Path(docs_root) / subdir)}
+    for k in ("default_expiry_days",):
+        if k in block:
+            overrides[k] = str(block[k])
+    return overrides
 
 
 def resolve_all() -> dict[str, str]:
@@ -38,9 +66,27 @@ def resolve_all() -> dict[str, str]:
     project_values = (configure.load_existing(configure.project_config_path(proot))
                       if proot else {})
     user_values = configure.load_existing(configure.user_config_path())
+    shared = read_shared_conventions.load(proot) if proot else None
+    shared_overrides = _compose_from_shared(shared, proot)
+
     raw = configure.resolve(project_values, user_values)
-    return {k: (expand(v) if k in configure.PATH_KEYS and v else v)
-            for k, v in raw.items()}
+    # Layer precedence: env > project-skill > shared > user-skill > default.
+    for k in list(raw):
+        env_v = os.environ.get(configure.ENV_PREFIX + k.upper())
+        if env_v:
+            continue  # env wins.
+        if k in project_values and project_values[k]:
+            continue  # project-skill wins.
+        if k in shared_overrides:
+            raw[k] = shared_overrides[k]
+
+    resolved: dict[str, str] = {}
+    for k, v in raw.items():
+        if k in configure.PATH_KEYS and v:
+            resolved[k] = expand(v)
+        else:
+            resolved[k] = v
+    return resolved
 
 
 def main() -> int:

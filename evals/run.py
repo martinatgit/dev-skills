@@ -60,6 +60,57 @@ def check_marketplace() -> list[str]:
     return []
 
 
+def _readme_registered_skills() -> set[str]:
+    """Skill names linked from the README skills table."""
+    readme = REPO_ROOT / "README.md"
+    if not readme.exists():
+        return set()
+    text = readme.read_text(encoding="utf-8")
+    return set(re.findall(r"\]\(skills/([^/)]+)/SKILL\.md\)", text))
+
+
+def _marketplace_registered_skills() -> set[str]:
+    """Skill names listed in every plugins[].skills array."""
+    if not MARKETPLACE.exists():
+        return set()
+    try:
+        data = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()  # check_marketplace() reports the parse error separately.
+    names: set[str] = set()
+    for plugin in data.get("plugins", []):
+        for entry in plugin.get("skills", []):
+            names.add(Path(entry).name)
+    return names
+
+
+def check_registration() -> list[str]:
+    """Every skills/<name>/ must appear in BOTH the README table and marketplace.
+
+    Without this, `/plugin install` (marketplace) and `npx skills add` (whole
+    tree) ship different skill sets. There is deliberately no exemption list:
+    an unregistered skill is always a bug, never a decision.
+    """
+    on_disk = {p.parent.name for p in SKILLS_DIR.glob("*/SKILL.md")}
+    problems: list[str] = []
+
+    for name in sorted(on_disk - _marketplace_registered_skills()):
+        problems.append(
+            f"skills/{name}: not listed in {MARKETPLACE.relative_to(REPO_ROOT)} "
+            f"(plugins[].skills) — /plugin install will not ship it"
+        )
+    for name in sorted(on_disk - _readme_registered_skills()):
+        problems.append(
+            f"skills/{name}: not linked from the README skills table"
+        )
+    for name in sorted(_marketplace_registered_skills() - on_disk):
+        problems.append(
+            f"{MARKETPLACE.relative_to(REPO_ROOT)}: lists './skills/{name}' "
+            f"but no such skill directory exists"
+        )
+    return problems
+
+
 def check_no_placeholders() -> list[str]:
     """Reject {{...}} placeholders in user-facing surfaces only.
 
@@ -100,6 +151,39 @@ def check_python_scripts() -> list[str]:
     return problems
 
 
+# Scripts stamped identically into every skill that ships them. Drift here is
+# always a bug: these files carry cross-skill invariants (project-root
+# detection, shared-conventions parsing) that must not vary per skill.
+STAMPED_SCRIPTS = (
+    "read_shared_conventions.py",
+    "find_project_root.py",
+)
+
+
+def check_stamped_script_drift() -> list[str]:
+    """Byte-compare each skill's stamped scripts against the canonical template.
+
+    Comparison is newline-insensitive: `.gitattributes` pins these files to LF,
+    but a checkout with core.autocrlf=true will materialise CRLF locally and
+    that is not drift.
+    """
+    problems: list[str] = []
+    for filename in STAMPED_SCRIPTS:
+        template = REPO_ROOT / "template" / "scripts" / filename
+        if not template.exists():
+            continue  # Template absent; refresher hasn't been introduced.
+        canonical = template.read_bytes().replace(b"\r\n", b"\n")
+        for copy in sorted(SKILLS_DIR.glob("*/scripts/" + filename)):
+            if copy.read_bytes().replace(b"\r\n", b"\n") != canonical:
+                problems.append(
+                    "%s: differs from canonical template at %s "
+                    "(run: python3 scripts/refresh-shared-reader.py)"
+                    % (copy.relative_to(REPO_ROOT),
+                       template.relative_to(REPO_ROOT))
+                )
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skill", help="Check one skill only (by folder name)")
@@ -116,8 +200,10 @@ def main() -> int:
     else:
         targets = sorted(SKILLS_DIR.glob("*/SKILL.md"))
         all_problems.extend(check_marketplace())
+        all_problems.extend(check_registration())
         all_problems.extend(check_no_placeholders())
         all_problems.extend(check_python_scripts())
+        all_problems.extend(check_stamped_script_drift())
 
     for skill_md in targets:
         all_problems.extend(check_frontmatter(skill_md))

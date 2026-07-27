@@ -53,6 +53,17 @@ DEVELOPER_DIARY_ROOT_DIR=/tmp/test-diary  # env var wins over both files
 
 Full env-var table and the project-root detection rules are in [`docs/install.md`](docs/install.md).
 
+### Project conventions (one-line setup)
+
+Set one docs-folder convention for every skill in the project:
+
+```sh
+# Create <project_root>/.agents/dev-skills.yaml with docs_root: agent-docs
+python3 scripts/setup-conventions.py --non-interactive --docs-root agent-docs
+```
+
+See [`docs/install.md`](docs/install.md#shared-conventions) for the full schema and resolution rules.
+
 ## Skills in this repository
 
 <!-- Update this table when you add a skill. -->
@@ -63,7 +74,16 @@ Full env-var table and the project-root detection rules are in [`docs/install.md
 | [`developer-diary`](skills/developer-diary/SKILL.md) | Persistent engineering knowledge across sessions. Reads the diary before design or implementation work, updates it after, and reviews it for structural repair. Invoke with `read`, `update`, or `review`. |
 | [`reason-through`](skills/reason-through/SKILL.md) | Multi-perspective reasoning framework. Dispatches up to 23 specialist reasoning agents in parallel and synthesises their outputs into one integrated answer with a falsifiable terminal claim. |
 | [`update-todos`](skills/update-todos/SKILL.md) | Captures deferred decisions, design inconsistencies, convention violations, missing tests, and open questions as atomic markdown notes in `doc/TODOs/` with full context. Invoke with `capture`, `clarify`, `list`, `resolve`, `review`, `maintenance`, `health`, or `import`. |
-| [`terminology`](skills/terminology/SKILL.md) | Curates the project's shared technical vocabulary in a single glossary file (default `doc/terminology.md`). Invoke with `note` (or `/note-term <…>`), `get`, `review`, or `validate`. |
+| [`terminology`](skills/terminology/SKILL.md) | Curates the project's shared technical vocabulary in a single glossary file (default `doc/terminology.md`). Invoke with `define` (or `/define-term <…>`), `get`, `review`, or `validate`. |
+| [`create-tutorial`](skills/create-tutorial/SKILL.md) | Generate a textbook-style technical tutorial for a software component. Invoke with `/create-tutorial <topic>`. Writes to `tutorials_dir` (project-only Pattern 2 key; falls through to `.agents/dev-skills.yaml`). |
+| [`chargebee`](skills/chargebee/SKILL.md) | Chargebee billing and subscription development guidance: Product Catalog 1.0/2.0, hosted checkout and Chargebee.js, payment intents (3DS/SCA), webhooks and event ordering, dunning, entitlements. Loads detailed references on demand. |
+| [`debugger-expert`](skills/debugger-expert/SKILL.md) | Authoritative reference for debugger and tracer design: trace semantics, event-model design, breakpoint/spy-point semantics, cross-formalism coherence, time-travel replay, remote debug protocols. |
+| [`formal-methods-expert`](skills/formal-methods-expert/SKILL.md) | Authoritative reference for SAT/SMT, CLP/CP, theorem proving, temporal logic, TLA+, and model checking. Use for algorithm selection, decidability analysis, propagator engine review, formal-system audits. |
+| [`improve-prompt`](skills/improve-prompt/SKILL.md) | Transform rough user-intent text into one polished, paste-ready LLM prompt. Evidence-guarded against the well-replicated failure modes of prompt engineering (CoT misuse, persona-on-factual, lost-in-middle, unwrapped untrusted input). |
+| [`petri-net-theory`](skills/petri-net-theory/SKILL.md) | Authoritative reference for Petri net theory: formal foundations, decidability, compliance modelling, P/T, CPN, and WF-net patterns. |
+| [`sanity-design-analysis`](skills/sanity-design-analysis/SKILL.md) | Analyse a software design for simplicity and maintainability. Produces a structured report covering mental model, assumptions, narrative, rules, happy/error paths, conflicts, diagrams, and a build-from-scratch tutorial. |
+| [`srs-expert`](skills/srs-expert/SKILL.md) | Authoritative reference for synchronous reactive systems: tick architecture, signal semantics, clock calculus, constructive causality. |
+| [`type-theory-expert`](skills/type-theory-expert/SKILL.md) | Authoritative reference for formal type systems: lambda cube, type inference (HM, bidirectional), advanced systems (GADTs, refinement, gradual, session, graded), category-theoretic foundations. |
 
 ## Authoring a new skill
 

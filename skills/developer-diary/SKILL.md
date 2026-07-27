@@ -1,6 +1,6 @@
 ---
 name: developer-diary
-description: Persistent engineering knowledge across sessions. Maintains a hierarchical project diary that captures decisions, reasoning, alternatives considered, debugging stories, and lessons learned — the colleague-handoff context that is otherwise lost between sessions and engineers. Invoke with `read` (before design or implementation work, to load relevant context), `update` (after meaningful work, while context is fresh), or `review` (occasionally, to repair structural drift). Use whenever the user mentions "developer diary", "engineering notebook", "session notes", "what did we do last time", "carry over context", or asks you to load or write project history. Use this even if phrased casually like "remind me where we left off" or "write down what we just did". Do not use for ephemeral chat memory or for action-item tracking — use `update-todos` for the latter.
+description: Persistent engineering knowledge across sessions. Maintains a hierarchical project diary that captures decisions, reasoning, alternatives considered, debugging stories, and lessons learned — the colleague-handoff context that is otherwise lost between sessions and engineers. Invoke with `read` (before design or implementation work, to load relevant context), `update` (after meaningful work, while context is fresh), `maintain` (to verify a single entry against current reality and propose preserving-narrative amendments), or `review` (occasionally, to repair structural drift). Use whenever the user mentions "developer diary", "engineering notebook", "session notes", "what did we do last time", "carry over context", or asks you to load or write project history. Use this even if phrased casually like "remind me where we left off" or "write down what we just did". Do not use for ephemeral chat memory or for action-item tracking — use `update-todos` for the latter.
 ---
 
 # Developer Diary
@@ -18,11 +18,12 @@ You are keenly aware that your context window is limited and the next engineer r
 The skill is invoked as:
 
 ```
-/developer-diary [read | update | review]
+/developer-diary [read | update | maintain | review]
 ```
 
 - `read` — invoke before design/implementation work, to selectively load relevant context.
 - `update` — invoke after completing meaningful work, while context is still fresh.
+- `maintain` — invoke for a single existing diary entry to detect drift between the entry and current code/requirements/sibling nodes, and propose narrative-preserving amendments behind an explicit approval gate.
 - `review` — invoke occasionally, to repair the diary's structure (orphan refs, parent/child duplication, stale cross-links).
 
 If no mode is supplied or the value is unrecognised, ask the user which mode to use.
@@ -36,7 +37,7 @@ Resolution order (first match wins):
 3. **User-level** config at `~/.config/developer-diary/config.yaml` — applies to non-path keys only (e.g. `node_token_limit`). The `root_dir` is project-bound and is never read from this layer.
 4. Built-in default (for non-path keys only).
 
-Path-typed keys (`root_dir`, `feature_routing_file`) are project-only by design: the diary is a per-project artefact, and a user-installed skill must not bleed one project's diary into another.
+Path-typed keys (`root_dir`, `feature_routing_file`, `requirements_dir`, `todos_inbox_dir`, `todos_archive_dir`) are project-only by design: the diary is a per-project artefact, and a user-installed skill must not bleed one project's diary into another.
 
 **Configure**
 
@@ -73,9 +74,10 @@ Every invocation begins with:
 
 After Step 0, follow the action file matching the requested mode (paths relative to this SKILL.md):
 
-- `read`   → [`actions/read-diary.md`](actions/read-diary.md)
-- `update` → [`actions/update-diary.md`](actions/update-diary.md)
-- `review` → [`actions/review-diary.md`](actions/review-diary.md)
+- `read`     → [`actions/read-diary.md`](actions/read-diary.md)
+- `update`   → [`actions/update-diary.md`](actions/update-diary.md)
+- `maintain` → [`actions/maintain-entry.md`](actions/maintain-entry.md)
+- `review`   → [`actions/review-diary.md`](actions/review-diary.md)
 
 ## Diary tree layout
 
@@ -118,7 +120,7 @@ The hierarchy mirrors the software architecture. Higher nodes (closer to root) c
 
 ## Size limit and splitting
 
-A single `diary-entry.md` should remain below the configured `node_token_limit` (default `4000`).
+A single `diary-entry.md` should remain below the configured `node_token_limit` (default `4000`). The same threshold also governs the `maintain` action's Phase 7 split decision.
 
 If a node would exceed that size:
 
@@ -157,4 +159,5 @@ Treat the diary as shared engineering memory:
 - [`references/config-schema.md`](references/config-schema.md) — full configuration schema and CLI usage.
 - [`actions/read-diary.md`](actions/read-diary.md) — read-mode procedure.
 - [`actions/update-diary.md`](actions/update-diary.md) — update-mode procedure.
+- [`actions/maintain-entry.md`](actions/maintain-entry.md) — maintain-mode procedure.
 - [`actions/review-diary.md`](actions/review-diary.md) — review-mode procedure.

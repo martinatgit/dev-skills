@@ -116,7 +116,7 @@ answer or `unknown`. Stop early if a field is already pinned.
 - Why 4: failure = **unknown** (off-topic? wrong register? AI-cliché phrases?).
 - Why 5: purpose = `creative_content`; but length / audience / success all
   `unknown` → **ambiguity gate fires**.
-- → Halt. Ask up to 3 questions via `AskUserQuestion`: audience, length, tone.
+- → Halt. Ask up to 3 questions (see [Asking the user](../SKILL.md#asking-the-user)): audience, length, tone.
 
 ---
 

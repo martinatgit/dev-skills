@@ -64,7 +64,7 @@ Omit the `*(abbrev)*` parenthetical if the row has no abbreviations. Omit the se
 For each requested term with no match, emit one line:
 
 ```
-**<term>** — not in glossary. Suggest `/note-term <term> …` if it has a project-specific meaning.
+**<term>** — not in glossary. Suggest `/define-term <term> …` if it has a project-specific meaning.
 ```
 
 Do not invent a definition. Do not draw on general knowledge. The whole point of the glossary is that it carries the project's *narrow* meaning; emitting a generic dictionary definition would teach the caller that the glossary is unreliable.

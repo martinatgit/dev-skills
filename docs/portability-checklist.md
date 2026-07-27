@@ -14,24 +14,41 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] The skill is a single folder under `skills/`.
 - [ ] `SKILL.md` body is under 500 lines.
 - [ ] Detail longer than 30 lines is in `references/`, not in SKILL.md.
-- [ ] Scripts live under `scripts/`, assets under `assets/`, reference docs under `references/`.
+- [ ] Every file sits in a sanctioned sub-directory:
+
+  | Directory | Contents | Placeholder-checked |
+  |---|---|---|
+  | `references/` | Reference docs the skill loads on demand. | yes |
+  | `scripts/` | Executable helpers (Python 3.12 stdlib preferred). | no |
+  | `actions/` | One file per invocable sub-command (`capture`, `review`, …). | no |
+  | `resources/` | Output templates, `*.md.tpl`. | no |
+  | `schemas/` | JSON Schema for the skill's structured output. | no |
+  | `agents/` | Sub-agent prompt files the skill dispatches. | no |
+  | `assets/` | Static binary assets. | no |
+
+  `SKILL.md` is the only file permitted at the skill root. "Placeholder-checked" marks the surfaces `evals/run.py` scans for unfilled `{{...}}`; the rest legitimately carry placeholder markers filled at runtime.
 - [ ] No `README.md` inside the skill folder (SKILL.md is the readme).
 
 ## Portability
 
-- [ ] Scripts are POSIX bash or Python 3 stdlib or Node.js stdlib only.
+- [ ] Scripts are POSIX bash or Python 3.12 stdlib or Node.js stdlib only.
+- [ ] Python scripts run under 3.12 with no deprecation warnings. Scripts with their own CLI entry point: `python3 -W error::DeprecationWarning skills/<name>/scripts/<script>.py --help`. `read_shared_conventions.py` has no CLI of its own — it is only ever imported, never invoked directly — so check it by importing under the same flag: `python3 -W error::DeprecationWarning -c "import sys; sys.path.insert(0, 'skills/<name>/scripts'); import read_shared_conventions"`.
 - [ ] No Bun, no uv, no `#!/usr/bin/env -S` shebangs, no Node version pins.
 - [ ] No external package installs at any point.
 - [ ] No tool-specific files inside the skill (no `allowed-tools` in frontmatter, no `agents/openai.yaml` unless documented).
+- [ ] No host-specific tool name appears in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent; put any per-host translation in `references/host-notes.md`. See [`docs/host-adaptation.md`](host-adaptation.md).
+- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` is cited as where one of *this repo's* files lives — link the repo-relative `agents/<name>.md` source instead (a later phase renames these files to `agents/<name>-agent.md`; update links then). Citing such a path as an illustrative example of a host's install location (e.g. explaining why a config key must be project-scoped) is fine.
 - [ ] No symlinks.
 
 ## Configuration (if applicable)
 
-- [ ] Config path is `~/.config/<skill-name>/config.yaml` with permissions `0600`.
-- [ ] Resolution order is env var → user config → project-local → interactive prompt.
-- [ ] `scripts/configure.sh` prompts for missing values, is idempotent, accepts `--repair`.
-- [ ] Configuration never writes outside `~/.config/<skill-name>/`.
+- [ ] Non-path config is at `~/.config/<skill-name>/config.yaml` with permissions `0600`; path-typed keys are at `<project_root>/.<skill-name>/config.yaml`.
+- [ ] Resolution order is env var → project-skill config → user-skill config (non-path keys only) → built-in default; skills with path-typed keys insert a `.agents/dev-skills.yaml` layer between project-skill and user-skill config (five layers total — see the bullet below). Path-typed keys always skip the user-skill layer.
+- [ ] `scripts/configure.py` prompts for missing values, is idempotent, accepts `--repair`.
+- [ ] Configuration writes only to `~/.config/<skill-name>/config.yaml`, `<project_root>/.<skill-name>/config.yaml`, or — when the user opts in via a skill's first-use prompt — the shared `<project_root>/.agents/dev-skills.yaml` file. Nothing else.
 - [ ] Schema is documented in `references/config-schema.md` with an example file.
+- [ ] If the skill has path-typed keys, the resolver consults `<project_root>/.agents/dev-skills.yaml` between project-skill and user-skill layers (see `docs/authoring-guide.md` -> Consulting the shared conventions file).
+- [ ] Both canonical stamped scripts — `template/scripts/read_shared_conventions.py` and `template/scripts/find_project_root.py` — have been stamped into the skill via `python3 scripts/refresh-shared-reader.py`. `python3 evals/run.py` reports no drift for either.
 
 ## State and side effects
 
@@ -61,7 +78,7 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 
 ## Final
 
-- [ ] `python3 evals/run.py --skill <your-skill>` returns OK (covers frontmatter, placeholders in user-facing surfaces, and Python script compilation).
+- [ ] `python3 evals/run.py` (unscoped — this is the gate; there is no CI in this repo) returns OK. It covers, repo-wide: frontmatter for every skill, marketplace JSON validity, README + marketplace registration, unfilled `{{...}}` placeholders in user-facing surfaces, Python script compilation, and stamped-script drift. `python3 evals/run.py --skill <your-skill>` only checks that one skill's frontmatter — it is a fast iteration shortcut, not a substitute for the unscoped run before opening a PR.
 - [ ] `python3 -m json.tool .claude-plugin/marketplace.json > /dev/null` exits 0.
 - [ ] `python3 -m py_compile skills/<your-skill>/scripts/*.py` exits 0 for every script.
 - [ ] If the skill writes user files, it exposes a `root_dir` (or equivalent path-typed) config key marked project-only.

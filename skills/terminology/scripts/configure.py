@@ -144,6 +144,30 @@ def write(path, values, extras=None):
         pass
 
 
+def write_shared_conventions_minimal(project_root: Path, docs_root: str) -> Path:
+    """Create a minimal .agents/dev-skills.yaml with schema + docs_root only.
+
+    Refuses to overwrite an existing foreign file (no dev-skills/v1 marker).
+    Used by the lazy first-use prompt when the user opts into the shared layer.
+    """
+    target = project_root / ".agents" / "dev-skills.yaml"
+    if target.exists():
+        existing = target.read_text(encoding="utf-8")
+        if "schema: dev-skills/v1" not in existing:
+            raise RuntimeError(
+                "refusing to overwrite %s: missing schema: dev-skills/v1 marker.\n"
+                "Remove the file or set DEV_SKILLS_CONFIG_FILE and re-run."
+                % target
+            )
+        return target
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        "schema: dev-skills/v1\ndocs_root: %s\n" % docs_root,
+        encoding="utf-8",
+    )
+    return target
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--scope", choices=["user", "project"], default="user")
@@ -161,7 +185,7 @@ def main():
             print(
                 "error: no project root found at or above the current directory.\n"
                 "Run from inside a project. terminology_file is project-bound by\n"
-                "design — user-scope is not allowed for path keys.",
+                "design -- user-scope is not allowed for path keys.",
                 file=sys.stderr,
             )
             return 2
@@ -195,6 +219,36 @@ def main():
     existing = load_existing(target)
     print("Configuring %s (%s scope) at: %s" % (SKILL_NAME, args.scope, target))
     print("Press Enter to accept the bracketed default for each prompt.\n")
+
+    if (
+        args.scope == "project"
+        and not args.non_interactive
+        and not existing.get("terminology_file")
+        and not getattr(args, "terminology_file", None)
+    ):
+        print("\nterminology needs a glossary file path.")
+        print("  1. Apply a docs-folder convention to every skill in this project")
+        print("     (creates .agents/dev-skills.yaml with docs_root only -- recommended)")
+        print("  2. Configure just terminology (creates .terminology/config.yaml)")
+        try:
+            choice = input("Choice [1/2, default 1]: ").strip() or "1"
+        except EOFError:
+            choice = "1"
+        if choice == "1":
+            try:
+                docs_root = input("docs_root [doc]: ").strip() or "doc"
+            except EOFError:
+                docs_root = "doc"
+            try:
+                shared_path = write_shared_conventions_minimal(proot, docs_root)
+                print("\nWrote %s." % shared_path)
+                print("terminology will resolve terminology_file to %s/terminology.md"
+                      % docs_root)
+                return 0
+            except RuntimeError as e:
+                print("error: %s" % e, file=sys.stderr)
+                return 2
+        # Choice 2: fall through to per-skill prompt loop below.
 
     new_values = {}
     for k, default in DEFAULTS.items():

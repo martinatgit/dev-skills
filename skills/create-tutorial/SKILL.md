@@ -1,11 +1,6 @@
 ---
-name: create-tutorial 
-description: Use this skill to generate a comprehensive, textbook-style technical tutorial for a newly implemented or modified software component.
-argument-hint: "[topic of tutorial]"
-metadata: 
-  author: "Martin Saerbeck"
-  version: "0.1"
-effort: high
+name: create-tutorial
+description: Generate a comprehensive, textbook-style technical tutorial for a newly implemented or modified software component. Use whenever the user types /create-tutorial <topic>, asks for "a tutorial on X", says "write a textbook chapter for this module", or similar. The topic is passed as the first argument; prefer this skill over ad-hoc explanations whenever the goal is a durable, self-contained artefact (not a chat answer). Do not use for inline explanations, short notes, or session handoff — use developer-diary for the latter.
 ---
 
 # Create a Technical Tutorial
@@ -18,6 +13,25 @@ A technical tutorial serves as:
 - A structured reference for both human engineers and LLM agents
 
 The tutorial must be **self-contained**, requiring no external context to understand the system.
+
+---
+
+## Configuration
+
+Resolution order (first match wins):
+
+1. Environment variable `CREATE_TUTORIAL_TUTORIALS_DIR`.
+2. Project-local config at `<project_root>/.create-tutorial/config.yaml`.
+3. Shared conventions file at `<project_root>/.agents/dev-skills.yaml` — composes `tutorials_dir` as `<docs_root>/skills.create-tutorial.subdir`, defaulting to `<docs_root>/tutorials`.
+4. Built-in default `doc/tutorials`.
+
+See [`references/config-schema.md`](references/config-schema.md).
+
+## Workflow
+
+**Step 0 — Resolve configuration.** Run `python3 scripts/resolve_config.py --all` and parse the `key=value` lines. Use the resolved `tutorials_dir` as the destination directory for every write below. If `tutorials_dir` is empty (no env var, no project config, no shared file), run the first-use flow: `python3 scripts/configure.py --scope project` and re-resolve.
+
+Then follow the structure below to produce the tutorial.
 
 ---
 
@@ -116,7 +130,7 @@ For each major API / function:
 
 ## Saving the Tutorial
 
-- Save as a markdown file in: `doc/tutorials/`
+- Save as a markdown file in the resolved `tutorials_dir` (Step 0 of Workflow).
 - File name rules:
   - Use concise, kebab-case naming
   - Reflect the main component or feature

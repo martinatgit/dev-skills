@@ -26,7 +26,10 @@ If a path-typed key cannot be resolved, the agent runs the first-use flow descri
 |---|---|---|---|---|
 | `root_dir` | path | **project-only** | `doc/developer-diary` (relative to project root) | Where the diary tree lives. May be relative to project root or absolute. |
 | `feature_routing_file` | path | **project-only** | `<root_dir>/feature-routing.md` | Routing index regenerated during `update`/`review`. |
-| `node_token_limit` | int | user-default-able | `4000` | Soft node-size limit; trigger to split into children. |
+| `node_token_limit` | int | user-default-able | `4000` | Soft node-size limit; trigger to split into children. Also used as the `maintain` action's Phase 7 split threshold. |
+| `requirements_dir` | path | **project-only** | _(unset)_ | Optional. Used by `maintain` to verify internal requirement-ID references (regex `[A-Z]{3,}-\d{3,}`). When unset, requirement-ID drift checks are silently skipped. |
+| `todos_inbox_dir` | path | **project-only** | _(unset)_ | Optional. Used by `maintain` to detect open-TODO references (regex `TODO-\d{8}-\d{4}`). When unset, TODO drift checks are silently skipped. Must be set together with `todos_archive_dir`. |
+| `todos_archive_dir` | path | **project-only** | _(unset)_ | Optional. Companion to `todos_inbox_dir`; the `maintain` action classifies discharged TODOs by looking here. Must be set together with `todos_inbox_dir`. |
 
 Path values may use `~` and `$VAR`; the resolver expands both.
 
@@ -41,6 +44,9 @@ If a user installs `developer-diary` in their home directory (e.g. `~/.claude/sk
 root_dir: doc/developer-diary
 feature_routing_file:                # blank -> <root_dir>/feature-routing.md
 node_token_limit: 4000
+requirements_dir: doc/requirements   # blank = skip requirement-ID drift checks
+todos_inbox_dir: doc/TODOs/inbox     # blank = skip TODO-ID drift checks
+todos_archive_dir: doc/TODOs/archive # required iff todos_inbox_dir is set
 ```
 
 ## CLI
@@ -64,6 +70,13 @@ python3 scripts/configure.py --scope project --path
 
 # Repair a partial config without overwriting good values
 python3 scripts/configure.py --repair
+
+# Opt into requirement-ID drift checks
+python3 scripts/configure.py --scope project --requirements-dir doc/requirements
+
+# Opt into TODO-ID drift checks (both flags required together)
+python3 scripts/configure.py --scope project \
+    --todos-inbox-dir doc/TODOs/inbox --todos-archive-dir doc/TODOs/archive
 ```
 
 ## Environment-variable overrides
@@ -73,5 +86,8 @@ python3 scripts/configure.py --repair
 | `DEVELOPER_DIARY_ROOT_DIR` | Overrides `root_dir` for this invocation. |
 | `DEVELOPER_DIARY_FEATURE_ROUTING_FILE` | Overrides `feature_routing_file`. |
 | `DEVELOPER_DIARY_NODE_TOKEN_LIMIT` | Overrides `node_token_limit`. |
+| `DEVELOPER_DIARY_REQUIREMENTS_DIR` | Overrides `requirements_dir` (opt-in). |
+| `DEVELOPER_DIARY_TODOS_INBOX_DIR` | Overrides `todos_inbox_dir` (opt-in). |
+| `DEVELOPER_DIARY_TODOS_ARCHIVE_DIR` | Overrides `todos_archive_dir` (opt-in). |
 
 These take precedence over both project and user config.
