@@ -30,9 +30,11 @@ description: >-
 
 Do not use a bare `>` (leaves a trailing newline on some parsers) and do not wrap a plain scalar across lines (indentation-sensitive and the easiest form to break).
 
+Five of the fourteen skills shipped in this repo today predate this rule (four use a bare `>`, one wraps a plain scalar). They are not converted in a blanket pass — a later phase rewrites four of them during an unrelated rename — but any skill you touch for another reason should be brought onto `>-` at the same time.
+
 Do not add `version`, `owner`, `tags`, `allowed-tools`, `metadata`, or any other field. The open standard's `metadata` namespace is experimental and support varies across agents. Things you add here silently get ignored on half the platforms.
 
-If a platform-specific field genuinely matters (Claude Code `allowed-tools`, a Codex `agents/openai.yaml`), ship it as a sidecar file inside the skill folder and mention it in the skill's README section. Do not bake it into SKILL.md.
+If a platform-specific field genuinely matters (Claude Code `allowed-tools`, a Codex `agents/openai.yaml`), ship it as a sidecar file inside the skill folder and mention it in a section of the skill's `SKILL.md` — never in a separate README, which [the portability checklist](portability-checklist.md#structure) forbids inside a skill folder. Do not bake the sidecar's content into SKILL.md's frontmatter.
 
 ## Writing the description
 
@@ -49,7 +51,7 @@ Agents systematically under-trigger. Over-trigger is usually better; you can alw
 
 Keep the body under 500 lines. If you're over, push detail into `references/`.
 
-Sub-directories are drawn from a fixed set — see the table in [the portability checklist](portability-checklist.md#structure). Do not invent a new one without adding it there and to `check_no_placeholders()` in `evals/run.py`.
+Sub-directories are drawn from a fixed set — see the table in [the portability checklist](portability-checklist.md#structure). Do not invent a new one without adding it to that table. `check_no_placeholders()` in `evals/run.py` has no directory list to update — it globs only `SKILL.md` and `references/**/*.md` — but if your new sub-directory should be placeholder-checked the way `references/` is, extend that glob too.
 
 Suggested sections, in order:
 
@@ -127,6 +129,7 @@ Fail loudly and early. Silent wrong output is the worst outcome. For each expect
 
 ## Don't do
 
+- No host-specific tool names in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent instead; see [`docs/host-adaptation.md`](host-adaptation.md) for the rule and worked examples.
 - No AGENTS.md, CLAUDE.md, or REVIEW.md inside a skill folder.
 - No install scripts at the repo root.
 - No symlinks across agent directories (`~/.claude/skills`, `~/.codex/skills`).

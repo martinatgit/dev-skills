@@ -210,12 +210,16 @@ The skill reads `terminology_file`, grep-scans the repo for code symbols and fil
 
 ## Companion agent
 
-The same workflow can be run by a dispatchable sub-agent, which is useful when a
-long-running task wants terminology curation done as a parallel subtask without
-polluting the main context. The agent delegates to this skill rather than
-re-implementing it — see [`agents/`](../../agents/) for the definitions this
-repository ships and [`docs/install.md`](../../docs/install.md) for how to
-install them.
+A later phase of this repository adds a dispatchable sub-agent that runs this
+same workflow in isolation — useful when a long-running task wants terminology
+curation done as a parallel subtask without polluting the main context. That
+agent does not exist here yet: [`agents/`](../../agents/) currently ships six
+agents (`debugger-expert`, `formal-methods-expert`, `petri-net-expert`,
+`prompt-engineer`, `srs-expert`, `type-theory-expert`), none of which curates
+terminology. Once it ships, its source will live alongside those, and it will
+delegate to this skill rather than re-implement it. See
+[`docs/host-adaptation.md`](../../docs/host-adaptation.md) for how this repo's
+agents are sourced and referenced. Until then, invoke this skill directly.
 
 ## References
 

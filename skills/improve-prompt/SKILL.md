@@ -118,8 +118,9 @@ they were distilled into the references at skill-creation time).
 
 ## Cross-references
 
-A peer **agent** `prompt-engineer` (in `.claude/agents/prompt-engineer.md`)
-runs the same workflow as a dispatchable subagent. Use the agent when
+A peer **agent** `prompt-engineer` (source at
+[`agents/prompt-engineer.md`](../../agents/prompt-engineer.md)) runs the same
+workflow as a dispatchable subagent. Use the agent when
 multiple prompt-improvement requests should run in parallel, or when the work
 should be isolated from the main conversation context. Otherwise invoke the
 skill directly.

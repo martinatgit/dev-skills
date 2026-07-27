@@ -1,4 +1,5 @@
 """Tests for the generalised stamped-script drift check."""
+import importlib.util
 import shutil
 import subprocess
 import sys
@@ -8,6 +9,26 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 STAMPED = ("read_shared_conventions.py", "find_project_root.py")
+
+# evals/run.py is importable as a plain module (no hyphen in the name); reuse
+# the same sys.path-insertion pattern test_drift_check.py already uses so the
+# module is cached and imported only once across the test run.
+sys.path.insert(0, str(REPO_ROOT / "evals"))
+import run  # type: ignore  # noqa: E402
+
+
+def _load_refresher():
+    """Import scripts/refresh-shared-reader.py by path.
+
+    It is a script, not a package member (the hyphen in its filename makes it
+    unimportable via a normal `import` statement), so load it explicitly from
+    its file location.
+    """
+    path = REPO_ROOT / "scripts" / "refresh-shared-reader.py"
+    spec = importlib.util.spec_from_file_location("refresh_shared_reader", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _skeleton(tmp: Path) -> Path:
@@ -30,6 +51,17 @@ def _run(cwd: Path):
 
 
 class StampedScriptDriftTests(unittest.TestCase):
+    def test_runner_and_refresher_stamped_scripts_tuples_match(self):
+        """STAMPED_SCRIPTS is declared independently in evals/run.py and
+        scripts/refresh-shared-reader.py. If they diverge, a script added to
+        the refresher but not the runner is silently never drift-checked."""
+        refresher = _load_refresher()
+        self.assertEqual(
+            run.STAMPED_SCRIPTS, refresher.STAMPED_SCRIPTS,
+            "evals/run.py STAMPED_SCRIPTS and scripts/refresh-shared-reader.py "
+            "STAMPED_SCRIPTS have drifted apart",
+        )
+
     def test_repo_has_no_drift(self):
         result = subprocess.run(
             [sys.executable, str(REPO_ROOT / "evals" / "run.py")],

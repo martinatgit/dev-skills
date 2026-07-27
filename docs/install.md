@@ -130,7 +130,7 @@ Skills in this repo follow a uniform configuration pattern:
 
 - Configuration files live at `~/.config/<skill-name>/config.yaml` (user scope) and/or `<project_root>/.<skill-name>/config.yaml` (project scope).
 - Path-typed keys (`root_dir` and similar) are **project-only**. A user-installed skill never bleeds one project's writes into another.
-- Resolution order: env var → project-local → user-level (non-path keys only) → built-in default.
+- Resolution order: env var → project-local → shared conventions file (`<project_root>/.agents/dev-skills.yaml`, path-typed keys only) → user-level (non-path keys only) → built-in default. Skills with no path-typed keys (`example-skill`, `reason-through`) skip the shared-conventions layer and resolve through the remaining four. See [Shared conventions](#shared-conventions) above for the full five-layer contract.
 - All helpers are Python 3 stdlib, identical on Windows / macOS / Linux.
 
 ### Configure a skill

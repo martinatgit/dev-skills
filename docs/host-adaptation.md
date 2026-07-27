@@ -13,7 +13,12 @@ Write **intent**, not a tool call.
 |---|---|
 | "Ask via `AskUserQuestion`." | "Ask the user a single consolidated question covering every uncertain field." |
 | "Dispatch with the `Agent` tool." | "Dispatch N sub-agents in parallel, one per family." |
-| "See `.claude/agents/foo.md`." | "See [`agents/foo-agent.md`](../agents/foo-agent.md)." |
+| "See `.claude/agents/foo.md`." | "See [`agents/foo.md`](../agents/foo.md)." |
+
+Today's shipped agents are named `<name>.md` (e.g. `agents/prompt-engineer.md`,
+`agents/petri-net-expert.md`) — a later phase renames them to `<name>-agent.md`
+for a consistent suffix. Link to the file as it is actually named today; update
+the link when that rename lands.
 
 If the intent genuinely needs a per-host translation table, put it in the
 skill's `references/host-notes.md` and link it from the workflow step. The
