@@ -5043,6 +5043,21 @@ This plan now exceeds the spec in three deliberate ways. Each was a decision, no
 2. **Agent inventory grows from 7 to 8.** `terminology-agent` (Task 39.1) is not in spec §3.2. Rationale: `skills/terminology/SKILL.md` documents a companion agent, so either the agent ships or the documentation is false. Naming follows the spec's own `<skill>-agent` rule.
 3. **A Python floor is declared (3.12).** The spec is silent. Rationale: the repo already requires 3.10+ syntax and Task 16's parity check requires `tomllib` (3.11+), so the floor existed implicitly and undocumented. 3.12 covers both with margin.
 
+**Phase 0 follow-ups (carried out of the execution ledger, 2026-07-27):**
+
+Deferred during the Phase 0 task loop and triaged by the final whole-branch review as ship-as-follow-up. Recorded here because the execution workspace is scratch and does not survive.
+
+- **No CI.** Nothing runs `evals/run.py` or the test suite automatically. All three new guardrails depend on a contributor running the unscoped command. This is the single largest hole in Phase 0's "cannot reopen" claim — a `.github/workflows` job is the highest-value follow-up in this file.
+- **Five docs-only rules Phase 0 added are unguarded**: the directory taxonomy, the skill-root file rule, the host-tool-name ban, the `.claude/` path ban, and the `>-` YAML house style. All five are checkable in roughly 40 lines of `evals/run.py`.
+- **`check_registration()` builds `on_disk` from `glob("*/SKILL.md")`**, so a `skills/foo/` with no `SKILL.md` is invisible to the disk side — and `npx skills add` copies the whole tree, so such a directory would ship unregistered and unvalidated.
+- **`STAMPED_SCRIPTS` is declared in three files.** Phase 0 added an equality assertion between the runner's and refresher's tuples; `tests/test_stamped_script_drift.py` still keeps a third private copy that nothing cross-checks.
+- **`skills/reason-through/SKILL.md:19` cites `nestjs-expert`**, a skill this repo does not ship — a genuine dangling cross-reference, pre-existing and out of scope for Task 0.3.
+- **`template/scripts/find_project_root.py` imports `os` and never uses it.** Stamped into all six copies. Fix belongs in the template.
+- **Five of 14 skills violate the `>-` YAML house style** (four bare `>`, one wrapped plain scalar). Phase 1's renames rewrite four of them; `petri-net-theory` is the straggler. The authoring guide carries a grandfathering note.
+- **`docs/authoring-guide.md`'s host-tool-name bullet omits the `references/host-notes.md` carve-out** that the checklist and `docs/host-adaptation.md` both grant. Imprecision, not falsity — the linked doc supplies it.
+- **`skills/improve-prompt/references/evidence-appendix.md` is orphaned** — `SKILL.md` never links it, so nothing loads it on demand. It also still contains an `Agent(subagent_type, prompt)` string, which is a verbatim citation of external research rather than an instruction, but now sits inside `references/` where the tool-name rule applies.
+- **`agents/devAgent/claude.md` is a seventh artifact under `agents/`** beyond the six top-level agent files that `skills/terminology/SKILL.md` counts. Gitignored and out of scope for the agents-layer work per spec §2.2.
+
 **Known gaps left open (recorded, not fixed):**
 
 - `developer-diary` and `update-todos` ship no `## Examples` and no `## Troubleshooting` despite the spec classifying them "already conformant". Task 40 Step 3 surfaces them explicitly so they cannot pass silently. Fixing them is a separate PR — folding two more skills into PR 2 would push it past reviewable size.
