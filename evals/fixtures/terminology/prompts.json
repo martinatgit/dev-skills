@@ -1,0 +1,55 @@
+{
+  "skill": "terminology",
+  "prompts": [
+    {
+      "id": "explicit-define-term",
+      "text": "/define-term Run is the persisted artefact for one engine execution; abbreviated R; not the verb",
+      "expect_trigger": true
+    },
+    {
+      "id": "add-a-term",
+      "text": "Can you add a term to the glossary for 'Snapshot' before we use it in the spec?",
+      "expect_trigger": true
+    },
+    {
+      "id": "define-in-project",
+      "text": "Define 'Engine' in this project — I keep seeing it used two different ways in review comments.",
+      "expect_trigger": true
+    },
+    {
+      "id": "what-does-x-mean-here",
+      "text": "What does 'Run' mean here? I want to make sure I'm using it the way the codebase does.",
+      "expect_trigger": true
+    },
+    {
+      "id": "glossary-out-of-date",
+      "text": "The glossary is out of date — a bunch of these definitions don't match what the code does anymore.",
+      "expect_trigger": true
+    },
+    {
+      "id": "review-for-drift",
+      "text": "Review terminology for drift and contradictions before we start the spec review.",
+      "expect_trigger": true
+    },
+    {
+      "id": "casual-write-down-what-we-mean",
+      "text": "Before we argue about this more, let's write down what we mean by 'Snapshot' for the project.",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-developer-diary",
+      "text": "Update the developer diary with the design decisions we made in today's session so the next engineer has context.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-update-todos",
+      "text": "Don't fix this now, just capture it as a TODO: the validator has no test for the empty-string case.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-generic-public-term",
+      "text": "Quick question — what's an array in JavaScript?",
+      "expect_trigger": false
+    }
+  ]
+}

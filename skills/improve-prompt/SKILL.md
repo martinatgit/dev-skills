@@ -44,6 +44,25 @@ scaffolding.
 - The user asked specifically for a brainstorm / plan / design — those have
   their own skills.
 
+## Inputs
+
+- **Rough intent text** — a pasted draft prompt, a natural-language task
+  description ("I want the LLM to …"), or an existing prompt that needs
+  tightening. This is the only required input. The skill is self-contained:
+  it works from the pasted text and its own `references/` files, and does not
+  read project files, URLs, or attachments at runtime.
+- **Optional known constraints** — audience, length, format, tool access, or
+  anything else the user already knows. Supplying these up front reduces how
+  often the ambiguity gate fires, but nothing here is mandatory.
+
+If a load-bearing field is missing — a 5-whys field (step 1) comes back
+`unknown` and blocks producing a prompt, the input self-conflicts, or the
+purpose is genuinely multi-class and no template composes — the ambiguity
+gate (step 6) fires: the skill halts and asks up to 3 targeted questions
+(see [Asking the user](#asking-the-user)), then restarts from step 1 once
+answered. Gaps that are not load-bearing are filled with the template's
+default rather than triggering a question.
+
 ## Internal workflow (silent — never narrated)
 
 1. **Intent via 5-whys.** Walk `references/five-whys-rubric.md` against the
