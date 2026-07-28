@@ -1,0 +1,30 @@
+{
+  "skill": "type-theory",
+  "prompts": [
+    {
+      "id": "row-polymorphism",
+      "text": "Our row-polymorphism system allows duplicate field labels. Is that sound?",
+      "expect_trigger": true
+    },
+    {
+      "id": "inference-choice",
+      "text": "Should we use HM or bidirectional checking for our DSL?",
+      "expect_trigger": true
+    },
+    {
+      "id": "linear-types",
+      "text": "How do linear types interact with exceptions?",
+      "expect_trigger": true
+    },
+    {
+      "id": "casual-soundness",
+      "text": "Is our type system sound?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-runtime",
+      "text": "Why is my program crashing with a null-pointer error?",
+      "expect_trigger": false
+    }
+  ]
+}

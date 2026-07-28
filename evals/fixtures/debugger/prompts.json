@@ -1,0 +1,30 @@
+{
+  "skill": "debugger",
+  "prompts": [
+    {
+      "id": "event-model",
+      "text": "I'm designing a tracer for a CLP system. How do I make the event model coherent?",
+      "expect_trigger": true
+    },
+    {
+      "id": "breakpoint-semantics",
+      "text": "What's the formal semantics of a breakpoint in a constraint propagator?",
+      "expect_trigger": true
+    },
+    {
+      "id": "time-travel",
+      "text": "I want time-travel replay for our reactive system. What design constraints does that impose?",
+      "expect_trigger": true
+    },
+    {
+      "id": "session-typed-channels",
+      "text": "How do session types help in remote debug protocol design?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-tool-usage",
+      "text": "How do I set a breakpoint in VS Code?",
+      "expect_trigger": false
+    }
+  ]
+}

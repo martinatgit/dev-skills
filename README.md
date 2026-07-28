@@ -77,13 +77,29 @@ See [`docs/install.md`](docs/install.md#shared-conventions) for the full schema 
 | [`terminology`](skills/terminology/SKILL.md) | Curates the project's shared technical vocabulary in a single glossary file (default `doc/terminology.md`). Invoke with `define` (or `/define-term <…>`), `get`, `review`, or `validate`. |
 | [`create-tutorial`](skills/create-tutorial/SKILL.md) | Generate a textbook-style technical tutorial for a software component. Invoke with `/create-tutorial <topic>`. Writes to `tutorials_dir` (project-only Pattern 2 key; falls through to `.agents/dev-skills.yaml`). |
 | [`chargebee`](skills/chargebee/SKILL.md) | Chargebee billing and subscription development guidance: Product Catalog 1.0/2.0, hosted checkout and Chargebee.js, payment intents (3DS/SCA), webhooks and event ordering, dunning, entitlements. Loads detailed references on demand. |
-| [`debugger-expert`](skills/debugger-expert/SKILL.md) | Authoritative reference for debugger and tracer design: trace semantics, event-model design, breakpoint/spy-point semantics, cross-formalism coherence, time-travel replay, remote debug protocols. |
-| [`formal-methods-expert`](skills/formal-methods-expert/SKILL.md) | Authoritative reference for SAT/SMT, CLP/CP, theorem proving, temporal logic, TLA+, and model checking. Use for algorithm selection, decidability analysis, propagator engine review, formal-system audits. |
+| [`debugger`](skills/debugger/SKILL.md) | Authoritative reference for debugger and tracer design: trace semantics, event-model design, breakpoint/spy-point semantics, cross-formalism coherence, time-travel replay, remote debug protocols. |
+| [`formal-methods`](skills/formal-methods/SKILL.md) | Authoritative reference for SAT/SMT, CLP/CP, theorem proving, temporal logic, TLA+, and model checking. Use for algorithm selection, decidability analysis, propagator engine review, formal-system audits. |
 | [`improve-prompt`](skills/improve-prompt/SKILL.md) | Transform rough user-intent text into one polished, paste-ready LLM prompt. Evidence-guarded against the well-replicated failure modes of prompt engineering (CoT misuse, persona-on-factual, lost-in-middle, unwrapped untrusted input). |
-| [`petri-net-theory`](skills/petri-net-theory/SKILL.md) | Authoritative reference for Petri net theory: formal foundations, decidability, compliance modelling, P/T, CPN, and WF-net patterns. |
+| [`petri-net-theory`](skills/petri-net-theory/SKILL.md) | Authoritative reference for Petri net theory: formal foundations, decidability, compliance modelling, P/T/CPN/WF-net patterns. |
 | [`sanity-design-analysis`](skills/sanity-design-analysis/SKILL.md) | Analyse a software design for simplicity and maintainability. Produces a structured report covering mental model, assumptions, narrative, rules, happy/error paths, conflicts, diagrams, and a build-from-scratch tutorial. |
-| [`srs-expert`](skills/srs-expert/SKILL.md) | Authoritative reference for synchronous reactive systems: tick architecture, signal semantics, clock calculus, constructive causality. |
-| [`type-theory-expert`](skills/type-theory-expert/SKILL.md) | Authoritative reference for formal type systems: lambda cube, type inference (HM, bidirectional), advanced systems (GADTs, refinement, gradual, session, graded), category-theoretic foundations. |
+| [`srs`](skills/srs/SKILL.md) | Authoritative reference for synchronous reactive systems: tick architecture, signal semantics, clock calculus, constructive causality. |
+| [`type-theory`](skills/type-theory/SKILL.md) | Authoritative reference for formal type systems: lambda cube, type inference (HM, bidirectional), advanced systems (GADTs, refinement, gradual, session, graded), category-theoretic foundations. |
+
+## Agents in this repository
+
+Agents are dispatchable subagent definitions paired with skills. They ship in two formats — Markdown for Claude Code and TOML for Codex CLI — and are installed via `scripts/install-agents.py` (or `/plugin install` for Claude Code).
+
+| Agent | Paired skill |
+|---|---|
+| [`improve-prompt-agent`](agents/improve-prompt-agent.md) | `improve-prompt` |
+| [`create-tutorial-agent`](agents/create-tutorial-agent.md) | `create-tutorial` |
+| [`formal-methods-agent`](agents/formal-methods-agent.md) | `formal-methods` |
+| [`petri-net-theory-agent`](agents/petri-net-theory-agent.md) | `petri-net-theory` |
+| [`srs-agent`](agents/srs-agent.md) | `srs` |
+| [`type-theory-agent`](agents/type-theory-agent.md) | `type-theory` |
+| [`debugger-agent`](agents/debugger-agent.md) | `debugger` |
+
+See [`docs/agents-guide.md`](docs/agents-guide.md) and [`docs/install.md`](docs/install.md#installing-agents).
 
 ## Authoring a new skill
 

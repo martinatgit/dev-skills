@@ -1,0 +1,35 @@
+{
+  "skill": "formal-methods",
+  "prompts": [
+    {
+      "id": "decidability",
+      "text": "Is QF_NIA decidable? Will Z3 terminate on x*y > 5 && y < 10?",
+      "expect_trigger": true
+    },
+    {
+      "id": "termination-casual",
+      "text": "Will this loop always exit?",
+      "expect_trigger": true
+    },
+    {
+      "id": "propagator-design",
+      "text": "Audit our CLP propagator engine — arc consistency only, no LCG. Sound?",
+      "expect_trigger": true
+    },
+    {
+      "id": "tla-spec",
+      "text": "Should I use TLA+ or Quint for this distributed-lock spec?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-testing",
+      "text": "How much test coverage do we need for the parser?",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-type-soundness",
+      "text": "Is our row-polymorphism type system sound?",
+      "expect_trigger": false
+    }
+  ]
+}

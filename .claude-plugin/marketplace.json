@@ -20,13 +20,22 @@
         "./skills/terminology",
         "./skills/create-tutorial",
         "./skills/chargebee",
-        "./skills/debugger-expert",
-        "./skills/formal-methods-expert",
+        "./skills/debugger",
+        "./skills/formal-methods",
         "./skills/improve-prompt",
         "./skills/petri-net-theory",
         "./skills/sanity-design-analysis",
-        "./skills/srs-expert",
-        "./skills/type-theory-expert"
+        "./skills/srs",
+        "./skills/type-theory"
+      ],
+      "agents": [
+        "./agents/improve-prompt-agent.md",
+        "./agents/create-tutorial-agent.md",
+        "./agents/formal-methods-agent.md",
+        "./agents/petri-net-theory-agent.md",
+        "./agents/srs-agent.md",
+        "./agents/type-theory-agent.md",
+        "./agents/debugger-agent.md"
       ]
     }
   ]

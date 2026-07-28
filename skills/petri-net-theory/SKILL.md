@@ -1,12 +1,14 @@
 ---
 name: petri-net-theory
-description: Use when needing authoritative Petri net theory — formal foundations,
-  decidability results, implementation strategies, modelling patterns, compliance
-  applications, or worked examples. Can map any concurrent-process, resource-pool,
-  workflow, prohibition, deadline, or regulatory compliance problem to the applicable
-  Petri net formalism — invoke even when "Petri net" is not explicitly mentioned.
-  Covers P/T nets, CPNs, HCPNs, WF-nets, CLP(PN), inhibitor arcs, timed nets,
-  algebraic nets, net contracts, constraint stratification, and regulatory compliance.
+description: >
+  Authoritative reference for Petri net theory. Use whenever the user asks about PN
+  foundations, decidability, modelling patterns, compliance applications, or workflow
+  formalisms. Triggers even when "Petri net" is not mentioned — any concurrent-process,
+  resource-pool, workflow, prohibition, deadline, or regulatory compliance problem maps
+  here. Covers P/T nets, CPNs, HCPNs, WF-nets, CLP(PN), inhibitor arcs, timed nets,
+  algebraic nets, net contracts. Do not use for: SAT/SMT/CLP-solver internals (use
+  `formal-methods`); type-system questions (use `type-theory`); synchronous-system clock
+  calculus (use `srs`); trace/debug protocols (use `debugger`).
 ---
 
 # Petri Net Theory — Authoritative Reference
@@ -14,6 +16,48 @@ description: Use when needing authoritative Petri net theory — formal foundati
 Authoritative reference for Petri net theory, decidability results, compliance
 modelling patterns, and the aiqeung Layer 2-3 implementation as a worked example.
 This skill can be invoked inline, or loaded by a dispatchable agent that delegates to it. See [`agents/`](../../agents/) for the agent definitions this repository ships.
+
+## When to use
+
+- Any Petri net theory question — formal foundations, decidability, modelling patterns.
+- Compliance applications: regulatory workflows, prohibition modelling, deadline semantics.
+- Concurrent process / resource-pool / workflow / prohibition / regulatory problems mapping to a Petri net formalism — even when "Petri net" is not mentioned.
+- P/T nets, CPNs, HCPNs, WF-nets, CLP(PN), inhibitor arcs, timed nets, algebraic nets, net contracts.
+
+## When not to use
+
+- SAT/SMT/CLP-solver-internals questions — use `formal-methods` (this skill cross-references when needed).
+- Type-system questions — use `type-theory`.
+- Synchronous-system clock calculus — use `srs`.
+- Debugger / trace protocol — use `debugger`.
+
+## Inputs
+
+A Petri-net theory or modelling question. Three modes:
+
+- **Theory query:** formal definitions, decidability of reachability, complexity proofs.
+- **Modelling query:** "how do I express prohibition / deadline / regulatory constraint as a net?"
+- **Implementation:** propagator / state-equation / SMPT-based reachability checking.
+
+## Examples
+
+### Example 1 — modelling pattern
+
+**User:** "I need to model a regulatory workflow where a user cannot perform action B without first having approval A, valid for 30 days."
+
+**Skill output:** Maps to a timed WF-net with: place `approved` (with timestamp token), inhibitor arc on the alternative-path transition, deadline transition that resets the marking after 30 days. Cites Reisig timed-net formalism. Flags the inhibitor-arc undecidability trap.
+
+### Example 2 — decidability question
+
+**User:** "Is reachability decidable for CPNs?"
+
+**Skill output:** States: CPN reachability is decidable but Ackermann-hard (per Czerwinski et al. 2021); the bound transfers from plain P/T nets. Quantifies the practical implication: state-space exploration is infeasible past mid-size; abstraction (state equation, SMPT) is required. Confidence: High.
+
+## Troubleshooting
+
+- **Inhibitor arcs make the net Turing-equivalent.** Flag explicitly: if the question assumes decidability, the answer is "not decidable in general". Offer the inhibitor-free reformulation.
+- **The user describes a workflow but doesn't mention "Petri net".** Map their description to the applicable PN formalism explicitly; cite the mapping.
+- **Cross-formalism question (PN + CLP, PN + SRS).** Answer the PN slice; hand off to `formal-methods` or `srs`.
 
 ---
 
@@ -141,7 +185,7 @@ Load the appropriate reference file for deep content.
 | Question | This skill | Delegate to |
 |---|---|---|
 | PN theory, decidability, firing rules, compliance modelling | Me | — |
-| Z3/SMT for PN state equations (solver internals) | Me (PN formulation) | `formal-methods-expert` |
-| Clock calculus, synchronous observers, tick architecture | — | `srs-expert` |
-| Type system for typed tokens | Me (PN side) | `type-theory-expert` |
-| Trace semantics for PN firing sequences | Me (PN events) | `debugger-expert` |
+| Z3/SMT for PN state equations (solver internals) | Me (PN formulation) | `formal-methods` |
+| Clock calculus, synchronous observers, tick architecture | — | `srs` |
+| Type system for typed tokens | Me (PN side) | `type-theory` |
+| Trace semantics for PN firing sequences | Me (PN events) | `debugger` |
