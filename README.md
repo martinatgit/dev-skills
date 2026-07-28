@@ -98,6 +98,7 @@ Agents are dispatchable subagent definitions paired with skills. They ship in tw
 | [`srs-agent`](agents/srs-agent.md) | `srs` |
 | [`type-theory-agent`](agents/type-theory-agent.md) | `type-theory` |
 | [`debugger-agent`](agents/debugger-agent.md) | `debugger` |
+| [`terminology-agent`](agents/terminology-agent.md) | `terminology` |
 
 See [`docs/agents-guide.md`](docs/agents-guide.md) and [`docs/install.md`](docs/install.md#installing-agents).
 

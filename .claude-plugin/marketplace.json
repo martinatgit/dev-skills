@@ -35,7 +35,8 @@
         "./agents/petri-net-theory-agent.md",
         "./agents/srs-agent.md",
         "./agents/type-theory-agent.md",
-        "./agents/debugger-agent.md"
+        "./agents/debugger-agent.md",
+        "./agents/terminology-agent.md"
       ]
     }
   ]

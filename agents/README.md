@@ -22,6 +22,7 @@ Agent name = `<paired-skill-name>` + `-agent`. No `-expert` suffix on either sid
 | `srs-agent` | `srs` | Synchronous reactive systems design and verification. |
 | `type-theory-agent` | `type-theory` | Formal type systems, inference, category-theoretic foundations. |
 | `debugger-agent` | `debugger` | Debugger and tracer design, trace semantics, event models. |
+| `terminology-agent` | `terminology` | Curate a project's shared technical vocabulary (define, get, review, validate). |
 
 ## See also
 
