@@ -1,0 +1,45 @@
+{
+  "skill": "chargebee",
+  "prompts": [
+    {
+      "id": "literal-token",
+      "text": "How do I set up Chargebee for our new subscription product?",
+      "expect_trigger": true
+    },
+    {
+      "id": "webhook-event-name",
+      "text": "Our subscription_renewed webhook handler is dropping events. Can you fix it?",
+      "expect_trigger": true
+    },
+    {
+      "id": "dunning-retry",
+      "text": "Failed payment retries aren't following the dunning schedule we expect. Help me debug it.",
+      "expect_trigger": true
+    },
+    {
+      "id": "product-catalog-migration",
+      "text": "We need to migrate Product Catalog 1.0 to 2.0 without breaking existing subscriptions.",
+      "expect_trigger": true
+    },
+    {
+      "id": "entitlements-gate",
+      "text": "Build an entitlements gate that checks a customer's plan before unlocking a feature in Chargebee.",
+      "expect_trigger": true
+    },
+    {
+      "id": "casual-idempotency-header",
+      "text": "What should I send as the chargebee-idempotency-key on this POST?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-stripe-only",
+      "text": "We bill customers directly through Stripe with no other billing provider. Set up subscription checkout and dunning emails.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-pricing-strategy",
+      "text": "What billing model should we use — usage-based, seat-based, or flat monthly — for our new product line?",
+      "expect_trigger": false
+    }
+  ]
+}

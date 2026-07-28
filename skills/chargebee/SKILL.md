@@ -7,6 +7,46 @@ description: Chargebee billing and subscription development guidance for senior 
 
 This skill primes the agent for any Chargebee-related task: implementation, integration, debugging, tutorial authoring, and worked examples. It is hierarchical: this file is the entry point; deep knowledge lives in `references/` and is loaded only when relevant.
 
+## When to use
+
+- The literal token "chargebee" appears (case-insensitive), or a URL under
+  `chargebee.com` / `apidocs.chargebee.com`.
+- The task is framed as subscription billing, checkout, dunning, entitlements,
+  metered/usage billing, or payment-gateway integration and the project already
+  depends on Chargebee.
+- Debugging an error whose payload carries `api_error_code`, `error_code`, or
+  the `chargebee-idempotency-key` header.
+- Writing a tutorial, explainer, or worked example about any of the above.
+
+## When not to use
+
+- **Generic payments work with no Chargebee dependency** — Stripe-only,
+  Adyen-only, or a home-grown biller. Chargebee's object model does not
+  transfer; answer from the gateway's own docs.
+- **Writing the tutorial artefact itself.** This skill supplies the Chargebee
+  content and vocabulary; `create-tutorial` owns the file structure, the output
+  path, and the textbook format. Use both.
+- **Generic subscription-business modelling** (pricing strategy, churn
+  analysis, revenue recognition policy) with no integration work attached.
+
+## Inputs
+
+Six values determine which reference to load and which code is correct. Confirm
+each from the user or the repo before generating non-trivial code; see
+[Step 1](#step-1-confirm-constraints-before-writing-code) for why each matters.
+
+| Input | Shape | If missing |
+|---|---|---|
+| Site environment | test or live; `{site}.chargebee.com` | Assume **test**; state the assumption. |
+| Product Catalog version | 1.0 (plans/addons) or 2.0 (items/item_prices) | Assume **2.0**; state the assumption. Endpoints and field names differ. |
+| SDK / language | Node, Python, PHP, Java, Go, Ruby, .NET, Laravel, Next.js, or raw HTTP | Ask. Code cannot be written without it. |
+| API version pinning | the `api_version` the consumer will see | Ask if the task touches webhooks. |
+| Payment gateway | Stripe, Adyen, Braintree, … | Ask if the task touches 3DS, dunning, or payment methods. |
+| Region / data residency | US, EU, AU (encoded in the site domain) | Assume from the site domain if supplied. |
+
+Never guess the SDK or the Product Catalog version silently — those two
+determine whether the generated code compiles at all.
+
 ## Step 0: Identify the task type
 
 Before touching code, classify the user request into one of these categories and load the corresponding reference. Do not load files you do not need.
@@ -97,6 +137,52 @@ When the request is teaching rather than building:
 2. Pick a single concrete user story and walk it end-to-end (signup -> first invoice -> renewal -> webhook -> portal update).
 3. Use the worked examples in `references/examples.md` as scaffolds. They cover: SaaS subscription with 3DS, usage-based billing, hosted checkout, webhook handler, and entitlements gate.
 4. State the Chargebee version assumption (Product Catalog 2.0 unless otherwise specified) and the SDK used.
+
+## Examples
+
+### Example 1 — typical case (webhook consumer)
+
+**User:** "Our subscription_renewed handler sometimes downgrades customers who
+just upgraded. Can you look at it?"
+
+**Skill output:** Classifies as a webhook-ordering bug and loads
+`references/webhooks_events.md`. Names the cause before reading code: webhooks
+arrive out of order and duplicated, so a stale `subscription_renewed` can
+overwrite a newer state. Prescribes the two always-true rules — persist
+`event.id` for de-duplication (≈3 d 7 h window) and compare
+`content.subscription.resource_version` before applying, discarding lower
+values. Asks for the `event.id`, `event_type`, `api_version`, and the receiver
+log before proposing a patch.
+
+### Example 2 — edge case (constraint conflict)
+
+**User:** "Write me a custom checkout that collects the card on our own form and
+posts it to our API."
+
+**Skill output:** Refuses the requested shape and says why in one sentence: raw
+PAN reaching the merchant backend puts the whole backend in PCI scope, which
+`## Hard limits` forbids. Offers the nearest thing that works — Chargebee.js
+Components for a fully custom UI with tokenised card fields, or Drop-In if the
+customisation need is styling only — and points at
+`references/hosted_chargebeejs.md` for the decision matrix. Does not generate
+the requested code.
+
+## Troubleshooting
+
+- **Generated code 404s or rejects a field name.** Product Catalog version
+  mismatch — 1.0 uses `plan`/`addon`, 2.0 uses `item`/`item_price`. Confirm the
+  site's version and reload `references/product_catalog.md`.
+- **Webhook handler times out or Chargebee reports failed delivery.** The
+  handler is doing work before acking. Budget is 20 s total on test sites, 60 s
+  on live. Ack first, process async. Retries run 7 times at +2 m, +6 m, +30 m,
+  +1 h, +5 h, +1 d, +2 d.
+- **Duplicate charges or duplicated side effects.** A POST went out without
+  `chargebee-idempotency-key`, or the key was regenerated on retry. One UUID per
+  *logical action*, reused across retries. Estimate APIs do not support
+  idempotency — do not send the header there.
+- **Amounts are 100× wrong.** `amount` fields are integers in minor units.
+- **3DS flow works on test and fails on live.** Test-gateway behaviour is not
+  representative. Re-verify against the real gateway's sandbox.
 
 ## Hard limits
 
