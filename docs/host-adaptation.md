@@ -15,10 +15,9 @@ Write **intent**, not a tool call.
 | "Dispatch with the `Agent` tool." | "Dispatch N sub-agents in parallel, one per family." |
 | "See `.claude/agents/foo.md`." | "See [`agents/foo.md`](../agents/foo.md)." |
 
-Today's shipped agents are named `<name>.md` (e.g. `agents/prompt-engineer.md`,
-`agents/petri-net-expert.md`) — a later phase renames them to `<name>-agent.md`
-for a consistent suffix. Link to the file as it is actually named today; update
-the link when that rename lands.
+Shipped agents are named `<paired-skill-name>-agent.md` (e.g.
+`agents/improve-prompt-agent.md`, `agents/petri-net-theory-agent.md`) — a
+consistent suffix, no `-expert` on either side. Link to the file by that name.
 
 If the intent genuinely needs a per-host translation table, put it in the
 skill's `references/host-notes.md` and link it from the workflow step. The
@@ -37,9 +36,7 @@ back to plain prose. Both satisfy the same contract, so state the contract:
 ## Referring to agents
 
 Agents ship from `agents/` in this repo and are installed per host by
-`scripts/install-agents.py` — that script does not exist on this branch yet
-(a later task adds it); until it ships, this describes the intended
-mechanism, not a command you can run today. When pointing readers at where
+`scripts/install-agents.py`. When pointing readers at where
 an agent's definition lives, link the repo-relative source path, never a host's
 installed location (`~/.claude/agents/`, `~/.codex/agents/`) — that path is
 per-user and doesn't exist until install. Citing a host's install path as an

@@ -213,11 +213,11 @@ The skill reads `terminology_file`, grep-scans the repo for code symbols and fil
 A later phase of this repository adds a dispatchable sub-agent that runs this
 same workflow in isolation — useful when a long-running task wants terminology
 curation done as a parallel subtask without polluting the main context. That
-agent does not exist here yet: [`agents/`](../../agents/) currently ships six
-agents (`debugger-expert`, `formal-methods-expert`, `petri-net-expert`,
-`prompt-engineer`, `srs-expert`, `type-theory-expert`), none of which curates
-terminology. Once it ships, its source will live alongside those, and it will
-delegate to this skill rather than re-implement it. See
+agent does not exist here yet: [`agents/`](../../agents/) currently ships seven
+agents, none of which curates terminology; see
+[`agents/README.md`](../../agents/README.md) for the authoritative table. Once
+it ships, its source will live alongside those, and it will delegate to this
+skill rather than re-implement it. See
 [`docs/host-adaptation.md`](../../docs/host-adaptation.md) for how this repo's
 agents are sourced and referenced. Until then, invoke this skill directly.
 

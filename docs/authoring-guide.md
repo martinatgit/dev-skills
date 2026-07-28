@@ -30,7 +30,7 @@ description: >-
 
 Do not use a bare `>` (leaves a trailing newline on some parsers) and do not wrap a plain scalar across lines (indentation-sensitive and the easiest form to break).
 
-Five of the fourteen skills shipped in this repo today predate this rule (four use a bare `>`, one wraps a plain scalar). They are not converted in a blanket pass — a later phase rewrites four of them during an unrelated rename — but any skill you touch for another reason should be brought onto `>-` at the same time.
+Five of the fourteen skills shipped in this repo today predate this rule and use a bare `>` (`debugger`, `formal-methods`, `petri-net-theory`, `srs`, `type-theory`). They are not converted in a blanket pass — each converts to `>-` on its next unrelated touch — but any skill you touch for another reason should be brought onto `>-` at the same time.
 
 Do not add `version`, `owner`, `tags`, `allowed-tools`, `metadata`, or any other field. The open standard's `metadata` namespace is experimental and support varies across agents. Things you add here silently get ignored on half the platforms.
 

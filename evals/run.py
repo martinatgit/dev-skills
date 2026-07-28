@@ -207,7 +207,7 @@ def check_agent_skill_pairing() -> list[str]:
 
 
 def check_agent_format_parity() -> list[str]:
-    """Each agents/<name>.md must have a matching .toml; name+description equal."""
+    """Each agents/<name>.md must have a matching .toml with an equal 'name' field."""
     problems: list[str] = []
     agents_dir = REPO_ROOT / "agents"
     if not agents_dir.is_dir():
