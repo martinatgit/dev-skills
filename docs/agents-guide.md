@@ -55,9 +55,14 @@ The Markdown body becomes `developer_instructions` as a multi-line TOML string.
 `evals/run.py` enforces:
 
 - Every `agents/<name>.md` has a `agents/<name>.toml` sibling.
-- `name` field is identical across the pair.
+- The `.toml` is byte-identical (newline-normalised) to what
+  `scripts/generate-codex-agents.py` would produce from the `.md` right now.
+  This is checked by importing the generator and regenerating in memory —
+  not by comparing individual fields — so it catches any divergence, not
+  just a changed `name`.
 
-Other fields may differ (the formats target different hosts).
+Fields the generator drops (`tools`, `model`) never reach the `.toml` at all;
+that is expected, not a divergence the check flags.
 
 ## Generation workflow
 
@@ -69,7 +74,7 @@ python3 scripts/generate-codex-agents.py
 
 Then commit both the `.md` and the regenerated `.toml`.
 
-Editing the `.toml` by hand is allowed but discouraged — the eval check fails when name or description diverges between formats. Either regenerate or update the Markdown.
+Editing the `.toml` by hand is unsupported — the eval check regenerates the `.toml` from the `.md` in memory and fails on any difference from what is on disk, not just a changed `name` or `description`. Always regenerate; never hand-edit the output.
 
 ## Banned constructs in agent bodies
 
@@ -77,7 +82,7 @@ Agents should not:
 
 - Read or write user project files outside what their paired skill mandates.
 - Embed credentials, API keys, or hardcoded paths.
-- Reference peer agents that do not exist in this repo (`evals/run.py` catches some of these via the pairing check).
+- Reference peer agents that do not exist in this repo. (Nothing in `evals/run.py` checks this — the pairing check only maps `<name>-agent.md` to `skills/<name>/` and never reads agent bodies. This is a manual review item.)
 
 ## Distribution
 

@@ -8,9 +8,11 @@ Mapping:
     frontmatter name        -> toml name
     frontmatter description -> toml description
     body                    -> toml developer_instructions (multi-line)
-    frontmatter model       -> toml model (if present)
     frontmatter skills      -> [skills.config] block (if present)
     frontmatter tools       -> dropped (Codex has its own tool model)
+    frontmatter model       -> dropped (Claude Code model tiers like "opus"
+                               are not Codex model IDs; map explicitly in
+                               docs/agents-guide.md if a mapping is ever needed)
 
 Stdlib only. No external YAML / TOML libraries.
 
@@ -43,27 +45,36 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
     for raw in fm_text.splitlines():
         if not raw.strip():
             continue
-        if raw.startswith("  - "):
+        # A YAML block-sequence item ("- foo"), at any indent (including
+        # column 0 — valid YAML for a sequence directly under its key).
+        list_m = re.match(r"^\s*-\s+(.*)$", raw)
+        if list_m:
             if current_list is None:
                 raise ValueError(f"list item without key context: {raw!r}")
-            current_list.append(raw[4:].strip())
+            current_list.append(list_m.group(1).strip())
             continue
         m = re.match(r"^([a-zA-Z_][\w-]*):\s*(.*)$", raw)
-        if not m:
-            # Continuation of folded scalar (description: > on prior line)
-            if current_key is not None and isinstance(fm[current_key], str):
-                fm[current_key] = (fm[current_key] + " " + raw.strip()).strip()
+        if m:
+            key, value = m.group(1), m.group(2).strip()
+            current_key = key
+            current_list = None
+            if value and value[0] in ">|":
+                # Folded (>) or literal (|) block scalar. Chomping/indentation
+                # indicators (-, +, digits) may follow the indicator character
+                # itself; ignore them and accumulate from continuation lines.
+                fm[key] = ""
+            elif value == "":
+                fm[key] = []
+                current_list = fm[key]
+            else:
+                fm[key] = value
             continue
-        key, value = m.group(1), m.group(2).strip()
-        current_key = key
-        current_list = None
-        if value == ">" or value == "|":
-            fm[key] = ""  # accumulate from continuations
-        elif value == "":
-            fm[key] = []
-            current_list = fm[key]
-        else:
-            fm[key] = value
+        # Not a key line and not a list item: only valid as a continuation
+        # of an in-progress folded/literal scalar value.
+        if current_key is not None and isinstance(fm.get(current_key), str):
+            fm[current_key] = (fm[current_key] + " " + raw.strip()).strip()
+            continue
+        raise ValueError(f"unrecognised frontmatter line: {raw!r}")
     return fm, body
 
 
@@ -97,8 +108,9 @@ def emit_toml(fm: dict, body: str) -> str:
     lines = []
     lines.append(f"name = {toml_escape_oneline(fm['name'])}")
     lines.append(f"description = {toml_escape_oneline(fm['description'])}")
-    if "model" in fm:
-        lines.append(f"model = {toml_escape_oneline(fm['model'])}")
+    # frontmatter `model` (a Claude Code model tier like "opus") is
+    # deliberately dropped here, same as `tools` above it in the docstring:
+    # Codex has its own model IDs and a Claude tier is meaningless there.
     lines.append("")
     lines.append("developer_instructions = " + toml_escape_multiline(body))
 
@@ -113,12 +125,11 @@ def emit_toml(fm: dict, body: str) -> str:
 
 
 def process_file(md_path: Path, dry_run: bool) -> Path | None:
+    """Convert one agent .md to its .toml. Raises ValueError on any parse
+    or emission failure — the caller must count that as a failed file, not
+    a silent skip (a stale .toml must not survive a bad source file)."""
     text = md_path.read_text(encoding="utf-8")
-    try:
-        fm, body = parse_frontmatter(text)
-    except ValueError as e:
-        print(f"  skip {md_path.name}: {e}", file=sys.stderr)
-        return None
+    fm, body = parse_frontmatter(text)
     toml_text = emit_toml(fm, body)
     toml_path = md_path.with_suffix(".toml")
     if dry_run:

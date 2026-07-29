@@ -159,13 +159,13 @@ For each major API / function:
 
 **User:** "Write a tutorial for the new tenant-isolation middleware."
 
-**Skill output:** A markdown file at `<tutorials_dir>/tenant-isolation-middleware.md` containing all 10 sections (Introduction, Prerequisites, System Architecture, Core Concepts, API and Functional Overview, Worked Examples, Implementation Insights, Comparative Analysis, Integration Guidance, Outlook, Testing Strategy). The tutorial reads as a self-contained textbook chapter; no external context is required to understand it.
+**Skill output:** A markdown file at `<tutorials_dir>/tenant-isolation-middleware.md` containing all 11 sections (Introduction, Prerequisites, System Architecture, Core Concepts, API and Functional Overview, Worked Examples, Implementation Insights, Comparative Analysis, Integration Guidance, Outlook, Testing Strategy). The tutorial reads as a self-contained textbook chapter; no external context is required to understand it.
 
 ### Example 2 — edge case (component without code)
 
 **User:** "Tutorial for the event-stream-processor — I have the spec but no code yet."
 
-**Skill output:** Same structure, but the Implementation Insights and Testing Strategy sections clearly label inferred-from-spec content vs. implemented behavior. The `## Inputs` section captures that the topic is a spec-only target so a future reader understands the labelling.
+**Skill output:** Same structure, but the Implementation Insights and Testing Strategy sections clearly label inferred-from-spec content vs. implemented behavior, per the Inputs & Assumptions guidance above (state assumptions explicitly; label inferred vs. explicit behavior).
 
 ## Troubleshooting
 

@@ -111,6 +111,108 @@ class GenerateCodexAgentsTests(unittest.TestCase):
             # must skip it without erroring.
             self.assertFalse((agents / "README.toml").exists())
 
+    def test_model_dropped_from_toml(self):
+        """F1: a Claude Code model tier (e.g. 'opus') must never reach the
+        Codex TOML — it is not a valid Codex model ID."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            agents = tdp / "agents"
+            agents.mkdir()
+            (agents / "sample-agent.md").write_text(SAMPLE_MD, encoding="utf-8")
+
+            result = run(["--agents-dir", str(agents)], cwd=tdp)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            toml_text = (agents / "sample-agent.toml").read_text(encoding="utf-8")
+            self.assertNotIn("model", toml_text)
+
+    def test_chomping_folded_scalar_description(self):
+        """F2: 'description: >-' (the house style per authoring-guide.md)
+        must not leak the '>-' indicator into the parsed value."""
+        md = textwrap.dedent("""\
+            ---
+            name: chomped-agent
+            description: >-
+              A chomped description. No trailing newline, no leading
+              indicator characters in the parsed value.
+            ---
+
+            Body.
+            """)
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            agents = tdp / "agents"
+            agents.mkdir()
+            (agents / "chomped-agent.md").write_text(md, encoding="utf-8")
+
+            result = run(["--agents-dir", str(agents)], cwd=tdp)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            toml_text = (agents / "chomped-agent.toml").read_text(encoding="utf-8")
+            desc_line = next(ln for ln in toml_text.splitlines() if ln.startswith("description "))
+            self.assertIn('"A chomped description.', desc_line)
+            self.assertNotIn('">-', desc_line)
+            self.assertNotIn('"> ', desc_line)
+
+    def test_zero_indent_list_preserved(self):
+        """F5: a `skills:`/`tools:` YAML list written at column 0 (`- item`,
+        no leading spaces) is valid YAML and must not be silently dropped."""
+        md = textwrap.dedent("""\
+            ---
+            name: zero-indent-agent
+            description: An agent with a zero-indent skills list.
+            skills:
+            - zero-indent-skill
+            ---
+
+            Body.
+            """)
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            agents = tdp / "agents"
+            agents.mkdir()
+            (agents / "zero-indent-agent.md").write_text(md, encoding="utf-8")
+
+            result = run(["--agents-dir", str(agents)], cwd=tdp)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            toml_text = (agents / "zero-indent-agent.toml").read_text(encoding="utf-8")
+            self.assertIn("[skills.config]", toml_text)
+            self.assertIn("zero-indent-skill", toml_text)
+
+    def test_no_frontmatter_counts_as_failure(self):
+        """F4: a non-README .md with no frontmatter must fail the run
+        (nonzero exit), not be silently skipped like README.md is."""
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            agents = tdp / "agents"
+            agents.mkdir()
+            (agents / "no-frontmatter-agent.md").write_text(
+                "# Not frontmatter, just a heading.\n", encoding="utf-8",
+            )
+            result = run(["--agents-dir", str(agents)], cwd=tdp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("no-frontmatter-agent", result.stderr)
+
+    def test_bullet_inside_folded_description_counts_as_failure(self):
+        """F4: a `- ` bullet inside a folded `description: >` block has no
+        list context and must fail loudly, not be swallowed as a skip."""
+        md = textwrap.dedent("""\
+            ---
+            name: bulleted-agent
+            description: >
+              An agent whose description folds in a bullet:
+              - this looks like a list item but isn't one.
+            ---
+
+            Body.
+            """)
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            agents = tdp / "agents"
+            agents.mkdir()
+            (agents / "bulleted-agent.md").write_text(md, encoding="utf-8")
+            result = run(["--agents-dir", str(agents)], cwd=tdp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("bulleted-agent", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

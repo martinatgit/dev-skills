@@ -8,7 +8,7 @@ description: >
   review. Prefer this over inlining glossary edits into a feature-implementation
   context. Returns a short summary and leaves the glossary file on disk for the
   parent agent to read.
-tools: Read, Glob, Grep, Write, Edit
+tools: Read, Glob, Grep, Write, Edit, Bash
 model: opus
 skills:
   - terminology

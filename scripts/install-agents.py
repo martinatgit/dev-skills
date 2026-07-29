@@ -131,20 +131,27 @@ def main(argv: list[str] | None = None) -> int:
         print("no agent files matched")
         return 0
 
-    # Check for collisions.
-    collisions = [dst for _src, dst in pairs if dst.exists() and not args.force]
+    # Collisions: destinations that already exist and would need --force.
+    collisions = {dst for _src, dst in pairs if dst.exists()} if not args.force else set()
+
+    if args.dry_run:
+        # Preview the plan even when some destinations already exist —
+        # annotate collisions instead of failing, so `--dry-run` remains
+        # usable for a contributor who has already installed once.
+        for src, dst in pairs:
+            note = "  [collision — exists, needs --force]" if dst in collisions else ""
+            print(f"would copy {src} -> {dst}{note}")
+        return 0
+
     if collisions:
-        for c in collisions:
+        for c in sorted(collisions):
             print(f"error: destination exists (use --force): {c}", file=sys.stderr)
         return 1
 
     for src, dst in pairs:
-        if args.dry_run:
-            print(f"would copy {src} -> {dst}")
-        else:
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dst)
-            print(f"copied {src.name} -> {dst}")
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dst)
+        print(f"copied {src.name} -> {dst}")
     return 0
 
 

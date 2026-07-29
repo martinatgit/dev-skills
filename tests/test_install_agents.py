@@ -119,6 +119,36 @@ class InstallAgentsTests(unittest.TestCase):
             self.assertIn("Body.", (home / ".claude" / "agents" / "sample-agent.md")
                           .read_text(encoding="utf-8"))
 
+    def test_dry_run_previews_reinstall_without_erroring(self):
+        """F12: --dry-run must preview an already-installed set, not fail.
+
+        docs/agents-portability-checklist.md prescribes
+        `install-agents.py --dry-run -g` as a pre-PR check; it must succeed
+        for a contributor who has already installed once.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            tdp = Path(td)
+            make_repo_with_agents(tdp)
+            home = tdp / "home"
+            (home / ".claude" / "agents").mkdir(parents=True)
+            (home / ".claude" / "agents" / "sample-agent.md").write_text(
+                "existing", encoding="utf-8",
+            )
+            (home / ".codex" / "agents").mkdir(parents=True)
+
+            result = run(
+                ["--agents-dir", str(tdp / "agents"), "--home", str(home),
+                 "--dry-run", "-g"],
+                cwd=tdp,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(".claude/agents/sample-agent.md", result.stdout.replace("\\", "/"))
+            # The pre-existing destination is not overwritten by a dry run.
+            self.assertEqual(
+                (home / ".claude" / "agents" / "sample-agent.md").read_text(encoding="utf-8"),
+                "existing",
+            )
+
     def test_subset_with_agents_flag(self):
         with tempfile.TemporaryDirectory() as td:
             tdp = Path(td)

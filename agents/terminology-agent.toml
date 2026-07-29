@@ -1,6 +1,5 @@
 name = "terminology-agent"
 description = "Runs the terminology skill's workflows in isolation. Use whenever another agent or a long-running implementation task wants glossary curation done as a parallel subtask without polluting its own context — capturing terms with /define-term, retrieving terms for use elsewhere, or running a glossary review. Prefer this over inlining glossary edits into a feature-implementation context. Returns a short summary and leaves the glossary file on disk for the parent agent to read."
-model = "opus"
 
 developer_instructions = '''
 

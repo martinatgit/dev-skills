@@ -1,54 +1,45 @@
 {
   "skill": "developer-diary",
-  "purpose": "Canonical trigger prompts. Each positive prompt should activate the developer-diary skill on every supported host (Claude Code, Codex CLI baseline). Target trigger rate: >=80%.",
   "prompts": [
     {
       "id": "explicit-read",
-      "trigger_expected": true,
-      "category": "explicit-invocation",
-      "input": "/developer-diary read"
+      "text": "/developer-diary read",
+      "expect_trigger": true
     },
     {
       "id": "explicit-update",
-      "trigger_expected": true,
-      "category": "explicit-invocation",
-      "input": "/developer-diary update"
+      "text": "/developer-diary update",
+      "expect_trigger": true
     },
     {
       "id": "explicit-review",
-      "trigger_expected": true,
-      "category": "explicit-invocation",
-      "input": "/developer-diary review"
+      "text": "/developer-diary review",
+      "expect_trigger": true
     },
     {
       "id": "casual-context-read",
-      "trigger_expected": true,
-      "category": "casual-phrasing",
-      "input": "Before we start: read the developer diary and tell me what's relevant for today's work on the auth module."
+      "text": "Before we start: read the developer diary and tell me what's relevant for today's work on the auth module.",
+      "expect_trigger": true
     },
     {
       "id": "casual-context-update",
-      "trigger_expected": true,
-      "category": "casual-phrasing",
-      "input": "We just shipped the new payment flow. Update the developer diary with what we tried, what worked, and what surprised us."
+      "text": "We just shipped the new payment flow. Update the developer diary with what we tried, what worked, and what surprised us.",
+      "expect_trigger": true
     },
     {
       "id": "review-repair",
-      "trigger_expected": true,
-      "category": "casual-phrasing",
-      "input": "The developer diary has gotten messy — review and repair the structure."
+      "text": "The developer diary has gotten messy — review and repair the structure.",
+      "expect_trigger": true
     },
     {
       "id": "single-domain-code-edit",
-      "trigger_expected": false,
-      "category": "negative",
-      "input": "Rename userId to user_identifier in src/auth.ts."
+      "text": "Rename userId to user_identifier in src/auth.ts.",
+      "expect_trigger": false
     },
     {
       "id": "factual-lookup",
-      "trigger_expected": false,
-      "category": "negative",
-      "input": "What does TypeScript's never type mean?"
+      "text": "What does TypeScript's never type mean?",
+      "expect_trigger": false
     }
   ]
 }

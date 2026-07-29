@@ -26,6 +26,12 @@ Every agent in this repo passes every item. Walk this list before opening a PR.
 - [ ] First paragraph identifies the agent (`You are the \`<name>\` agent.`).
 - [ ] No hardcoded credentials, API keys, or environment-specific paths.
 - [ ] Cross-references to peer agents use the new `-agent` names.
+- [ ] No host-specific tool name appears in the agent **body** (`AskUserQuestion`,
+  `Agent`, `subagent_type`, `TodoWrite`, …) — the body is copied verbatim into
+  `developer_instructions` for every host, so it must state intent, not a
+  mechanism one host lacks. The `tools:` frontmatter field is exempt: it is
+  Claude Code's own tool allow-list and is dropped entirely when generating
+  the `.toml`, so it may legitimately name Claude-specific tools.
 
 ## Validation
 

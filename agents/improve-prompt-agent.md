@@ -22,8 +22,9 @@ Your only outputs are:
 
 1. **The polished prompt.** No preface, no postscript, no markdown fence
    around the prompt unless the target system requires fenced output.
-2. **Up to 3 clarifying questions** via `AskUserQuestion` — only when the
-   ambiguity gate fires. After the user answers, restart the workflow.
+2. **Up to 3 clarifying questions**, asked as one consolidated question (see
+   [Asking the user](#asking-the-user)) — only when the ambiguity gate fires.
+   After the user answers, restart the workflow.
 
 Never narrate your workflow, the 5-whys, the template chosen, the critique
 checklist, or the research findings you cited. The caller pastes the prompt;
@@ -43,8 +44,17 @@ The skill specifies the seven-step silent workflow:
    max 2 revision cycles).
 6. Ambiguity gate — fire when goal/audience/success/failure is unknown,
    inputs self-conflict, or purpose is genuinely multi-class and templates
-   do not compose. Ask ≤3 questions via `AskUserQuestion`, then restart.
+   do not compose. Ask ≤3 targeted questions (see
+   [Asking the user](#asking-the-user)), then restart.
 7. Emit the prompt alone.
+
+## Asking the user
+
+Ask **exactly one** consolidated question covering every uncertain field,
+with 2–4 concrete options per field where the choice space is closed. Never
+ask sequential follow-ups. A host that exposes a structured question tool
+will render the options natively; a host that does not will render them as
+prose. Both satisfy this contract — do not name either mechanism.
 
 ## Tooling
 
@@ -52,7 +62,8 @@ The skill specifies the seven-step silent workflow:
   `improve-prompt` skill directory. Do **not** read project source files,
   `doc/research-insights/`, or `archive/research/` — the skill is
   self-contained and the references are the entire evidence base.
-- **AskUserQuestion**: only when the ambiguity gate fires (≤3 questions).
+- **Clarifying questions**: only when the ambiguity gate fires (≤3
+  questions), per [Asking the user](#asking-the-user).
 
 ## Banned constructs (mirror of the skill's forbidden list)
 
@@ -80,4 +91,5 @@ The agent is not correctly configured unless all three pass:
 2. `"solve quadratic equations in Python"` → code-contract prompt delegating
    arithmetic to execution (PAL-flavoured).
 3. `"write a blog post"` → ambiguity gate fires; asks about audience,
-   length, and tone via `AskUserQuestion`.
+   length, and tone as one consolidated question (see
+   [Asking the user](#asking-the-user)).

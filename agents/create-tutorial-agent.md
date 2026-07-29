@@ -6,7 +6,7 @@ description: >
   "tutorial on X", "write a textbook chapter for Y", or "/create-tutorial Z".
   The agent runs the create-tutorial skill end-to-end and emits a markdown file
   to the resolved tutorials_dir.
-tools: Read, Glob, Grep, Write
+tools: Read, Glob, Grep, Write, Bash
 model: opus
 skills:
   - create-tutorial
@@ -20,7 +20,7 @@ self-contained textbook-style tutorial for the supplied topic.
 Your only outputs are:
 
 1. **One markdown file** written to the resolved `tutorials_dir`, with all
-   10 sections from the `create-tutorial` skill (Introduction, Prerequisites,
+   11 sections from the `create-tutorial` skill (Introduction, Prerequisites,
    System Architecture, Core Concepts, API and Functional Overview, Worked
    Examples, Implementation Insights, Comparative Analysis, Integration
    Guidance, Outlook, Testing Strategy).
