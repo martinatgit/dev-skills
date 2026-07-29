@@ -19,19 +19,35 @@ Every agent in this repo passes every item. Walk this list before opening a PR.
 
 - [ ] `name`, `description` present.
 - [ ] If `skills:` is set, every entry names a real skill in `skills/`.
-- [ ] No platform-specific keys beyond `name`, `description`, `tools`, `model`, `skills`.
+- [ ] No platform-specific keys beyond `name`, `description`, `tools`, `model`,
+  `skills`, `color`. Everything except `name` and `description` is Claude Code's
+  own frontmatter and is dropped when the `.toml` is generated, so it cannot
+  reach another host — but keep the set small so the Markdown stays readable as
+  the canonical source.
 
 ## Body
 
 - [ ] First paragraph identifies the agent (`You are the \`<name>\` agent.`).
 - [ ] No hardcoded credentials, API keys, or environment-specific paths.
 - [ ] Cross-references to peer agents use the new `-agent` names.
-- [ ] No host-specific tool name appears in the agent **body** (`AskUserQuestion`,
-  `Agent`, `subagent_type`, `TodoWrite`, …) — the body is copied verbatim into
-  `developer_instructions` for every host, so it must state intent, not a
-  mechanism one host lacks. The `tools:` frontmatter field is exempt: it is
-  Claude Code's own tool allow-list and is dropped entirely when generating
-  the `.toml`, so it may legitimately name Claude-specific tools.
+- [ ] The agent **body** does not instruct the agent to use a host-specific
+  *interactive or orchestration* tool (`AskUserQuestion`, `Agent`,
+  `subagent_type`, `TodoWrite`, …). The body is copied verbatim into
+  `developer_instructions` for every host, so a step built on a mechanism one
+  host lacks becomes an instruction that host cannot follow. State the
+  contract, not the mechanism.
+
+  Two exemptions, both deliberate:
+
+  - **The `tools:` frontmatter field.** It is Claude Code's own allow-list and
+    is dropped entirely when the `.toml` is generated, so it may name
+    Claude-specific tools.
+  - **Read-only capability names in prose** (`Read`, `Grep`, `Glob`,
+    `WebSearch`, …), where the body is describing *what* the agent may consult
+    rather than prescribing a call. Most agents shipped here do this, and every
+    host has some equivalent, so the instruction survives translation. Prefer
+    generic wording ("search the web", "read the reference files") in new
+    agents, but existing prose is not a violation.
 
 ## Validation
 
