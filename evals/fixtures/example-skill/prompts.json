@@ -1,0 +1,45 @@
+{
+  "skill": "example-skill",
+  "prompts": [
+    {
+      "id": "reference-for-new-skill",
+      "text": "I'm about to author a new skill in this repo — can you pull up example-skill so I can see how the conventions are applied?",
+      "expect_trigger": true
+    },
+    {
+      "id": "pattern-2-config-reference",
+      "text": "Show me how Pattern 2 lazy runtime configuration is supposed to look — walk me through example-skill's config resolution.",
+      "expect_trigger": true
+    },
+    {
+      "id": "filled-in-template-comparison",
+      "text": "I want to see a filled-in version of template/SKILL.md side by side with the real thing — show me example-skill.",
+      "expect_trigger": true
+    },
+    {
+      "id": "project-local-first-writes",
+      "text": "Before I write config handling for my new skill, show me how example-skill does project-local-first config precedence.",
+      "expect_trigger": true
+    },
+    {
+      "id": "portable-scripts-reference",
+      "text": "What's the reference skill for writing portable Python scripts the way this repo expects? Show me its scripts folder.",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-real-config-work",
+      "text": "Use example-skill to manage the real configuration for our production deployment.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-real-network-call",
+      "text": "Wire up example-skill to actually call our production API and report the response.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-unrelated-skill-chargebee",
+      "text": "Draft a Chargebee webhook handler for subscription_renewed events.",
+      "expect_trigger": false
+    }
+  ]
+}

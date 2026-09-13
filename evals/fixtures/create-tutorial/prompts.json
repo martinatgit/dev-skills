@@ -1,0 +1,30 @@
+{
+  "skill": "create-tutorial",
+  "prompts": [
+    {
+      "id": "slash-command",
+      "text": "/create-tutorial event-stream-processor",
+      "expect_trigger": true
+    },
+    {
+      "id": "natural-language",
+      "text": "Write a tutorial for the new tenant-isolation middleware.",
+      "expect_trigger": true
+    },
+    {
+      "id": "textbook-chapter",
+      "text": "I need a textbook chapter explaining how our auth middleware works.",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-bugfix",
+      "text": "Help me fix this off-by-one error in parseDate.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-session-handoff",
+      "text": "Remind me what we were working on yesterday.",
+      "expect_trigger": false
+    }
+  ]
+}

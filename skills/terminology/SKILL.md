@@ -210,16 +210,12 @@ The skill reads `terminology_file`, grep-scans the repo for code symbols and fil
 
 ## Companion agent
 
-A later phase of this repository adds a dispatchable sub-agent that runs this
-same workflow in isolation — useful when a long-running task wants terminology
-curation done as a parallel subtask without polluting the main context. That
-agent does not exist here yet: [`agents/`](../../agents/) currently ships six
-agents (`debugger-expert`, `formal-methods-expert`, `petri-net-expert`,
-`prompt-engineer`, `srs-expert`, `type-theory-expert`), none of which curates
-terminology. Once it ships, its source will live alongside those, and it will
-delegate to this skill rather than re-implement it. See
-[`docs/host-adaptation.md`](../../docs/host-adaptation.md) for how this repo's
-agents are sourced and referenced. Until then, invoke this skill directly.
+The same workflow can be run by [`terminology-agent`](../../agents/terminology-agent.md),
+a dispatchable sub-agent — useful when a long-running task wants terminology
+curation done as a parallel subtask without polluting the main context. The
+agent delegates to this skill rather than re-implementing it. Install it with
+`python3 scripts/install-agents.py --agents terminology-agent`; see
+[`docs/install.md`](../../docs/install.md#installing-agents).
 
 ## References
 

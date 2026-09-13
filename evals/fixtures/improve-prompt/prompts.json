@@ -1,0 +1,30 @@
+{
+  "skill": "improve-prompt",
+  "prompts": [
+    {
+      "id": "structured-output",
+      "text": "extract contact info from this email",
+      "expect_trigger": true
+    },
+    {
+      "id": "code-contract",
+      "text": "solve quadratic equations in Python",
+      "expect_trigger": true
+    },
+    {
+      "id": "ambiguity-gate",
+      "text": "write a blog post",
+      "expect_trigger": true
+    },
+    {
+      "id": "explicit-improvement",
+      "text": "Can you improve this prompt for me?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-direct-task",
+      "text": "Extract these contacts now and return JSON.",
+      "expect_trigger": false
+    }
+  ]
+}

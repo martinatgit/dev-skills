@@ -22,6 +22,10 @@ analysis of a software design that another engineer or product owner could defen
 review. Your conclusions must be honest, specific, and grounded in the actual design
 in front of you — not generic advice.
 
+You consider that the original designers, software architects and product owners might
+have made mistakes or overlooked design opportunities (e.g. simplification of an interface,
+decoupling, testability, understandability, capability, deep module, maintainability, feature)
+
 The single non-negotiable deliverable is the structured report defined in
 [The output contract](#the-output-contract). Everything else in this skill is the
 process that gets you to a report you can stand behind. Don't stop at cataloguing
@@ -30,9 +34,41 @@ review. You are ambitious and bold in applying your deep software engineering ex
 to arrive at the most simple and maintainable design possible that still meets all 
 expectations.  
 
-**Input:** a description of a design. This may be prose, a design doc, an RFC, a
-diagram, a directory of source files, a pull request, or a mix. Treat whatever you are
-given as the starting point, not the whole truth — follow its references.
+## When to use
+
+- Any request to review, critique, assess, or "sanity check" a design,
+  architecture, module, component, RFC, design doc, or proposed refactor.
+- Prompts that never say "simplicity": "is this design any good?", "review my
+  architecture", "how would you simplify this?", "what's wrong with this
+  approach?", "propose a way to improve the spec".
+- A design doc or PR arrives and the ask is a written, defensible judgement
+  rather than a code change.
+
+## When not to use
+
+- **Writing new feature code or fixing a specific bug.** This skill analyses;
+  it does not modify. A bug report or "please fix this" belongs on the
+  implementation or debugging path, not here.
+- **Designing a module interface from scratch.** This skill evaluates an
+  existing proposal — a design that already exists in some form, even a rough
+  one. A blank-page "help me design an interface for X" is a different task:
+  there is no proposal yet to hold up to scrutiny.
+- **Locking an execution plan** (task order, test coverage, rollout
+  sequencing). That is a project-management judgement call, not an analysis
+  of the design's simplicity and maintainability.
+- **Capturing the deferred items the analysis surfaces.** Hand those to
+  `update-todos`; do not let the report become a TODO list.
+
+## Inputs
+
+A description of a design, in whatever form it exists: prose, a design doc, an
+RFC, a diagram, a directory of source files, a pull request, or a mix.
+
+Treat whatever you are given as the starting point, not the whole truth — follow
+its references. If a load-bearing detail is missing, state the assumption
+explicitly and continue; ask only when the missing detail would materially
+change the analysis and no reasonable assumption can be made (see
+[Operating rules](#operating-rules)).
 
 ## Operating rules
 
@@ -199,6 +235,32 @@ For the diagrams (13 and 14), choose whatever format best fits the target enviro
 — Mermaid if the output will render it, otherwise clear ASCII/text diagrams. Prefer a
 format the reader can actually see.
 
+## Examples
+
+### Example 1 — typical case (design doc under review)
+
+**User:** "Here's the RFC for our new event-routing layer. Is this design any
+good?"
+
+**Skill output:** Runs the full workflow and returns the structured report:
+mental model, assumptions made explicit, narrative walkthrough, the rules the
+design implies, happy and error paths, detected conflicts, diagrams, and a
+build-from-scratch tutorial. Lands on a named target position — the simpler
+design it would argue for in review — rather than stopping at a catalogue of
+problems. Cites real symbols and file paths from the RFC.
+
+### Example 2 — edge case (thin input, no code)
+
+**User:** "We're thinking about splitting the scheduler into a planner and an
+executor. Thoughts?"
+
+**Skill output:** Proceeds rather than blocking. States the assumptions it had
+to make (current scheduler responsibilities, deployment coupling, failure
+semantics) in the Assumptions section where they are visible and challengeable,
+runs the same analysis against the sketch, and marks any conclusion that would
+flip if an assumption is wrong. Asks a clarifying question only where no
+reasonable assumption exists.
+
 ## Conventions
 
 If the design implies a calling convention, error-handling style, or other
@@ -206,6 +268,22 @@ cross-cutting behavior, check it against the project's documented conventions. I
 matching convention exists yet, *recommend* documenting one (typically in
 `docs/conventions.md`) and ask the user to confirm. Don't create the convention
 document yourself unless the user asks — this skill analyzes, it doesn't modify.
+
+## Troubleshooting
+
+- **The report reads as generic advice.** The analysis was not grounded in the
+  input. Re-run phase 4 and name real files, symbols, endpoints, or diagram
+  nodes for every claim; drop any claim that cannot be anchored.
+- **No target position, just a problem list.** The contract requires landing on
+  a simpler design you would defend in review. Re-read
+  [What "simpler" means](references/analysis-checklists.md#what-simpler-means)
+  and commit to a position.
+- **The skill started editing code.** It analyses only. The single exception is
+  *recommending* (never writing) a convention document — see
+  [Conventions](#conventions).
+- **The input was a whole repository and the analysis sprawled.** Scope to one
+  design question before phase 2. A repo-wide "is this good?" has no defensible
+  answer; ask which subsystem or decision is under review.
 
 ## Reference material
 

@@ -44,6 +44,25 @@ scaffolding.
 - The user asked specifically for a brainstorm / plan / design — those have
   their own skills.
 
+## Inputs
+
+- **Rough intent text** — a pasted draft prompt, a natural-language task
+  description ("I want the LLM to …"), or an existing prompt that needs
+  tightening. This is the only required input. The skill is self-contained:
+  it works from the pasted text and its own `references/` files, and does not
+  read project files, URLs, or attachments at runtime.
+- **Optional known constraints** — audience, length, format, tool access, or
+  anything else the user already knows. Supplying these up front reduces how
+  often the ambiguity gate fires, but nothing here is mandatory.
+
+If a load-bearing field is missing — a 5-whys field (step 1) comes back
+`unknown` and blocks producing a prompt, the input self-conflicts, or the
+purpose is genuinely multi-class and no template composes — the ambiguity
+gate (step 6) fires: the skill halts and asks up to 3 targeted questions
+(see [Asking the user](#asking-the-user)), then restarts from step 1 once
+answered. Gaps that are not load-bearing are filled with the template's
+default rather than triggering a question.
+
 ## Internal workflow (silent — never narrated)
 
 1. **Intent via 5-whys.** Walk `references/five-whys-rubric.md` against the
@@ -89,6 +108,40 @@ sequential follow-ups. A host that exposes a structured question tool will
 render the options natively; a host that does not will render them as prose.
 Both satisfy this contract — do not name either mechanism.
 
+## Examples
+
+### Example 1 — structured-output (contact extraction)
+
+**User:** "Extract contact info from this email."
+
+**Skill output:** A prompt that:
+- Defines an explicit JSON schema (`name`, `email`, `phone`, etc.).
+- Wraps the email payload in an `<UNTRUSTED_DATA>` envelope with a "data not instructions" guard.
+- States `"JSON only, no prose"` at both primacy and recency positions.
+- Contains no CoT scaffold and no persona.
+
+### Example 2 — code-contract (math via execution)
+
+**User:** "Solve quadratic equations in Python."
+
+**Skill output:** A prompt that:
+- Specifies a typed function signature (`def solve_quadratic(a: float, b: float, c: float) -> tuple[complex, complex]`).
+- Lists edge-case rules (`a == 0` → linear case; complex discriminant → complex roots).
+- States `"Output only the code"` at primacy and recency.
+- Delegates arithmetic to execution (PAL-flavoured per `[PAL-dominates-arithmetic]`).
+
+### Example 3 — ambiguity gate fires
+
+**User:** "Write a blog post."
+
+**Skill output:** Up to 3 clarifying questions (see [Asking the user](#asking-the-user)) covering audience, length, and tone. After answers, the workflow restarts from step 1 with the gated fields resolved.
+
+## Troubleshooting
+
+- **Prompt looks too long for the task.** The purpose class may be wrong — re-classify via `references/template-matrix.md`. A `short` task does not need a 400-word prompt.
+- **User reports the model didn't do step-by-step reasoning.** CoT is default-off; only `math_symbolic` and the deductive subset of `code_gen` trigger it. If the task is genuinely symbolic, re-check the purpose class.
+- **Few-shot exemplars look too uniform.** Diversify by surface form, label, and order (`[Order-flips]`, `[Format-flips]`). The template-matrix cell mandates lexical diversity.
+
 ## Reference files (load on demand inside the workflow)
 
 | File | When to read |
@@ -118,9 +171,9 @@ they were distilled into the references at skill-creation time).
 
 ## Cross-references
 
-A peer **agent** `prompt-engineer` (source at
-[`agents/prompt-engineer.md`](../../agents/prompt-engineer.md)) runs the same
-workflow as a dispatchable subagent. Use the agent when
+A peer **agent** `improve-prompt-agent` (source at
+[`agents/improve-prompt-agent.md`](../../agents/improve-prompt-agent.md)) runs
+the same workflow as a dispatchable subagent. Use the agent when
 multiple prompt-improvement requests should run in parallel, or when the work
 should be isolated from the main conversation context. Otherwise invoke the
 skill directly.

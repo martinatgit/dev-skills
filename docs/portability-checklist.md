@@ -37,7 +37,7 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] No external package installs at any point.
 - [ ] No tool-specific files inside the skill (no `allowed-tools` in frontmatter, no `agents/openai.yaml` unless documented).
 - [ ] No host-specific tool name appears in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent; put any per-host translation in `references/host-notes.md`. See [`docs/host-adaptation.md`](host-adaptation.md).
-- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` is cited as where one of *this repo's* files lives — link the repo-relative `agents/<name>.md` source instead (a later phase renames these files to `agents/<name>-agent.md`; update links then). Citing such a path as an illustrative example of a host's install location (e.g. explaining why a config key must be project-scoped) is fine.
+- [ ] No path under `.claude/`, `~/.claude/`, `.codex/`, or `~/.codex/` is cited as where one of *this repo's* files lives — link the repo-relative `agents/<name>-agent.md` source instead. Citing such a path as an illustrative example of a host's install location (e.g. explaining why a config key must be project-scoped) is fine.
 - [ ] No symlinks.
 
 ## Configuration (if applicable)
@@ -68,6 +68,37 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 - [ ] Tested on Claude Code: skill triggers on all canonical prompts in `evals/fixtures/<skill-name>/`.
 - [ ] Tested on one other agent (Codex CLI, Cursor, or Windsurf).
 - [ ] Trigger rate at or above 80% on canonical prompts — if not, rewrite the description.
+- [ ] `evals/fixtures/<skill-name>/prompts.json` uses the fixture schema below — every fixture file in the repo must match it exactly.
+
+### Fixture schema
+
+`evals/fixtures/<skill-name>/prompts.json` is a single JSON object:
+
+```json
+{
+  "skill": "<skill-name>",
+  "prompts": [
+    { "id": "short-kebab-slug", "text": "the literal prompt text", "expect_trigger": true }
+  ]
+}
+```
+
+- Top level: exactly `skill` (the skill's folder name) and `prompts` (an array). No other top-level keys — no `purpose` blurb; the schema and its intent are documented here, once, for every fixture file.
+- Each entry in `prompts`: exactly `id` (kebab-case, unique within the file), `text` (the prompt string), and `expect_trigger` (`true` for a prompt that should trigger the skill, `false` for a negative/counter-example). No other per-prompt keys — no `category` field; encode any useful classification into the `id` itself (e.g. `negative-unrelated-skill-chargebee`).
+- Include at least one negative (`expect_trigger: false`) prompt per skill to catch over-triggering.
+
+Verify every fixture file shares this shape:
+
+```sh
+python3 -c "
+import json, pathlib
+shapes = set()
+for p in sorted(pathlib.Path('evals/fixtures').glob('*/prompts.json')):
+    d = json.loads(p.read_text(encoding='utf-8'))
+    shapes.add((tuple(sorted(d)), tuple(sorted({k for e in d['prompts'] for k in e}))))
+assert len(shapes) == 1, f'{len(shapes)} schemas: {shapes}'
+"
+```
 
 ## Documentation
 
@@ -78,7 +109,7 @@ Every skill in this repo passes every item. Walk this list before opening a PR.
 
 ## Final
 
-- [ ] `python3 evals/run.py` (unscoped — this is the gate; there is no CI in this repo) returns OK. It covers, repo-wide: frontmatter for every skill, marketplace JSON validity, README + marketplace registration, unfilled `{{...}}` placeholders in user-facing surfaces, Python script compilation, and stamped-script drift. `python3 evals/run.py --skill <your-skill>` only checks that one skill's frontmatter — it is a fast iteration shortcut, not a substitute for the unscoped run before opening a PR.
+- [ ] `python3 evals/run.py` (unscoped — this is the gate; there is no CI in this repo) returns OK. It covers, repo-wide: frontmatter for every skill, marketplace JSON validity, README + marketplace registration, unfilled `{{...}}` placeholders in user-facing surfaces, Python script compilation, stamped-script drift, agent-skill pairing (every `agents/<name>-agent.md` has a `skills/<name>/`), and agent format parity (every `agents/<name>.toml` matches what `scripts/generate-codex-agents.py` would produce from its `.md`). `python3 evals/run.py --skill <your-skill>` only checks that one skill's frontmatter — it is a fast iteration shortcut, not a substitute for the unscoped run before opening a PR.
 - [ ] `python3 -m json.tool .claude-plugin/marketplace.json > /dev/null` exits 0.
 - [ ] `python3 -m py_compile skills/<your-skill>/scripts/*.py` exits 0 for every script.
 - [ ] If the skill writes user files, it exposes a `root_dir` (or equivalent path-typed) config key marked project-only.

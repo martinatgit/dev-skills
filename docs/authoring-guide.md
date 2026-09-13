@@ -30,7 +30,7 @@ description: >-
 
 Do not use a bare `>` (leaves a trailing newline on some parsers) and do not wrap a plain scalar across lines (indentation-sensitive and the easiest form to break).
 
-Five of the fourteen skills shipped in this repo today predate this rule (four use a bare `>`, one wraps a plain scalar). They are not converted in a blanket pass — a later phase rewrites four of them during an unrelated rename — but any skill you touch for another reason should be brought onto `>-` at the same time.
+Five of the fourteen skills shipped in this repo today predate this rule and use a bare `>` (`debugger`, `formal-methods`, `petri-net-theory`, `srs`, `type-theory`). They are not converted in a blanket pass — each converts to `>-` on its next unrelated touch — but any skill you touch for another reason should be brought onto `>-` at the same time.
 
 Do not add `version`, `owner`, `tags`, `allowed-tools`, `metadata`, or any other field. The open standard's `metadata` namespace is experimental and support varies across agents. Things you add here silently get ignored on half the platforms.
 
@@ -73,7 +73,7 @@ Use imperative verbs ("Read the file", not "The file is read"). Keep steps short
 
 Allowed:
 
-- Python **3.12** stdlib, no external packages. **Default choice.** 3.12 is the floor, not a target: `evals/run.py` already uses un-deferred `list[str]` annotations (PEP 585, 3.9+) and two test files use un-deferred `Path | None` (PEP 604, 3.10+); a planned eval check will also need `tomllib` (3.11+). Pinning the floor above all of them keeps the eval scripts, the test suite, and the skill scripts on one baseline.
+- Python **3.12** stdlib, no external packages. **Default choice.** 3.12 is the floor, not a target: `evals/run.py` already uses un-deferred `list[str]` annotations (PEP 585, 3.9+) and three test files (`tests/test_check_reference_drift.py`, `tests/test_smoke_end_to_end.py`, `tests/test_evals_agent_checks.py`) use un-deferred `Path | None` (PEP 604, 3.10+); `evals/run.py`'s agent-format-parity check also imports `tomllib` (3.11+). Pinning the floor above all of them keeps the eval scripts, the test suite, and the skill scripts on one baseline.
 - POSIX bash (must work on macOS's default 3.x). Use only when Python is overkill.
 - Node.js with no external packages beyond what ships with Node.
 
@@ -131,7 +131,7 @@ Fail loudly and early. Silent wrong output is the worst outcome. For each expect
 
 - No host-specific tool names in skill prose (`AskUserQuestion`, `Agent`, `subagent_type`, `TodoWrite`, …). Write intent instead; see [`docs/host-adaptation.md`](host-adaptation.md) for the rule and worked examples.
 - No AGENTS.md, CLAUDE.md, or REVIEW.md inside a skill folder.
-- No install scripts at the repo root.
+- No install scripts for a *skill*, at the skill's root or anywhere else — skill configuration is lazy (see Configuration above). This does not extend to `scripts/install-agents.py`: that installs the separate `agents/` layer (Claude Code subagents / Codex CLI subagents), not a skill, and following the lazy-configuration rule for skills is not a license to add more repo-root installers for skills.
 - No symlinks across agent directories (`~/.claude/skills`, `~/.codex/skills`).
 - No modifications to CLAUDE.md, settings.json, or any file outside the skill's own folder and config directory.
 - No network calls during configuration without explicit user consent in the same turn.

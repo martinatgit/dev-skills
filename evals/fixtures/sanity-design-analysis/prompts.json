@@ -1,0 +1,50 @@
+{
+  "skill": "sanity-design-analysis",
+  "prompts": [
+    {
+      "id": "sanity-check-literal",
+      "text": "Can you sanity check this design doc for our new event-routing layer?",
+      "expect_trigger": true
+    },
+    {
+      "id": "is-this-any-good",
+      "text": "Here's the RFC for the caching layer. Is this design any good?",
+      "expect_trigger": true
+    },
+    {
+      "id": "whats-wrong-with-this-approach",
+      "text": "We're planning to have every service poll a shared table for job status. What's wrong with this approach?",
+      "expect_trigger": true
+    },
+    {
+      "id": "review-my-architecture",
+      "text": "Review my architecture for the notification service before I bring it to the team.",
+      "expect_trigger": true
+    },
+    {
+      "id": "propose-improvement-no-simplicity-word",
+      "text": "Propose a way to improve the spec for our permissions module — I think the roles and scopes are tangled together.",
+      "expect_trigger": true
+    },
+    {
+      "id": "casual-thoughts-on-split",
+      "text": "We're thinking about splitting the scheduler into a planner and an executor. Thoughts?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-fix-specific-bug",
+      "text": "Our subscription_renewed webhook handler sometimes downgrades customers who just upgraded. Can you fix it?",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-new-interface-from-scratch",
+      "text": "I need a brand-new interface for a rate limiter module — no existing code or design yet, just help me design it from scratch.",
+      "expect_trigger": false
+    },
+    {
+      "id": "negative-capture-todo",
+      "text": "Let's not action this now — capture as a TODO that the retry logic needs a second look later.",
+      "expect_trigger": false
+    }
+  ]
+}

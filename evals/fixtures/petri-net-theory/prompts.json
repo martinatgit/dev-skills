@@ -1,0 +1,30 @@
+{
+  "skill": "petri-net-theory",
+  "prompts": [
+    {
+      "id": "modelling-prohibition",
+      "text": "Model a workflow where action B requires approval A within 30 days.",
+      "expect_trigger": true
+    },
+    {
+      "id": "cpn-reachability",
+      "text": "Is reachability decidable for coloured Petri nets?",
+      "expect_trigger": true
+    },
+    {
+      "id": "no-pn-mention",
+      "text": "How do I model concurrent resource pools with deadline constraints?",
+      "expect_trigger": true
+    },
+    {
+      "id": "wf-net-soundness",
+      "text": "Is this workflow net sound?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-solver",
+      "text": "Should I use Z3's QF_LIA or QF_LRA for this constraint?",
+      "expect_trigger": false
+    }
+  ]
+}

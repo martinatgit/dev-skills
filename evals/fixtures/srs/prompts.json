@@ -1,0 +1,30 @@
+{
+  "skill": "srs",
+  "prompts": [
+    {
+      "id": "tick-architecture",
+      "text": "Should our compliance monitor use a one-phase or three-phase tick?",
+      "expect_trigger": true
+    },
+    {
+      "id": "constructive-causality",
+      "text": "What's the constructive-causality requirement for our until operator?",
+      "expect_trigger": true
+    },
+    {
+      "id": "event-driven-general",
+      "text": "Design a tick-based event processor for the inventory system.",
+      "expect_trigger": true
+    },
+    {
+      "id": "clock-calculus",
+      "text": "Two signals at different clock rates — how do we sample-and-hold without breaking the synchronous hypothesis?",
+      "expect_trigger": true
+    },
+    {
+      "id": "negative-petri-net",
+      "text": "Is our workflow net sound?",
+      "expect_trigger": false
+    }
+  ]
+}
