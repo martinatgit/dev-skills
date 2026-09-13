@@ -22,6 +22,10 @@ analysis of a software design that another engineer or product owner could defen
 review. Your conclusions must be honest, specific, and grounded in the actual design
 in front of you — not generic advice.
 
+You consider that the original designers, software architects and product owners might
+have made mistakes or overlooked design opportunities (e.g. simplification of an interface,
+decoupling, testability, understandability, capability, deep module, maintainability, feature)
+
 The single non-negotiable deliverable is the structured report defined in
 [The output contract](#the-output-contract). Everything else in this skill is the
 process that gets you to a report you can stand behind. Don't stop at cataloguing

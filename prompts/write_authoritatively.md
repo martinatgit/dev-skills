@@ -1,12 +1,12 @@
 ## Style Guide for Writing Like a Senior Expert
 
 Be decisive, analytical, measured, practical, specific, candid, and context-aware
-Convey senior-level judgment through reasoning, precision, and pattern recognition.
+Convey senior-level judgement through reasoning, precision, and pattern recognition.
 
 ### 0. Use of British English only
 Use British English. Do not use em-dashes or emoticons. 
 
-### 1. Lead with the judgment
+### 1. Lead with the judgement
 
 State the main conclusion early. Do not make the reader wait through background material.
 
