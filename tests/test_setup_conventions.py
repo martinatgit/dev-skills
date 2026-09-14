@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "setup-conventions.py"
 
 
-def _run(*args, cwd, env=None):
+def _run(*args, cwd, env=None, input_text=None):
     base_env = dict(os.environ)
     # Strip env vars from prior tests that could pollute this one.
     base_env.pop("DEV_SKILLS_CONFIG_FILE", None)
@@ -22,7 +22,7 @@ def _run(*args, cwd, env=None):
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
         cwd=cwd, env=base_env,
-        capture_output=True, text=True, check=False,
+        capture_output=True, text=True, check=False, input=input_text,
     )
 
 
@@ -117,6 +117,55 @@ class SetupConventionsTest(unittest.TestCase):
         result = _run("--print", cwd=self.tmp)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("docs_root: agent-docs", result.stdout)
+
+    def _write_custom_conventions(self):
+        target = self.tmp / ".agents" / "dev-skills.yaml"
+        target.parent.mkdir(exist_ok=True)
+        target.write_text(
+            "schema: dev-skills/v1\ndocs_root: agent-docs\nskills:\n"
+            "  developer-diary:\n    subdir: diary\n"
+            "    feature_routing_file: routing.md\n    node_token_limit: 900\n"
+            "  update-todos:\n    subdir: tasks\n    default_expiry_days: 45\n"
+            "  terminology:\n    filename: terms.md\n    validation_timeout: 30\n"
+            "  create-tutorial:\n    subdir: guides\n"
+            "  future-skill:\n    future_key: retained\n",
+            encoding="utf-8",
+        )
+        return target
+
+    def test_noninteractive_rerun_preserves_existing_values(self):
+        target = self._write_custom_conventions()
+        before = _run("--print", cwd=self.tmp).stdout
+        result = _run("--non-interactive", cwd=self.tmp)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(_run("--print", cwd=self.tmp).stdout, before)
+        self.assertTrue(target.exists())
+
+    def test_interactive_rerun_preserves_unmentioned_values(self):
+        self._write_custom_conventions()
+        before = _run("--print", cwd=self.tmp).stdout
+        result = _run(cwd=self.tmp, input_text="\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(_run("--print", cwd=self.tmp).stdout, before)
+
+    def test_explicit_flags_replace_only_named_values(self):
+        self._write_custom_conventions()
+        before = _run("--print", cwd=self.tmp).stdout
+        result = _run(
+            "--non-interactive", "--docs-root", "knowledge",
+            "--terminology-filename", "vocabulary.md", cwd=self.tmp,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        expected = before.replace("docs_root: agent-docs", "docs_root: knowledge")
+        expected = expected.replace("filename: terms.md", "filename: vocabulary.md")
+        self.assertEqual(_run("--print", cwd=self.tmp).stdout, expected)
+
+    def test_print_does_not_change_file(self):
+        target = self._write_custom_conventions()
+        before = (target.read_bytes(), target.stat().st_mtime_ns)
+        result = _run("--print", cwd=self.tmp)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((target.read_bytes(), target.stat().st_mtime_ns), before)
 
 
 if __name__ == "__main__":

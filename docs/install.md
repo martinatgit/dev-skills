@@ -1,206 +1,182 @@
 # Install
 
-This page covers every supported way to install skills from this repository, across every host agent that supports the [agentskills.io](https://agentskills.io/specification) open standard.
+Start with the [README installation and update walkthrough](../README.md#install). It covers a local checkout, both hosts, personal/project scope, optional subagents, configuration, and upgrades. This page is the detailed reference.
 
-> Verified state: **April 2026**. Each agent's official docs are authoritative; cross-check those if a path looks off.
+Claude Code and Codex references were checked on 2026-09-13. Other hosts below retain the previously documented paths; consult their official documentation for current support. Python helpers use the standard library and run with Python 3.10+; tests require 3.11+.
 
 ## Quick start — multi-agent install
 
-The fastest way: the [`skills`](https://www.npmjs.com/package/skills) npm CLI auto-detects every installed agent and copies skills into the right place for each.
+From the dev-skills checkout, install selected personal skills into both hosts:
 
 ```sh
-# All detected agents, current scope (project if cwd is a project root, else user)
-npx skills add martinatgit/dev-skills
-
-# Specific agents only
-npx skills add martinatgit/dev-skills -a claude-code -a codex
-
-# Specific skill only
-npx skills add martinatgit/dev-skills --skill reason-through
-
-# Force user scope ("global")
-npx skills add martinatgit/dev-skills -g
-
-# Non-interactive (CI)
-npx skills add martinatgit/dev-skills -y
+npx skills add . -g -a claude-code -a codex --skill developer-diary update-todos --copy
 ```
 
-`npx skills` walks upward from your cwd looking for project markers (`.git`, `package.json`, etc.) to decide between project and user scope. Pass `-g` to force user scope.
+Use `--skill '*'` for all skills, or `--list` to browse without installing. For project scope, run from the consuming project, pass the checkout's absolute path, and omit `-g`. The external skills CLI defaults to project scope; do not rely on this repository's project-root algorithm to determine its destination.
 
-Source: [npm — `skills` package](https://www.npmjs.com/package/skills) and the [vercel-labs/skills](https://github.com/vercel-labs/skills) repo.
+For remote-source installation, replace `.` with `martinatgit/dev-skills`. Keep track of the original source and scope for [updates](../README.md#update-an-existing-installation).
 
 ## Install matrix (per agent × per scope)
 
-| Agent | User scope | Project scope | Notes |
-|---|---|---|---|
-| **Claude Code** | `~/.claude/skills/<name>/` | `<repo>/.claude/skills/<name>/` | Also supports plugin marketplaces (`/plugin marketplace add`, `/plugin install`). Live change detection; nested `.claude/skills/` in subdirectories auto-discovered. |
-| **Codex CLI** | `~/.agents/skills/<name>/` | `<repo>/.agents/skills/<name>/` | Walks parent directories to project root. Skills support shipped December 2025. |
-| **Cursor** | `~/.agents/skills/<name>/` or `~/.cursor/skills/<name>/` | `<repo>/.agents/skills/<name>/` or `<repo>/.cursor/skills/<name>/` | Reads both the cross-vendor `.agents/` convention and Cursor-specific `.cursor/`. Falls back to Claude / Codex skills directories for compatibility. |
-| **Windsurf** | `~/.codeium/windsurf/skills/<name>/` | `<repo>/.windsurf/skills/<name>/` | Ships as "Cascade Skills". |
-| **Goose** | `~/.config/agents/skills/<name>/` | `<repo>/.agents/skills/<name>/` | Desktop app + CLI; managed as a dedicated platform extension. |
-
-**`.agents/skills/`** is the emerging cross-vendor convention used by Codex, Cursor (alternative path), and Goose. Claude Code and Windsurf still use vendor-specific paths but are converging.
+| Agent | User scope | Project scope |
+|---|---|---|
+| Claude Code | `~/.claude/skills/<name>/` | `<project>/.claude/skills/<name>/` |
+| Codex | `~/.agents/skills/<name>/` | `<project>/.agents/skills/<name>/` |
+| Cursor | `~/.agents/skills/<name>/` or `~/.cursor/skills/<name>/` | `<project>/.agents/skills/<name>/` or `<project>/.cursor/skills/<name>/` |
+| Windsurf | `~/.codeium/windsurf/skills/<name>/` | `<project>/.windsurf/skills/<name>/` |
+| Goose | `~/.config/agents/skills/<name>/` | `<project>/.agents/skills/<name>/` |
 
 ## Manual install (any agent)
 
+Create the appropriate destination from the matrix and copy the complete `skills/<name>` directory into it, including scripts and references. For example, from the checkout in a POSIX shell:
+
 ```sh
-# Clone the repo
-git clone https://github.com/martinatgit/dev-skills.git
-
-# Copy a single skill into the agent of your choice
-cp -r dev-skills/skills/reason-through ~/.claude/skills/        # Claude Code, user scope
-cp -r dev-skills/skills/reason-through ~/.agents/skills/        # Codex CLI / Cursor / Goose, user scope
-cp -r dev-skills/skills/reason-through .claude/skills/          # Claude Code, project scope
-cp -r dev-skills/skills/reason-through .agents/skills/          # Codex CLI / Cursor / Goose, project scope
-
-# Or copy all skills at once
-cp -r dev-skills/skills/* ~/.claude/skills/
+mkdir -p "$HOME/.claude/skills"
+cp -R skills/improve-prompt "$HOME/.claude/skills/"
 ```
 
-Manual install is the right fallback when `npx skills` is unavailable or you want full control over which skills land where.
+In PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE/.claude/skills"
+Copy-Item -Recurse -LiteralPath "skills/improve-prompt" -Destination "$env:USERPROFILE/.claude/skills/"
+```
+
+These examples are for a **first install**. For a manual update, back up the old skill folder outside every host discovery directory, then replace the folder as a whole. Overlaying files can leave files deleted upstream behind. Never remove unrelated skills. Configuration belongs outside the installed skill, so replacing its code need not overwrite project preferences.
 
 ## Claude Code plugin install
 
-```
-/plugin marketplace add martinatgit/dev-skills
-/plugin install dev-skills@martinatgit
-```
+In Claude Code running in the checkout:
 
-The marketplace manifest is at [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json) and lists every shipped skill.
-
-## Verifying the install
-
-```sh
-# Claude Code (user scope)
-ls ~/.claude/skills/
-
-# Codex CLI / Cursor / Goose (user scope)
-ls ~/.agents/skills/
-
-# Project scope (run from inside the project)
-ls .claude/skills/   .agents/skills/
+```text
+/plugin marketplace add .
+/plugin install dev-skills@dev-skills
 ```
 
-Each of these should show a directory per skill with a `SKILL.md` inside.
+Alternatively add `martinatgit/dev-skills` for a GitHub-backed marketplace. The plugin includes skills and Claude agents. The default scope is user; select project/local scope through `/plugin`. Skills use the plugin namespace, for example `/dev-skills:improve-prompt`.
+
+The manifest is [marketplace.json](../.claude-plugin/marketplace.json). `dev-skills` is both the plugin name and marketplace name; `martinatgit` is its owner. Avoid installing the same Claude skills both standalone and through the plugin.
+
+For updates, refresh the marketplace then run `claude plugin update dev-skills@dev-skills`; add `--scope project` for a project installation. Update a local marketplace's checkout first. Refreshing a marketplace listing alone is not a substitute for updating the installed plugin.
 
 ## Installing agents
 
-Agents in this repo ship in two formats targeting different hosts.
-
-### Claude Code
-
-Either via the plugin marketplace (recommended):
-
-```
-/plugin marketplace add martinatgit/dev-skills
-/plugin install dev-skills@martinatgit
-```
-
-This installs all skills and all `agents/*.md` files. Manual alternative:
+The installer handles Claude Markdown and Codex TOML files; it does not install their paired skills. From the checkout:
 
 ```sh
-cp dev-skills/agents/*.md ~/.claude/agents/        # user scope
-cp dev-skills/agents/*.md .claude/agents/          # project scope
+python scripts/install-agents.py -g -a claude-code -a codex --dry-run
+python scripts/install-agents.py -g -a claude-code -a codex
 ```
 
-### Codex CLI
-
-Run the host-detecting installer:
+Choose one host if needed. Explicit hosts do not require pre-existing destination directories. Without `-a`, detection considers host config roots in the consuming project and user home. Personal scope is `-g`; otherwise cwd determines the consuming project root. Invoke by absolute path from another project:
 
 ```sh
-python3 scripts/install-agents.py                  # auto-detect, current scope
-python3 scripts/install-agents.py -g               # force user scope
-python3 scripts/install-agents.py --agents improve-prompt-agent  # subset
-python3 scripts/install-agents.py --dry-run        # preview
+cd "/path/to/your-project"
+python "/path/to/dev-skills/scripts/install-agents.py" -a codex --agents improve-prompt-agent
 ```
 
-Or manual:
+Destinations: Claude `<scope>/.claude/agents/<name>.md`; Codex `<scope>/.codex/agents/<name>.toml`. Unknown hosts/names fail before copying. This repository supplies subagent formats only for these two hosts.
+
+Codex agents inherit parent skill discovery and ask to load their paired skill in their instructions. They do not encode Claude's preload list as Codex configuration. Install paired skills at a scope visible to the consuming session. See the [agents guide](agents-guide.md#codex-cli-generated).
+
+## Agent updates and recovery
+
+Use the same host/scope and optionally the same `--agents` selection:
 
 ```sh
-cp dev-skills/agents/*.toml ~/.codex/agents/       # user scope
-cp dev-skills/agents/*.toml .codex/agents/         # project scope
+python scripts/install-agents.py -g -a codex --update --dry-run
+python scripts/install-agents.py -g -a codex --update
 ```
 
-### Cursor, Windsurf, Goose
+- First installs create missing destinations.
+- Identical files are skipped and can be adopted into installer tracking.
+- `--update` replaces an older tracked file only when it still matches its recorded installed hash.
+- Different untracked files and locally edited tracked files are conflicts; inspect before opting into `--force`.
+- `--force` backs up changed existing files before replacing them and prints the backup paths.
+- All destinations are checked before planned copies begin. Filesystem errors can still interrupt a batch; this is not a multi-file transaction.
+- Dry runs write neither agents, backups, nor tracking data.
+- Obsolete tracked names are reported, not deleted. Untracked legacy names require the inventory below.
+- `-y/--yes` is retained for command compatibility; the installer has no interactive prompts and it never implies `--force`.
 
-These hosts do not have a file-based subagent slot today. Skills are the portable alternative; install them via `npx skills add martinatgit/dev-skills` (see [Quick start](#quick-start--multi-agent-install)).
+The installer keeps `.dev-skills-install.json` alongside installed agents. Preserve it to retain source/hash tracking. Backups live outside normal agent file names; use the exact path printed by the installer. To restore, preserve the new version if needed and copy the saved bytes back to the original agent file. A restored older version may differ from the manifest and will correctly be treated as a conflict on the next update.
 
-### Verifying the agents install
+For installations made before tracking existed, identical files are adopted on reinstallation. Different existing files require reviewed `--force` replacement and are backed up. Never overwrite a plugin cache with this installer; update that plugin through its host.
+
+### Legacy names
+
+| Old skill folder | Current skill folder |
+|---|---|
+| formal-methods-expert | formal-methods |
+| debugger-expert | debugger |
+| srs-expert | srs |
+| type-theory-expert | type-theory |
+
+| Old agent stem | Current agent stem |
+|---|---|
+| prompt-engineer | improve-prompt-agent |
+| formal-methods-expert | formal-methods-agent |
+| petri-net-expert | petri-net-theory-agent |
+| srs-expert | srs-agent |
+| type-theory-expert | type-theory-agent |
+| debugger-expert | debugger-agent |
+
+Inspect personal and project skill/agent directories, including `~/.codex/skills` if an earlier manual setup used it. Install and verify the replacement, then unregister the old skill through its original installer, or move a manual copy outside host discovery. Back up local modifications first. The repository does not automatically rename project references or delete old registrations.
+
+## Verifying the install
+
+Start a fresh host session in the consuming project, check skill discovery, and invoke a selected skill. For a plugin installation also check its enabled scope through `/plugin`. If subagents were selected, explicitly dispatch one. Merely seeing a file on disk does not validate host loading.
+
+Inspect configuration from that same project:
 
 ```sh
-ls ~/.claude/agents/    # Claude Code, user scope
-ls ~/.codex/agents/     # Codex CLI, user scope
-ls .claude/agents/ .codex/agents/  # project scope
+python "/path/to/dev-skills/skills/update-todos/scripts/configure.py" --print
+python "/path/to/dev-skills/skills/update-todos/scripts/resolve_config.py" --project-root
 ```
 
 ## Shared conventions
 
-A single project-scope file `<project_root>/.agents/dev-skills.yaml` lets one declaration drive every skill's output paths. Create it once; every Pattern-2 skill in this repo reads it at runtime.
+A project-scope `<project>/.agents/dev-skills.yaml` supplies output conventions for developer-diary, update-todos, terminology, and create-tutorial:
 
 ```yaml
-# .agents/dev-skills.yaml
 schema: dev-skills/v1
-docs_root: agent-docs        # the only mandatory line beyond schema
-
-skills:                      # optional per-skill block
+docs_root: agent-docs
+skills:
   terminology:
-    filename: terms.md       # -> agent-docs/terms.md
+    filename: terms.md
 ```
 
-**Create it** (interactive):
+From the consuming project:
 
 ```sh
-python3 scripts/setup-conventions.py
+python "/path/to/dev-skills/scripts/setup-conventions.py" --non-interactive --docs-root agent-docs --terminology-filename terms.md
+python "/path/to/dev-skills/scripts/setup-conventions.py" --print
 ```
 
-**Create it non-interactively** (CI):
+Omit `--non-interactive` for interactive setup. Reruns preserve existing parsed `docs_root` and per-skill blocks; only supplied settings change. Omitted `docs_root` defaults to `doc` on first use only. The writer normalizes formatting and comments; unsupported top-level keys are outside the schema. Edit the file to remove an override intentionally.
 
-```sh
-python3 scripts/setup-conventions.py --non-interactive --docs-root agent-docs \
-    --terminology-filename terms.md
-```
-
-The first-use prompt in each skill's `configure.py` also offers to create a minimal `.agents/dev-skills.yaml` (with just `schema` and `docs_root`) instead of writing per-skill config -- pick that option if you want one convention for the whole project.
-
-**Resolution order** (first match wins, per key):
-
-1. Per-key environment variable (e.g. `TERMINOLOGY_FILE`).
-2. Per-skill project config (`<proj>/.terminology/config.yaml`).
-3. Shared conventions file (`<proj>/.agents/dev-skills.yaml`).
-4. Per-skill user config (`~/.config/<skill>/config.yaml`).
-5. Built-in default.
-
-**Collision safety:** the mandatory `schema: dev-skills/v1` marker means a foreign tool with the same filename is detected and ignored (the shared layer is skipped; per-skill config + defaults still apply).
-
-**Escape hatch:** `DEV_SKILLS_CONFIG_FILE=<path>` points at an alternate file if a genuine name collision occurs.
+A missing/wrong schema or malformed file is ignored by runtime with a diagnostic, while the setup writer refuses to overwrite it. `DEV_SKILLS_CONFIG_FILE` can point to an alternate shared file. Shared conventions are intended to be committed with the project.
 
 ## Per-skill runtime configuration
 
-Skills in this repo follow a uniform configuration pattern:
+Per-key precedence:
 
-- Configuration files live at `~/.config/<skill-name>/config.yaml` (user scope) and/or `<project_root>/.<skill-name>/config.yaml` (project scope).
-- Path-typed keys (`root_dir` and similar) are **project-only**. A user-installed skill never bleeds one project's writes into another.
-- Resolution order: env var → project-local → shared conventions file (`<project_root>/.agents/dev-skills.yaml`) → user-level (non-path keys only) → built-in default. Skills with no path-typed keys (`example-skill`, `reason-through`) skip the shared-conventions layer and resolve through the remaining four. See [Shared conventions](#shared-conventions) above for the full five-layer contract.
-- All helpers are Python 3 stdlib, identical on Windows / macOS / Linux.
+1. Per-key environment variable.
+2. `<project>/.<skill-name>/config.yaml`.
+3. Shared conventions.
+4. User config at `~/.config/<skill-name>/config.yaml` (or `XDG_CONFIG_HOME`), non-path keys only.
+5. Built-in default.
 
-### Configure a skill
+Skills without shared output conventions, such as reason-through and example-skill, skip layer 3. Unresolved output paths trigger the skill's first-use configuration flow. Keep cwd in the consuming project; an installed skill folder is not the consuming project.
 
 ```sh
-# Inside a skill folder (or use absolute paths)
-cd ~/.claude/skills/update-todos      # or wherever the skill is installed
-
-# Project scope (where path-typed keys belong)
-python3 scripts/configure.py --scope project
-
-# User scope (defaults reused across projects)
-python3 scripts/configure.py --scope user
-
-# Non-interactive
-python3 scripts/configure.py --scope project --root-dir doc/TODOs
-
-# Inspect resolution
-python3 scripts/configure.py --print
+python "/path/to/dev-skills/skills/update-todos/scripts/configure.py" --scope project --non-interactive --root-dir doc/TODOs
+python "/path/to/dev-skills/skills/update-todos/scripts/configure.py" --scope user --non-interactive --default-expiry-days 60
+python "/path/to/dev-skills/skills/update-todos/scripts/configure.py" --print
 ```
+
+For all four shared-config skills, `configure.py --print` delegates to the runtime resolver and prints effective values. It does not write files. `--scope` selects the file to write, not a filter on runtime precedence. Each skill's `references/config-schema.md` describes its private settings.
+
+Existing project config overrides a new shared convention. Neither setting `docs_root` nor repairing config moves existing project artifacts. The [README migration instructions](../README.md#upgrade-from-older-names-or-configuration) explain deprecated update-todos keys, explicit repair, and legacy-name cleanup.
 
 ### Per-skill env-var overrides
 
@@ -210,8 +186,10 @@ python3 scripts/configure.py --print
 | `developer-diary` | `DEVELOPER_DIARY_FEATURE_ROUTING_FILE` | Override the routing-index file path. |
 | `developer-diary` | `DEVELOPER_DIARY_NODE_TOKEN_LIMIT` | Override the soft node-size limit. |
 | `update-todos` | `UPDATE_TODOS_ROOT_DIR` | Override where the TODO tree is read/written. |
-| `update-todos` | `UPDATE_TODOS_INBOX_WIP_LIMIT` | Override the inbox WIP limit. |
-| `update-todos` | `UPDATE_TODOS_ACTIVE_WIP_LIMIT` | Override the active WIP limit. |
+| `update-todos` | `UPDATE_TODOS_HEALTH_TIER_HEALTHY_MAX` | Upper count for the healthy tier. |
+| `update-todos` | `UPDATE_TODOS_HEALTH_TIER_GUIDANCE_MAX` | Upper count for advisory guidance. |
+| `update-todos` | `UPDATE_TODOS_HEALTH_TIER_STRONG_THRESHOLD` | Count above which guidance is strong (not blocking). |
+| `update-todos` | `UPDATE_TODOS_AUTO_MAINTENANCE_ON_RESOLVE` | Enable maintenance on resolve. |
 | `update-todos` | `UPDATE_TODOS_DEFAULT_EXPIRY_DAYS` | Override the default expiry horizon. |
 | `reason-through` | `REASON_THROUGH_CACHE_DIR` | Override the cache directory. |
 | `reason-through` | `REASON_THROUGH_LOG_DIR` | Override the log directory. |
@@ -236,9 +214,9 @@ Skills detect a project root by walking up from the current directory looking fo
 The walk stops at the filesystem root or the user's home directory, whichever first. To debug:
 
 ```sh
-python3 scripts/find_project_root.py
-python3 scripts/find_project_root.py --from /some/path
-python3 scripts/find_project_root.py --mark .my-marker  # custom marker
+python "/path/to/dev-skills/template/scripts/find_project_root.py"
+python "/path/to/dev-skills/template/scripts/find_project_root.py" --from /some/path
+python "/path/to/dev-skills/template/scripts/find_project_root.py" --mark .my-marker  # custom marker
 ```
 
 ## Sources

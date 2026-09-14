@@ -200,14 +200,19 @@ def main():
         return 0
 
     if args.do_print:
-        proot = find_project_root()
-        project_values = (
-            load_existing(project_config_path(proot)) if proot else {}
+        # Invoke the runtime CLI in its own module context: it imports configure.
+        # Inherit cwd so project discovery starts in the consuming project.
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("resolve_config.py")), "--all"],
+            capture_output=True, text=True, check=False,
         )
-        user_values = load_existing(user_config_path())
-        for k, v in resolve(project_values, user_values).items():
-            print("%s: %s" % (k, v))
-        return 0
+        if result.stderr:
+            print(result.stderr, end="", file=sys.stderr)
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                key, _, value = line.partition("=")
+                print("%s: %s" % (key, value))
+        return result.returncode
 
     existing = load_existing(target)
     print("Configuring %s (%s scope) at: %s" % (SKILL_NAME, args.scope, target))

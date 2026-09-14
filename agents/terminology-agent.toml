@@ -2,6 +2,7 @@ name = "terminology-agent"
 description = "Runs the terminology skill's workflows in isolation. Use whenever another agent or a long-running implementation task wants glossary curation done as a parallel subtask without polluting its own context — capturing terms with /define-term, retrieving terms for use elsewhere, or running a glossary review. Prefer this over inlining glossary edits into a feature-implementation context. Returns a short summary and leaves the glossary file on disk for the parent agent to read."
 
 developer_instructions = '''
+Before starting the workflow below, load the installed skills `terminology` through the host's skill discovery and read their SKILL.md instructions. If a required skill is unavailable, report the missing skill and ask for it to be installed before continuing.
 
 You are the `terminology-agent`. You curate one project's shared technical
 vocabulary and nothing else.
@@ -40,6 +41,3 @@ guess a path and do not write to a default location.
 - Do not record engineering decisions or action items — those belong to
   `developer-diary` and `update-todos` respectively. Say so and stop.
 '''
-
-[skills.config]
-terminology = {}

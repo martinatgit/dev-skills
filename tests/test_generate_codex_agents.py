@@ -4,6 +4,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -55,6 +56,13 @@ class GenerateCodexAgentsTests(unittest.TestCase):
             self.assertIn("A sample agent", toml_text)
             self.assertIn("developer_instructions", toml_text)
             self.assertIn("You are the `sample-agent`", toml_text)
+
+            config = tomllib.loads(toml_text)
+            self.assertNotIn("skills", config)
+            instructions = config["developer_instructions"]
+            self.assertIn("load the installed skills", instructions)
+            self.assertIn("`sample-skill`", instructions)
+            self.assertIn("unavailable", instructions)
 
     def test_dry_run_does_not_write(self):
         with tempfile.TemporaryDirectory() as td:
@@ -174,8 +182,9 @@ class GenerateCodexAgentsTests(unittest.TestCase):
             result = run(["--agents-dir", str(agents)], cwd=tdp)
             self.assertEqual(result.returncode, 0, result.stderr)
             toml_text = (agents / "zero-indent-agent.toml").read_text(encoding="utf-8")
-            self.assertIn("[skills.config]", toml_text)
-            self.assertIn("zero-indent-skill", toml_text)
+            config = tomllib.loads(toml_text)
+            self.assertNotIn("skills", config)
+            self.assertIn("zero-indent-skill", config["developer_instructions"])
 
     def test_no_frontmatter_counts_as_failure(self):
         """F4: a non-README .md with no frontmatter must fail the run

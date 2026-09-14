@@ -46,9 +46,9 @@ The Markdown body is the agent's system prompt.
 `agents/<name>.toml` is generated from the `.md` by `scripts/generate-codex-agents.py`. Schema (per [Codex 2026 subagent docs](https://developers.openai.com/codex/subagents)):
 
 - **Required:** `name`, `description`, `developer_instructions`.
-- **Optional:** `model`, `model_reasoning_effort`, `nickname_candidates`, `sandbox_mode`, `mcp_servers`, `[skills.config]`.
+The generator emits only these required fields. Codex supports additional session configuration keys, but this repository inherits model, permissions, and skill discovery from the parent.
 
-The Markdown body becomes `developer_instructions` as a multi-line TOML string.
+The Markdown body becomes `developer_instructions` as a multi-line TOML string. If Claude frontmatter lists `skills`, the generator prepends an instruction to load those installed skills and report missing dependencies before continuing. This is instruction-driven loading, not automatic host preloading. Codex's `[[skills.config]]` entries control paths/enabled flags and do not represent Claude's preload-by-name list. No `skills.config` override is emitted.
 
 ### Cross-format invariants
 
@@ -88,11 +88,11 @@ Agents should not:
 
 Agents are not portable across all hosts. Each format ships to its specific host:
 
-- **Claude Code:** via plugin marketplace (`/plugin install dev-skills@martinatgit`) or manual copy of `agents/*.md` to `~/.claude/agents/` or `<project>/.claude/agents/`.
-- **Codex CLI:** via `python3 scripts/install-agents.py` or manual copy of `agents/*.toml` to `~/.codex/agents/` or `<project>/.codex/agents/`.
+- **Claude Code:** via plugin marketplace (`/plugin install dev-skills@dev-skills`) or `python scripts/install-agents.py -g -a claude-code` (standalone skills must be installed separately) to `~/.claude/agents/` or `<project>/.claude/agents/`.
+- **Codex CLI:** via `python scripts/install-agents.py -g -a codex` or manual copy of individual `agents/<name>.toml` to `~/.codex/agents/` or `<project>/.codex/agents/`.
 - **Cursor, Windsurf, Goose:** no file-based agent slot exists today. Skills are the portable alternative.
 
-See [`docs/install.md`](install.md) for the full install matrix.
+See [`docs/install.md`](install.md) for the full install matrix, managed updates, conflict backups, and legacy-name migrations.
 
 ## Authoring checklist
 

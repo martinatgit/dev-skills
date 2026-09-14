@@ -115,7 +115,7 @@ agents/
 
 **Claude Code (`<name>.md`):** YAML frontmatter with required `name`, `description`. Optional `tools`, `model`, `skills` (declares paired skills to auto-load). Body is the system prompt.
 
-**Codex CLI (`<name>.toml`):** TOML with required `name`, `description`, `developer_instructions`. Optional `nickname_candidates`, `model`, `model_reasoning_effort`, `sandbox_mode`, `mcp_servers`, and `[skills.config]` table.
+**Codex CLI (`<name>.toml`):** TOML with required `name`, `description`, `developer_instructions`. The generator inherits parent settings. Claude skill dependencies are preserved through explicit loading instructions; no `skills.config` override is emitted. See [the current installation contract](../../../doc/requirements/installation-v1.md).
 
 **Cross-format invariants** (enforced by an eval check):
 
@@ -125,20 +125,20 @@ agents/
 
 ### 3.5 Source-of-truth strategy
 
-Markdown is canonical. `scripts/generate-codex-agents.py` reads each `<name>.md`, extracts frontmatter + body, and emits `<name>.toml`. Body becomes `developer_instructions` as a TOML multi-line string. The generator runs as part of the agents installer and is tested by `tests/test_generate_codex_agents.py`.
+Markdown is canonical. `scripts/generate-codex-agents.py` reads each `<name>.md`, extracts frontmatter + body, and emits `<name>.toml`. Body becomes `developer_instructions` as a TOML multi-line string. The generator runs as a contributor step before committing generated files and is tested by `tests/test_generate_codex_agents.py`.
 
-Hand-editing the TOML is allowed but flagged by the eval check if it diverges from what the generator would produce from the corresponding `.md`. Either re-run the generator or update the Markdown source.
+Hand-editing the TOML is unsupported. Edit the Markdown source and re-run the generator; the eval check rejects divergence.
 
 ### 3.6 Installer
 
-`scripts/install-agents.py` (Python 3 stdlib, mirrors the project-root detection in `scripts/find_project_root.py`):
+`scripts/install-agents.py` (Python 3 stdlib, reuses `template/scripts/find_project_root.py`):
 
 - Detects installed hosts using the same marker walk as `find_project_root.py` plus per-host probes.
 - For each detected host with a file-based agent slot, copies the matching file:
   - **Claude Code** → `~/.claude/agents/<name>.md` (user) or `<scope>/.claude/agents/<name>.md` (project)
   - **Codex CLI** → `~/.codex/agents/<name>.toml` (user) or `<scope>/.codex/agents/<name>.toml` (project)
 - **Cursor / Windsurf / Goose:** skip with an informational message — no file-based agent slot exists on these hosts as of 2026-06.
-- Flags: `--agents <name>...` (subset), `-a <host>` (force host), `-g` (force user scope), `-y` (non-interactive), `--force` (overwrite).
+- Flags: `--agents <name>...` (subset), `-a <host>` (explicit host), `-g` (user scope), `--dry-run` (preview), `--update` (replace unmodified tracked files), `--force` (back up and replace conflicts). `-y` is a compatibility no-op. Full current semantics are in [the installation contract](../../../doc/requirements/installation-v1.md).
 - Default behaviour refuses to overwrite existing files.
 
 Distribution is per-host. There is no `npx skills`-style cross-host installer for agents; the `vercel-labs/skills` CLI only handles skills.
@@ -159,7 +159,7 @@ Distribution is per-host. There is no `npx skills`-style cross-host installer fo
 ]
 ```
 
-This ships Markdown agents to Claude Code via `/plugin install dev-skills@martinatgit`. Codex users use `scripts/install-agents.py` since the marketplace is Claude-Code-specific.
+This ships Markdown agents to Claude Code via `/plugin install dev-skills@dev-skills`. Codex users use `scripts/install-agents.py` since the marketplace is Claude-Code-specific.
 
 ### 3.8 Documentation surface
 

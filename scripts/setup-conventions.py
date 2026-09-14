@@ -5,6 +5,11 @@ Pre-flight collision check: refuses to overwrite an existing file that lacks
 the `schema: dev-skills/v1` marker. Set DEV_SKILLS_CONFIG_FILE to write to an
 alternate path.
 
+Reruns preserve the parsed docs_root and per-skill scalar values, including
+keys without CLI flags. Explicit flags replace only their named values.
+Rewriting normalizes ordering/formatting and does not retain comments or
+unsupported top-level fields (the canonical reader does not expose them).
+
 Usage:
     python3 scripts/setup-conventions.py                                  # interactive
     python3 scripts/setup-conventions.py --non-interactive --docs-root X
@@ -160,7 +165,7 @@ Examples:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--docs-root", default=None,
-                        help="Set the docs_root (default: doc).")
+                        help="Set docs_root (default: existing value, then doc).")
     parser.add_argument("--print", dest="do_print", action="store_true",
                         help="Print resolved values from existing file and exit.")
     parser.add_argument("--non-interactive", action="store_true",
@@ -182,14 +187,13 @@ Examples:
         return _print_resolved(target)
 
     _pre_flight(target)
+    existing = _load_existing(target) or {}
 
     # Gather docs_root.
+    prompt_default = args.docs_root if args.docs_root is not None else existing.get("docs_root", "doc")
     if args.non_interactive:
-        docs_root = args.docs_root or "doc"
+        docs_root = prompt_default
     else:
-        existing = _load_existing(target)
-        existing_docs_root = (existing or {}).get("docs_root", "")
-        prompt_default = args.docs_root or existing_docs_root or "doc"
         try:
             ans = input("docs_root [%s]: " % prompt_default).strip()
         except EOFError:
@@ -198,16 +202,15 @@ Examples:
 
     _validate_scalar("docs_root", docs_root)
 
-    # Collect per-skill overrides from CLI flags.
-    skill_overrides = {}
+    # Preserve every parsed per-skill key, including keys without CLI flags.
+    skill_overrides = {
+        skill: dict(block) for skill, block in existing.get("skills", {}).items()
+    }
     for skill, keys in SKILL_SCHEMA.items():
-        block = {}
         for k in keys:
             v = getattr(args, "%s_%s" % (skill, k), None)
             if v is not None:
-                block[k] = v
-        if block:
-            skill_overrides[skill] = block
+                skill_overrides.setdefault(skill, {})[k] = v
 
     for skill, block in skill_overrides.items():
         for k, v in block.items():

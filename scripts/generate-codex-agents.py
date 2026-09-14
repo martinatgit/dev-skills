@@ -8,7 +8,7 @@ Mapping:
     frontmatter name        -> toml name
     frontmatter description -> toml description
     body                    -> toml developer_instructions (multi-line)
-    frontmatter skills      -> [skills.config] block (if present)
+    frontmatter skills      -> explicit loading instructions (if present)
     frontmatter tools       -> dropped (Codex has its own tool model)
     frontmatter model       -> dropped (Claude Code model tiers like "opus"
                                are not Codex model IDs; map explicitly in
@@ -112,14 +112,20 @@ def emit_toml(fm: dict, body: str) -> str:
     # deliberately dropped here, same as `tools` above it in the docstring:
     # Codex has its own model IDs and a Claude tier is meaningless there.
     lines.append("")
-    lines.append("developer_instructions = " + toml_escape_multiline(body))
-
     skills = fm.get("skills")
     if isinstance(skills, list) and skills:
-        lines.append("")
-        lines.append("[skills.config]")
-        for s in skills:
-            lines.append(f"{s} = {{}}")
+        # Codex inherits skill discovery from the parent. Its skills.config
+        # array enables/disables paths; it is not Claude's preload-by-name list.
+        # See https://learn.chatgpt.com/docs/agent-configuration/subagents.
+        names = ", ".join(f"`{skill}`" for skill in skills)
+        body = (
+            "Before starting the workflow below, load the installed skills "
+            f"{names} through the host's skill discovery and read their SKILL.md "
+            "instructions. If a required skill is unavailable, report the missing "
+            "skill and ask for it to be installed before continuing.\n\n"
+            + body.lstrip()
+        )
+    lines.append("developer_instructions = " + toml_escape_multiline(body))
 
     return "\n".join(lines) + "\n"
 
