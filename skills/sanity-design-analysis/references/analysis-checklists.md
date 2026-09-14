@@ -105,6 +105,7 @@ deviations should be justified.
 - **Simple over complicated** — a widely understood construct beats one that takes
   time to learn.
 - **Fail as early as possible** — compile-time failure beats runtime failure.
+- **Deep vs shallow modules** — deep modules are preferable as they abstract complexity and provide clean interfaces that lend themselves naturally to testing. 
 - **Formal enforcement over lax enforcement** — encode constraints, fixed points, and
   assumptions so the compiler or type system enforces them, rather than relying on
   convention.
